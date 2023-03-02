@@ -1,0 +1,216 @@
+---
+title: "Nasjonal insektovervåking - en inblikk"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+vertical_layout: fill
+theme: cosmo
+runtime: shiny
+---
+  
+<style>                     
+  .navbar {
+    background-color:#425563;
+      border-color:white;
+    fg-color:#b4bcc3!important;
+  }
+.navbar-brand {
+  color:#b4bcc3!important;
+    font-weight:bold;
+}
+</style>   
+  
+<style type="text/css">
+  
+.chart-title { 
+  font-size: 15px
+  color:#425563
+    
+</style>
+      
+      
+<!-- Outline: -->
+<!-- Hur gör vi i fält -->
+<!-- Hur gör vi på lab -->
+<!-- Hur gör vi på PCs -->
+<!-- Hur ser denna typ av data ut -->
+<!-- Tidsserier, Rødlistade arter, Skillnader i  -->
+<!-- Artslistor -->
+<!-- Finn fångstplats -->
+<!-- Innomartsvariation -->
+
+
+<!-- logo: ./figures/nina_logo_black_48.png -->
+<!-- favicon: ./figures/nina_logo_black_48.png -->
+      
+      
+      
+      
+```{r}
+suppressPackageStartupMessages({
+  require(tidyverse)
+  require(NinaR)
+  require(DBI)
+  require(RPostgres)
+  require(sf)
+  require(Norimon)
+  require(knitr)
+  require(leaflet)
+  require(leaflet.minicharts)
+  require(shiny)
+  require(flexdashboard)
+  
+  
+})
+```
+    
+    
+```{r}
+load("./data/shinyPass.Rdata")
+
+connect_to_insect_db(user = my_username,
+                     password = my_password)
+```
+    
+
+
+
+Innenarts-variasjon
+=====================================
+  
+Column {data-width=60%}
+-----------------------------------------------------------------------
+  
+### Haplotyper
+  
+```{r}
+asv_perc_reads <- tbl(con,
+                      Id(schema = "views",
+                         table = "asv_perc_reads"))
+```
+
+```{r}
+basemap <- leaflet(width = "100%",
+                   height = "400px") %>%
+  addTiles(group = "OpenStreetMap")
+
+
+asv_to_leaflet <- function(species = "NULL"){
+  
+  sel_asv <- asv_perc_reads %>%
+    filter(species_latin_gbif == species)  %>%
+    collect() %>% 
+    #  filter(!!input$species_select_asv %in% (species_latin_gbif)) %>%
+    mutate(asv = as_factor(sequence_id),
+           perc_reads = round(perc_reads*100, 2))
+  
+  
+  to_plot  <- sel_asv %>% 
+    # mutate(lat = st_coordinates(geometry)[,2],
+    #        lon = st_coordinates(geometry)[,1]) %>%
+    # st_drop_geometry() %>% 
+    select(locality, 
+           lat,
+           lon, 
+           sequence_id,
+           perc_reads,
+           sum_reads) %>% 
+    pivot_wider(names_from = "sequence_id",
+                values_from = "perc_reads",
+                names_prefix = "seq_",
+                values_fill = 0)
+  
+  return(to_plot)
+}
+
+
+# asv_leaflet <- function(species = NULL){
+#   
+#   to_plot <- asv_to_leaflet(species)
+#   
+#   basemap %>% 
+#    addMinicharts(to_plot$lon,
+#                 to_plot$lat,
+#                 type = "pie",
+#                 chartdata = to_plot[, which(grepl("seq_", names(to_plot)))],
+#                 width = log(to_plot$sum_reads) * 2 ,
+#                 legend = FALSE,
+#                )
+#   
+#   
+# }
+```
+
+
+```{r}
+renderLeaflet({
+
+  to_plot <- asv_to_leaflet("Bombus jonellus")
+
+  basemap  %>%
+    addMinicharts(to_plot$lon,
+                  to_plot$lat,
+                  type = "pie",
+                  chartdata = to_plot[, which(grepl("seq_", names(to_plot)))],
+                  width = log(to_plot$sum_reads) * 3,
+                  legend = FALSE
+    )
+
+})
+
+
+```
+
+
+Column {data-width=40%}
+-----------------------------------------------------------------------
+  
+### Utvalg
+
+Velg art, vis identification confidence (doesn't work yet)
+
+```{r}
+species_list <- tbl(con,
+           Id(schema = "views",
+              table = "species_list"))
+
+
+species_choices <- species_list %>%
+  select(species_latin_gbif) %>%
+  distinct() %>%
+  arrange(species_latin_gbif) %>%
+  pull()
+
+
+
+selectInput("asv_species",
+            label = "Velg Art",
+            choices = species_choices,
+            selected = "")
+
+
+
+```
+
+
+
+### Notater
+
+```{r}
+selectInput(
+  "month", 
+  label = "Pick a Month",
+  choices = month.abb, 
+  selected = month.abb[2]
+)
+
+getmonth <- reactive({
+  sprintf('Box 2 (%s)', input$month)
+})
+
+renderText({getmonth()})
+``` 
+  
+
+
+
