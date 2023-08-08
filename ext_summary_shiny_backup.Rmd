@@ -57,6 +57,7 @@ suppressPackageStartupMessages({
   require(knitr)
   require(leaflet)
   require(leaflet.minicharts)
+  require(flexdashboard)
  
  
 })
@@ -238,7 +239,7 @@ Overvåkingen innebærer starten på en sammenlignbar tidsserie over insektmengd
 
 Overvåkingen kartlegger ikke bara forandringer, uten gir også verdifull kunnskap om dagens artsforekomster. For eksempel kan det brukes som en standardisert datakilde for forekomst av rødlistete arter, og arter som ikke tidligere er registrert fra landet. Det er da viktig å huske at funnen ikke er manuelt verifisert, uten baserer seg utelukkende på DNA-treffer, hvilke gjenspeiler kvaliteten på referansebasene. 
 
-Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunne kobles til ett artsnavn. I tillegg vil noen artsnavn endres, altettersom feil i basene (f.eks. i BOLD), oppdages og blir utbedret. Typisk sett er de fleste av de vanlige artene (som utgjører merparten av den innsamlete DNAen) strekkodete, og vi kan sette et artsnavn på disse. Likevel gjenstår det et stort antall arter som ennå ikke er strekkodet, og derfor ikke kan bestemmes til art. Særskilt for store og vanskelige artsgrupper har vi begrenset evne å sette artsnavn til alle innsamlete (antatte) arter, da mange av dem fortsatt mangler i referansebasene. Programmet strekkoder derfor hvert år arter som mangler i samarbeide med NTNU Vitenskapsmuseet, hittil mellom 300 og 500 nye arter per år.
+Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunne kobles til ett artsnavn. I tillegg vil noen artsnavn endres, altettersom feil i basene (f.eks. i BOLD), oppdages og blir utbedret. Typisk sett er de fleste av de vanlige artene (som utgjører merparten av den innsamlete DNAen) strekkodete, og vi kan sette et artsnavn på disse. Likevel gjenstår det et stort antall arter som ennå ikke er strekkodet, og derfor ikke kan bestemmes til art. Særskilt for store og vanskelige artsgrupper har vi begrenset evne å sette artsnavn til alle innsamlete (antatte) arter, da mange av dem fortsatt mangler i referansebasene. Programmet strekkoder derfor hvert år arter som mangler i samarbeide med NTNU Vitenskapsmuseet, hittills mellom 300 og 500 nye arter per år.
 
 
 ### Mange observerte arter har ennå ikke blitt tildelt et navn
@@ -346,53 +347,42 @@ species_list <- tbl(con,
               table = "species_list")) 
 
 
-conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR")
-
-order_choices <- species_list %>% 
-  select(id_order) %>%
-  distinct() %>%
-  arrange(id_order) %>% 
-  pull()
-
-family_choices <- species_list %>% 
-  filter(id_order == input$sel_order)
-  select(id_order) %>%
-  distinct() %>%
-  arrange(id_order) %>% 
-  pull()
-
-
 species_choices <- species_list %>% 
   select(species_latin_gbif) %>%
   distinct() %>%
   arrange(species_latin_gbif) %>% 
   pull()
 
-selectInput("sel_conf",
-            label = "Velg konfidansenivå",
-            choices = order_choices,
-            selected = "")
 
-selectInput("sel_order",
-            label = "Velg orden",
-            choices = order_choices,
-            selected = "")
 
 selectInput("asv_species",
-            label = "Velg art",
+            label = "Velg Art",
             choices = species_choices,
             selected = "")
 
-spec_conf <- function() reactive({
-  species_list %>%
-    filter(species_latin_gbif == input$asv_species) %>%
-    select(identification_confidence) %>%
-    distinct() %>%
-    pull()
+# spec_conf <- function() reactive({
+#   species_list %>%
+#     filter(species_latin_gbif == input$asv_species) %>%
+#     select(identification_confidence) %>%
+#     distinct() %>%
+#     pull()
+# 
+# })
 
-})
+# renderValueBox({
+#   
+#   valueBox(spec_conf,
+#          icon = "fa-comment",
+#          color = ifelse(spec_conf() == "HIGH", "£4aa22e", ifelse(spec_conf() == "MODERATE", "#2568f6", "#ea3223"))
+#          )
+# })
 
 
+  # 
+  # valueBox(spec_conf,
+  #        icon = "fa-comment",
+  #        color = "#2568f6"
+  #        )
 
 
 ```

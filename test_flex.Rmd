@@ -172,22 +172,68 @@ Velg art, vis identification confidence (doesn't work yet)
 ```{r}
 species_list <- tbl(con,
            Id(schema = "views",
-              table = "species_list"))
+              table = "species_list")) 
 
 
-species_choices <- species_list %>%
+conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR")
+
+order_choices <- species_list %>% 
+  select(id_order) %>%
+  distinct() %>%
+  arrange(id_order) %>% 
+  pull()
+
+output$family_selection <- renderUI({ 
+  req(input$sel_order)
+  
+  
+  family_choices <- species_list %>% 
+  filter(id_order == input$sel_order)
+  select(id_order) %>%
+  distinct() %>%
+  arrange(id_order) %>% 
+  pull()
+  
+  selectInput("sel_family",
+            label = "Velg familie",
+            choices = family_choices(),
+            selected = "")
+  
+  
+})
+
+
+species_choices <- species_list %>% 
   select(species_latin_gbif) %>%
   distinct() %>%
-  arrange(species_latin_gbif) %>%
+  arrange(species_latin_gbif) %>% 
   pull()
+
+selectInput("sel_conf",
+            label = "Velg konfidansenivå",
+            choices = conf_choices,
+            selected = "")
+
+selectInput("sel_order",
+            label = "Velg orden",
+            choices = order_choices,
+            selected = "")
 
 
 
 selectInput("asv_species",
-            label = "Velg Art",
+            label = "Velg art",
             choices = species_choices,
             selected = "")
 
+spec_conf <- function() reactive({
+  species_list %>%
+    filter(species_latin_gbif == input$asv_species) %>%
+    select(identification_confidence) %>%
+    distinct() %>%
+    pull()
+
+})
 
 
 ```
