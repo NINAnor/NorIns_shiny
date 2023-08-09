@@ -4,8 +4,9 @@
  * Skin: NINA
  * ----------
  */
-.navbar {
-  background-color: #004F71;
+ 
+ .navbar {
+  background-color: #435768;
  }
 .navbar .nav > li > a {
   color: #ffffff;
@@ -315,9 +316,9 @@
 
 
 .navbar-nav li a:hover, .navbar-nav > .active > a {
-color: #E57200 !important;
+color: #e57200 !important;
 
-background-color:#004F71 !important;
+background-color: #435768 !important;
 background-image: none !important;
 }
 
@@ -329,8 +330,38 @@ background-image: none !important;
 }
 
 .box {
-  border: 1px solid #666;
+  border: 2px solid #A2AAAD;
+  border-radius: 4px;
+  box-shadow: none;
+  background-color: none;
+  margin: none;
+
+
 }
+
+
+.box-header{
+  margin-left: none;
+  border-bottom: 2px solid #A2AAAD;
+}
+
+
+
+.box-body {
+  white-space: pre-wrap;
+  margin-left: 10px;
+  margin-top: none;
+  margin-bottom: none;
+  font-family: "Open Sans", Helvetica, Arial;
+  font-weight: normal;
+  font-size: 16px;
+}
+
+
+#speciesbox > .box-body {
+white-space: nowrap;
+}
+
 
 img {
   display: block;
@@ -338,3 +369,4 @@ img {
   margin-right: auto;
   
 }
+

@@ -29,7 +29,7 @@ ui <- navbarPage(title = "Norsk insektovervåking - en innblikk",
 
                  box(
                    textOutput("felletyper_text"),
-                   tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
+                  # tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
                    title = "Overvåkingsdesign",
                    solidHeader = TRUE
 
@@ -126,6 +126,7 @@ ui <- navbarPage(title = "Norsk insektovervåking - en innblikk",
                  textOutput("tidsserie_text"),
                  tags$style(type="text/css", "#tidsserie_text {white-space: pre-wrap;}"),
                  title = "Starten på en tidsserie",
+                 background = "lime",
                  solidHeader = TRUE
                )
              ),
@@ -134,27 +135,29 @@ ui <- navbarPage(title = "Norsk insektovervåking - en innblikk",
                box(
                  uiOutput('redlist'),
                  title = "Rødlistede og ikke tidligere registrerte funn",
+                 background = "lime",
                  solidHeader = TRUE
                ),
                
                box(
                  uiOutput('betacom'),
-                 title = "Artsamfunn varierer med økosystem, og over tid",
-                 solidHeader = TRUE
+                 title = "Artsamfunn varierer med økosystem, og over tid"
                )
              )),
     tabPanel(title = "Innenartsvariasjon",
              fluidRow(
-               box(
+               box(title = "Fordeling av genetiske varianter",
                  leaflet::leafletOutput("asv_map",
                                         width = "70%",
                                         height = 600)
                  
                ),
-               box(
-                 selectizeInput("asv_species", 
-                                label = "Select species",
-                                choices = NULL)
+               shinydashboardPlus::box(id = "speciesbox",
+                                       title = "Kartsutvalg",
+                 uiOutput("choose_conf"),
+                 uiOutput("choose_order"),
+                 uiOutput("choose_fam"),
+                 uiOutput("choose_spec")
                )
              )
              )
@@ -294,11 +297,19 @@ Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunn
                      height = "400px") %>% 
     addTiles(group = "OpenStreetMap")
   
+ 
+ selected_species <- reactive({
+   if(is.na(input$asv_species)) return(NULL)
+   
+  species <- input$asv_species
+  return(species) 
+   
+ })
   
   asv_to_leaflet <- function(species = "NULL"){
     
     sel_asv <- asv_perc_reads %>%
-      filter(species_latin_gbif == species)  %>%
+      filter(species_latin_gbif == !!selected_species())  %>%
       collect() %>% 
       #  filter(!!input$species_select_asv %in% (species_latin_gbif)) %>%
       mutate(asv = as_factor(sequence_id),
@@ -328,16 +339,30 @@ Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunn
   
 
   output$asv_map <- renderLeaflet({
+    req(input$asv_species)
     
     to_plot <- asv_to_leaflet(input$asv_species)
     
     basemap  %>% 
+      leaflet::addProviderTiles(providers$Esri.WorldImagery,
+                                group = "Ortophoto") %>% 
+      leaflet::addProviderTiles(providers$OpenTopoMap, 
+                                group = "Topo")  %>% 
+      leaflet::addLayersControl(overlayGroups = c("OpenStreetMap", "Topo", "Ortophoto") 
+                                , options = layersControlOptions(collapsed = FALSE)) %>% 
+      leaflet::hideGroup(c("Topo", "Ortophoto"))  %>% 
       addMinicharts(to_plot$lon,
                     to_plot$lat,
                     type = "pie",
                     chartdata = to_plot[, which(grepl("seq_", names(to_plot)))],
                     width = log(to_plot$sum_reads) * 3 ,
                     legend = FALSE,
+                    popup = list(noPopup = TRUE)
+                    # popupOptions = list(autoPan = FALSE,
+                    #                     maxHeight = 400,
+                    #                     maxWidth = 400,
+                    #                     minWidth = 200
+                    #                    )
       )
     
   })
@@ -349,33 +374,14 @@ Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunn
 
 
 species_list <- tbl(con,
-           Id(schema = "views",
-              table = "species_list")) 
-
-output$choose_fam <- renderUI({
-  
-  family_choices <- species_list %>% 
-    filter(id_order == input$sel_order)
-  select(id_order) %>%
-    distinct() %>%
-    arrange(id_order) %>% 
-    pull()
-  
-  
-  selectInput("sel_fam",
-              label = "Velg familie",
-              choices = family_choices,
-              selected = "")
-  
-  
-})
-
+                    Id(schema = "views",
+                       table = "species_list")) 
 
 
 
 output$choose_conf <- renderUI({
   
-  conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR")
+  conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR", "ALL")
   
   
   selectInput("sel_conf",
@@ -400,29 +406,100 @@ output$choose_order <- renderUI({
 })
 
 
+
+output$choose_fam <- renderUI({
+  
+  req(input$sel_order)
+  
+  family_choices_q <- "
+  SELECT distinct id_family
+  from views.species_list
+  WHERE id_order = ?id1
+  "
+  
+  family_choice_san <- sqlInterpolate(con,
+                                      family_choices_q,
+                                      id1 = input$sel_order)
+  
+  family_choices <- dbGetQuery(con,
+                               family_choice_san)
   
   
-  species_choices <- species_list %>% 
-    select(species_latin_gbif) %>%
-    distinct() %>%
-    arrange(species_latin_gbif) %>% 
-    pull()
+
+  selectInput("sel_fam",
+              label = "Velg familie",
+              choices = family_choices$id_family,
+              selected = "")
   
-  updateSelectizeInput(session,
-                       inputId = "asv_species",
-                       choices = species_choices,
-                       server = TRUE)
-
-
-
-spec_conf <- function() reactive({
-  species_list %>%
-    filter(species_latin_gbif == input$asv_species) %>%
-    select(identification_confidence) %>%
-    distinct() %>%
-    pull()
-
+  
 })
+
+
+
+
+  
+output$choose_spec <- renderUI({
+  req(input$sel_order)
+  req(input$sel_fam)
+  req(input$sel_conf)
+  
+
+  
+  if(input$sel_conf != "ALL"){ 
+  species_choices_q <- "
+  SELECT distinct species_latin_gbif
+  from views.species_list
+  WHERE id_order = ?id1
+  AND id_family = ?id2
+  AND identification_confidence = ?id3
+  "
+  
+  species_choice_san <- sqlInterpolate(con,
+                                      species_choices_q,
+                                      id1 = input$sel_order,
+                                      id2 = input$sel_fam,
+                                      id3 = input$sel_conf)
+  
+  species_choices <- dbGetQuery(con,
+                               species_choice_san)
+  
+  } else {
+    species_choices_q <- "
+  SELECT distinct species_latin_gbif
+  from views.species_list
+  WHERE id_order = ?id1
+  AND id_family = ?id2
+  "
+    
+    species_choice_san <- sqlInterpolate(con,
+                                         species_choices_q,
+                                         id1 = input$sel_order,
+                                         id2 = input$sel_fam)
+    
+    species_choices <- dbGetQuery(con,
+                                  species_choice_san) 
+    
+  }
+
+
+
+  selectInput("asv_species",
+              label = "Velg art",
+              choices = species_choices$species_latin_gbif,
+              selected = "")
+  
+})
+
+
+
+# spec_conf <- function() reactive({
+#   species_list %>%
+#     filter(species_latin_gbif == input$asv_species) %>%
+#     select(identification_confidence) %>%
+#     distinct() %>%
+#     pull()
+# 
+# })
 
 
 
