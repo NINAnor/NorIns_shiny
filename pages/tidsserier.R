@@ -8,13 +8,13 @@ tidsserier_ui <- function(id){
                uiOutput(ns("tidsserie")),
                title = "Biomasse og artsantall",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              ),
              box(
                textOutput(ns("tidsserie_text")),
                title = "Starten på en tidsserie",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              )
            ),
            br(),
@@ -24,14 +24,14 @@ tidsserier_ui <- function(id){
                title = "Rødlistede og ikke tidligere registrerte funn",
                background = "lime",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              ),
              
              box(
                uiOutput(ns("betacom")),
                title = "Artsamfunn varierer med økosystem, og over tid",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              )
            ))
   
@@ -45,7 +45,7 @@ tidsserier_server <- function(id, login_import) {
     
     output$tidsserie <- renderUI({
       tags$img(src = "figures/biomass_div_concat.png", 
-               height = "550px",
+               height = "250px",
                width = '90%')
     })
     
@@ -60,14 +60,14 @@ Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunn
     
     output$redlist <- renderUI({
       tags$img(src = "figures/redlist_nonnative_concat.png", 
-               height = "550px",
+               height = "250px",
                width = '90%'
       )
     })
     
     output$betacom <- renderUI({
       tags$img(src = "figures/beta-div-patterns-overall-1.svg", 
-               height = "550px",
+               height = "250px",
                width = '90%'
       )
     })

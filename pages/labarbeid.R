@@ -10,7 +10,7 @@ tabPanel(title = "Labarbeid",
              uiOutput(ns("bottle")),
              title = "En malalisefelle samler tusenvis av insekter",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            ),
            
            box(
@@ -18,7 +18,7 @@ tabPanel(title = "Labarbeid",
              tags$style(type="text/css", "#proc_text {white-space: pre-wrap;}"),
              title = "Prosessering av prøver",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            )
          ),
          br(),
@@ -27,14 +27,14 @@ tabPanel(title = "Labarbeid",
              uiOutput(ns("syrphidae")),
              title = "Eksempel på blomfluer fra en felletømming",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            ),
            
            box(
              uiOutput(ns("lab")),
              title = "Prøvene veies og DNA-et identifiseres med metastrekkoding",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            )
          )
 )
@@ -47,7 +47,8 @@ labarbeid_server <- function(id, login_import) {
     
     output$bottle <- renderUI({
       tags$img(src = "figures/IMG_8093.jpg", 
-               height = '550px')
+               height = '250px',
+               width = "90%")
     })
     
     output$proc_text <- renderText("Særskilt malaisefeller fanger store mengder insekter, og en manuell sortering og identifisering av artene ville ta for lang tid i et så stort program som dette. Manuell identifisering stiller også store krav på taksonomisk kompetanse, men er mulig å gjennomføre for enkelte grupper for kvalitetssikring av metodikken, som for eksempel blomsterfluer. 
@@ -59,13 +60,14 @@ Felleprøvene prosesseres på lab i Trondheim, der vi tilsetter en \"lyserings-v
     
     output$syrphidae <- renderUI({
       tags$img(src = "figures/syrphidae_sortering.jpg", 
-               height = '550px'
+               height = '250px',
+               width = "90%"
       )
     })
     
     output$lab <- renderUI({
       tags$img(src = "figures/20221026_095621.jpg", 
-               height = '550px',
+               height = '250px',
                width = "90%"
       )
     })

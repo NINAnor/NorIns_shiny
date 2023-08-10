@@ -9,14 +9,14 @@ tabPanel(title = "Bioinformatikk",
              uiOutput(ns("flytskjema")),
              title = "Resultater fra metastrekkoding kvalitetssikres",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            ),
            
            box(
              textOutput(ns("flytskjema_text")),
              title = "Dataprosessering og håndtering",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            )
          ),
          br(),
@@ -25,14 +25,14 @@ tabPanel(title = "Bioinformatikk",
              uiOutput(ns("data_storage")),
              title = "Prosjektet danner store datamengder",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            ),
            
            box(
              uiOutput(ns("data_links")),
              title = "Linker til data",
              solidHeader = TRUE,
-             height = "700px"
+             height = "400px"
            )
          )
 )
@@ -48,7 +48,7 @@ bioinformatikk_server <- function(id, login_import) {
     
     output$flytskjema <- renderUI({
       tags$img(src = "figures/flyt_concat.png", 
-               height = "550px",
+               height = "250px",
                width = '90%')
       
     })

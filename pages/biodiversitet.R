@@ -9,14 +9,14 @@ biodiv_ui <- function(id){
                uiOutput(ns("rankabund")),
                title = "Flere tusen arter observeres ofte, men de aller fleste arter er uvanlige",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              ),
              
              box(
                textOutput(ns("rankabund_text")),
                title = "Overvåking av en hyperdivers organismegruppe",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              )
            ),
            br(),
@@ -25,14 +25,14 @@ biodiv_ui <- function(id){
                uiOutput(ns("specacc")),
                title = "Mer og mer av insektmangfoldet kartlegges",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              ),
              
              box(
                uiOutput(ns("artsniva")),
                title = "Mange observerte arter har ennå ikke blitt tildelt et navn",
                solidHeader = TRUE,
-               height = "700px"
+               height = "400px"
              )
            )
   )
@@ -47,7 +47,7 @@ biodiv_server <- function(id, login_import) {
 
 output$rankabund <- renderUI({
   tags$img(src = "figures/spec-occ-1.svg", 
-           height = "550px",
+           height = "250px",
            width = '90%')
 })
 
@@ -62,14 +62,14 @@ Slike skjeve abundanser innebærer at man ikke kan forvente seg å observere et 
 
 output$specacc <- renderUI({
   tags$img(src = "figures/div-est-1.svg", 
-           height = "550px",
+           height = "250px",
            width = '90%'
   )
 })
 
 output$artsniva <- renderUI({
   tags$img(src = "figures/artsniva-1.png", 
-           height = "550px",
+           height = "250px",
            width = '90%'
   )
 }) 

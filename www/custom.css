@@ -326,7 +326,7 @@ background-image: none !important;
 .logo {
   font-family: "Open Sans", Helvetica, Arial;
   font-weight: bold;
-  font-size: 24px;
+  font-size: 16px;
 }
 
 .box {
@@ -356,7 +356,7 @@ background-image: none !important;
   margin-bottom: none;
   font-family: "Open Sans", Helvetica, Arial;
   font-weight: normal;
-  font-size: 16px;
+  font-size: 12px;
 }
 
 
@@ -372,3 +372,9 @@ img {
   
 }
 
+
+body {
+  font-family: "Open Sans", Helvetica, Arial;
+  font-weight: bold;
+  font-size: 12px;
+}
