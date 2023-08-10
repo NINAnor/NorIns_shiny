@@ -7,13 +7,14 @@ tidsserier_ui <- function(id){
              box(
                uiOutput(ns("tidsserie")),
                title = "Biomasse og artsantall",
-               solidHeader = TRUE
+               solidHeader = TRUE,
+               height = "700px"
              ),
              box(
                textOutput(ns("tidsserie_text")),
                title = "Starten på en tidsserie",
-               background = "lime",
-               solidHeader = TRUE
+               solidHeader = TRUE,
+               height = "700px"
              )
            ),
            br(),
@@ -22,12 +23,15 @@ tidsserier_ui <- function(id){
                uiOutput(ns("redlist")),
                title = "Rødlistede og ikke tidligere registrerte funn",
                background = "lime",
-               solidHeader = TRUE
+               solidHeader = TRUE,
+               height = "700px"
              ),
              
              box(
                uiOutput(ns("betacom")),
-               title = "Artsamfunn varierer med økosystem, og over tid"
+               title = "Artsamfunn varierer med økosystem, og over tid",
+               solidHeader = TRUE,
+               height = "700px"
              )
            ))
   
@@ -40,7 +44,9 @@ tidsserier_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     
     output$tidsserie <- renderUI({
-      tags$img(src = "figures/biomass_div_concat.png", width = '90%')
+      tags$img(src = "figures/biomass_div_concat.png", 
+               height = "550px",
+               width = '90%')
     })
     
     output$tidsserie_text <- renderText("Overvåkingen innebærer starten på en sammenlignbar tidsserie over insektmengder og artskomposisjon for store insektsamfunn i landet. Insekter varierer ofte kraftig, både innen år, mellom år, og mellom lokaliteter, og man trenger derfor lange tidsserier før man kan observere statistisk sikre forandringer. Det er ikke mulig å forutse nøyaktig hvor lang tid, da det er avhengig hvor store forandringene blir, og hvor mye tilfeldig variasjon man har, men tidshorisonten er snarere 10-talls år enn enkeltår.
@@ -54,12 +60,14 @@ Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunn
     
     output$redlist <- renderUI({
       tags$img(src = "figures/redlist_nonnative_concat.png", 
+               height = "550px",
                width = '90%'
       )
     })
     
     output$betacom <- renderUI({
       tags$img(src = "figures/beta-div-patterns-overall-1.svg", 
+               height = "550px",
                width = '90%'
       )
     })

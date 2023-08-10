@@ -335,8 +335,10 @@ background-image: none !important;
   box-shadow: none;
   background-color: none;
   margin: none;
-
-
+/*  width: 400px;
+  height: 300px;
+  box-sizing: border-box;
+*/
 }
 
 

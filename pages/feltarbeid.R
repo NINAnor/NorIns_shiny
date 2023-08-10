@@ -8,14 +8,16 @@ felt_ui <- function(id){
              box(
                uiOutput(ns("felletyper")),
                title = "Innsamling med malaise- og vindusfeller",
-               solidHeader = TRUE
+               solidHeader = TRUE,
+               height = "700px"
              ),
              
              box(
                textOutput(ns("felletyper_text")),
                # tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
                title = "Overvåkingsdesign",
-               solidHeader = TRUE
+               solidHeader = TRUE,
+               height = "700px"
                
              )
            ),
@@ -24,14 +26,15 @@ felt_ui <- function(id){
              box(
                uiOutput(ns("stagger")),
                title = "Lokaliteter gjenbesøkes hvert 5:e år",
-               solidHeader = TRUE
-               
+               solidHeader = TRUE,
+               height = "700px"
              ),
              
              box(
                uiOutput(ns("localities")),
                title = "Overvåkingslokaliteter i perioden 2020-2022",
-               solidHeader = TRUE
+               solidHeader = TRUE,
+               height = "700px"
              )
            )
   )
@@ -45,7 +48,9 @@ felt_server <- function(id, login_import) {
 
 
 output$felletyper <- renderUI({
-  tags$img(src = "figures/felletyper.jpg", width = '90%')
+  tags$img(src = "figures/felletyper.jpg", 
+           height = "550px",
+           width = "90%")
   
 })
 
@@ -58,12 +63,14 @@ Overvåkingen skjer hovedsakelig med malaisefeller, et slags telt der insektene 
 
 
 output$stagger <- renderUI({
-  tags$img(src = "figures/forskj-1.svg", width = '90%')
+  tags$img(src = "figures/forskj-1.svg", 
+           height = '550px',)
 })
 
 
 output$localities <- renderUI({
-  tags$img(src = "figures/lokaler20202022-1.svg", width = '90%')
+  tags$img(src = "figures/lokaler20202022-1.svg",
+           height = '550px')
 })
 
   })
