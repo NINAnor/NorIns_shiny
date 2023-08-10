@@ -1,4 +1,12 @@
 
+require(leaflet)
+require(leaflet.minicharts)
+require(DBI)
+require(dbplyr)
+require(dplyr)
+require(forcats)
+require(tidyr)
+require(Norimon)
 
 asvmap_ui <- function(id){
   ns <- NS(id)
@@ -30,7 +38,13 @@ asvmap_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
     
-  
+    
+
+    load("data/shinyPass.Rdata")
+    
+    connect_to_insect_db(user = my_username,
+                         password = my_password)
+   
     
     asv_perc_reads <- tbl(con,
                           Id(schema = "views",
