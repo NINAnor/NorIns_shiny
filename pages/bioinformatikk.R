@@ -48,8 +48,8 @@ bioinformatikk_server <- function(id, login_import) {
     
     output$flytskjema <- renderUI({
       tags$img(src = "figures/flyt_concat.png", 
-               height = "250px",
-               width = '90%')
+               height = "300px",
+               width = "95%")
       
     })
     

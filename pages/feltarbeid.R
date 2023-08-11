@@ -49,8 +49,8 @@ felt_server <- function(id, login_import) {
 
 output$felletyper <- renderUI({
   tags$img(src = "figures/felletyper.jpg", 
-           height = "250px",
-           width = "90%")
+           height = "300px",
+           width = "95%")
   
 })
 
@@ -64,15 +64,13 @@ Overvåkingen skjer hovedsakelig med malaisefeller, et slags telt der insektene 
 
 output$stagger <- renderUI({
   tags$img(src = "figures/forskj-1.svg", 
-           height = '250px',
-           width = "90%")
+           height = '300px')
 })
 
 
 output$localities <- renderUI({
   tags$img(src = "figures/lokaler20202022-1.svg",
-           height = '250px',
-           width = "90%")
+           height = '300px')
 })
 
   })

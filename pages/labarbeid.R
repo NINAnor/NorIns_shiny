@@ -32,7 +32,7 @@ tabPanel(title = "Labarbeid",
            
            box(
              uiOutput(ns("lab")),
-             title = "Prøvene veies og DNA-et identifiseres med metastrekkoding",
+             title = "Veing og identifisering med metastrekkoding",
              solidHeader = TRUE,
              height = "400px"
            )
@@ -47,8 +47,7 @@ labarbeid_server <- function(id, login_import) {
     
     output$bottle <- renderUI({
       tags$img(src = "figures/IMG_8093.jpg", 
-               height = '250px',
-               width = "90%")
+               height = '300px')
     })
     
     output$proc_text <- renderText("Særskilt malaisefeller fanger store mengder insekter, og en manuell sortering og identifisering av artene ville ta for lang tid i et så stort program som dette. Manuell identifisering stiller også store krav på taksonomisk kompetanse, men er mulig å gjennomføre for enkelte grupper for kvalitetssikring av metodikken, som for eksempel blomsterfluer. 
@@ -60,15 +59,14 @@ Felleprøvene prosesseres på lab i Trondheim, der vi tilsetter en \"lyserings-v
     
     output$syrphidae <- renderUI({
       tags$img(src = "figures/syrphidae_sortering.jpg", 
-               height = '250px',
-               width = "90%"
+               height = '300px'
       )
     })
     
     output$lab <- renderUI({
       tags$img(src = "figures/20221026_095621.jpg", 
-               height = '250px',
-               width = "90%"
+               height = '300px',
+               width = "95%"
       )
     })
     

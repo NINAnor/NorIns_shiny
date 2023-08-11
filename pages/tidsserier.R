@@ -45,30 +45,27 @@ tidsserier_server <- function(id, login_import) {
     
     output$tidsserie <- renderUI({
       tags$img(src = "figures/biomass_div_concat.png", 
-               height = "250px",
-               width = '90%')
+               height = "300px")
     })
     
     output$tidsserie_text <- renderText("Overvåkingen innebærer starten på en sammenlignbar tidsserie over insektmengder og artskomposisjon for store insektsamfunn i landet. Insekter varierer ofte kraftig, både innen år, mellom år, og mellom lokaliteter, og man trenger derfor lange tidsserier før man kan observere statistisk sikre forandringer. Det er ikke mulig å forutse nøyaktig hvor lang tid, da det er avhengig hvor store forandringene blir, og hvor mye tilfeldig variasjon man har, men tidshorisonten er snarere 10-talls år enn enkeltår.
 
 Overvåkingen kartlegger ikke bara forandringer, uten gir også verdifull kunnskap om dagens artsforekomster. For eksempel kan det brukes som en standardisert datakilde for forekomst av rødlistete arter, og arter som ikke tidligere er registrert fra landet. Det er da viktig å huske at funnen ikke er manuelt verifisert, uten baserer seg utelukkende på DNA-treffer, hvilke gjenspeiler kvaliteten på referansebasene. 
 
-Referansebasene blir stendig bedre, hvilket leder til at altfler arter vill kunne kobles til ett artsnavn. I tillegg vil noen artsnavn endres, altettersom feil i basene (f.eks. i BOLD), oppdages og blir utbedret. Typisk sett er de fleste av de vanlige artene (som utgjører merparten av den innsamlete DNAen) strekkodete, og vi kan sette et artsnavn på disse. Likevel gjenstår det et stort antall arter som ennå ikke er strekkodet, og derfor ikke kan bestemmes til art. Særskilt for store og vanskelige artsgrupper har vi begrenset evne å sette artsnavn til alle innsamlete (antatte) arter, da mange av dem fortsatt mangler i referansebasene. Programmet strekkoder derfor hvert år arter som mangler i samarbeide med NTNU Vitenskapsmuseet, hittil mellom 300 og 500 nye arter per år.
+De fleste av de vanlige artene er allerede strekkodete, og vi kan dermed tildele et artsnavn for disse funn. Men et stort antall arter er ennå ikke strekkodet, og kan derfor ikke bestemmes kobles til et navn. Særskilt for tovinger of vepser har vi begrenset evne til å sette artsnavn, da mange av disse arter fortsatt mangler i referansebasene. Programmet strekkoder derfor hvert år arter som mangler i samarbeide med NTNU Vitenskapsmuseet, hittil mellom 300 og 500 nye arter per år.
 "
     )
     
     
     output$redlist <- renderUI({
       tags$img(src = "figures/redlist_nonnative_concat.png", 
-               height = "250px",
-               width = '90%'
+               height = "300px"
       )
     })
     
     output$betacom <- renderUI({
       tags$img(src = "figures/beta-div-patterns-overall-1.svg", 
-               height = "250px",
-               width = '90%'
+               height = "300px"
       )
     })
        

@@ -7,7 +7,7 @@ biodiv_ui <- function(id){
            fluidRow(
              box(
                uiOutput(ns("rankabund")),
-               title = "Flere tusen arter observeres ofte, men de aller fleste arter er uvanlige",
+               title = "Mange arter fanges ofte, men de fleste artene er uvanlige",
                solidHeader = TRUE,
                height = "400px"
              ),
@@ -30,7 +30,7 @@ biodiv_ui <- function(id){
              
              box(
                uiOutput(ns("artsniva")),
-               title = "Mange observerte arter har ennå ikke blitt tildelt et navn",
+               title = "Mange arter kan ennå ikke tildeles et navn",
                solidHeader = TRUE,
                height = "400px"
              )
@@ -47,8 +47,9 @@ biodiv_server <- function(id, login_import) {
 
 output$rankabund <- renderUI({
   tags$img(src = "figures/spec-occ-1.svg", 
-           height = "250px",
-           width = '90%')
+           height = "300px",
+           width = "95%"
+           )
 })
 
 output$rankabund_text <- renderText("Insektsamfunn er ekstremt artsrike. Av de ca. 30 000 kjente artene i Norge fra dyreriket, er nesten 20 000 insekter, men  sannsynligvis finnes det ytterligere flere tusen insektarter i Norge som venter på å oppdages. Nesten alle artsrike samfunn domineres av et relativ fåtall antall arter og har en lang hale med skjeldne arter. Dette er spesielt tydelig med insektfunnen fra dette prosjekt, der flere tusen arter blir funnet svært sjeldent. Alt ettersom innsamlingen fortsetter kan man forvente seg at halen til høyre vil fortsette utvides, med nye sjeldne arter.
@@ -62,15 +63,13 @@ Slike skjeve abundanser innebærer at man ikke kan forvente seg å observere et 
 
 output$specacc <- renderUI({
   tags$img(src = "figures/div-est-1.svg", 
-           height = "250px",
-           width = '90%'
+           height = "300px"
   )
 })
 
 output$artsniva <- renderUI({
   tags$img(src = "figures/artsniva-1.png", 
-           height = "250px",
-           width = '90%'
+           height = "300px"
   )
 }) 
 

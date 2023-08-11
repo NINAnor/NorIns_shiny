@@ -15,7 +15,7 @@ asvmap_ui <- function(id){
            fluidRow(
              box(title = "Fordeling av genetiske varianter",
                  leaflet::leafletOutput(ns("asv_map"),
-                                        width = "70%",
+                                        width = "95%",
                                         height = 600),
                  height = "800px"
                  
@@ -113,7 +113,7 @@ asvmap_server <- function(id, login_import) {
       selectInput(inputId = ns("sel_order"),
                   label = "Velg orden",
                   choices = order_choices_list,
-                  selected = "")
+                  selected = "Blattodea")
     })
     
     
@@ -269,8 +269,8 @@ asvmap_server <- function(id, login_import) {
     
     
     
-    basemap <- leaflet(width = "100%",
-                       height = "400px") %>% 
+    basemap <- leaflet(width = "300px",
+                       height = "200px") %>% 
       addTiles(group = "OpenStreetMap")
     
     
