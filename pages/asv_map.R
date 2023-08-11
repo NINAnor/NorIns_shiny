@@ -77,17 +77,43 @@ asvmap_server <- function(id, login_import) {
     
     output$choose_order <- renderUI({
       
-      order_choices <- species_list %>% 
-        select(id_order) %>%
-        filter(!is.na(id_order)) %>% 
-        distinct() %>%
-        arrange(id_order) %>% 
-        pull()
+      order_choices_q <- "
+
+        SELECT sl.id_order, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
+        FROM
+        (SELECT distinct id_order as id_order
+        from views.species_list
+        WHERE id_order IS NOT NULL) sl LEFT JOIN
+        
+        (SELECT orden,
+         populaernavn_bokmaal
+         FROM 
+        lookup.artsnavnebasen
+        WHERE underorden IS NULL
+        AND overfamilie IS NULL
+        AND familie IS NULL 
+        ) names
+        ON sl.id_order = names.orden
+        ORDER BY id_order 
+
+      "
+      
+      order_choices_san <- sqlInterpolate(con,
+                                         order_choices_q)
+      
+      order_choices_raw <- dbGetQuery(con,
+                                   order_choices_san)
+      
+      order_choices_list <- as.list(order_choices_raw$id_order)
+      
+      if(length(order_choices_list) >0){
+      names(order_choices_list) <- paste0(order_choices_raw$id_order, ' - ', order_choices_raw$bokmal)
+      }
       
       selectInput(inputId = ns("sel_order"),
                   label = "Velg orden",
-                  choices = order_choices,
-                  selected = "Blattodea")
+                  choices = order_choices_list,
+                  selected = "")
     })
     
     
@@ -97,25 +123,44 @@ asvmap_server <- function(id, login_import) {
       req(input$sel_order)
       
       family_choices_q <- "
-        SELECT distinct id_family
-        from views.species_list
-        WHERE id_order = ?id1
-        AND id_family IS NOT NULL
-        ORDER BY id_family
+                SELECT sl.id_family, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
+                FROM
+                (SELECT distinct id_family as id_family
+                from views.species_list
+                WHERE id_family IS NOT NULL
+        		    AND id_order = ?id1) sl LEFT JOIN
+                
+                (SELECT familie,
+                 populaernavn_bokmaal
+                 FROM 
+                lookup.artsnavnebasen
+                WHERE familie IS NOT NULL
+        		    AND underfamilie IS NULL
+                AND tribus IS NULL
+        		    AND undertribus IS NULL
+                AND slekt IS NULL 
+        		    AND orden = ?id1
+                ) names
+                ON sl.id_family = names.familie
+                ORDER BY id_family
       "
       
       family_choice_san <- sqlInterpolate(con,
                                           family_choices_q,
                                           id1 = input$sel_order)
       
-      family_choices <- dbGetQuery(con,
+      family_choices_raw <- dbGetQuery(con,
                                    family_choice_san)
       
+      family_choices_list <- as.list(family_choices_raw$id_family)
       
+      if(length(family_choices_list) >0){
+      names(family_choices_list) <- paste0(family_choices_raw$id_family, ' - ', family_choices_raw$bokmal)
+      }
       
       selectInput(inputId = ns("sel_fam"),
                   label = "Velg familie",
-                  choices = family_choices$id_family,
+                  choices = family_choices_list,
                   selected = "")
       
       
@@ -133,13 +178,32 @@ asvmap_server <- function(id, login_import) {
       
       if(input$sel_conf != "ALL"){ 
         species_choices_q <- "
-          SELECT distinct species_latin_gbif
-          from views.species_list
-          WHERE id_order = ?id1
-          AND id_family = ?id2
-          AND identification_confidence = ?id3
-          AND species_latin_gbif IS NOT NULL
-          ORDER BY species_latin_gbif
+          SELECT sl.species_latin_gbif, sl.id_genus, sl.id_species, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
+        FROM
+        (SELECT distinct on(species_latin_gbif) 
+    		 id_genus,
+    		 id_species,
+    		 species_latin_gbif
+         from views.species_list
+         WHERE id_genus IS NOT NULL
+      	 AND id_species IS NOT NULL
+      	 AND id_order = ?id1
+         AND id_family = ?id2
+         AND identification_confidence = ?id3) sl LEFT JOIN
+        
+        (SELECT *
+         FROM 
+        lookup.artsnavnebasen
+        WHERE slekt IS NOT NULL
+    		AND art IS NOT NULL
+    		AND orden = ?id1
+    		AND familie = ?id2
+        ) names
+        ON sl.id_genus = names.slekt
+		    AND sl.id_species = names.art
+        ORDER BY species_latin_gbif
+          
+          
         "
         
         species_choice_san <- sqlInterpolate(con,
@@ -148,17 +212,34 @@ asvmap_server <- function(id, login_import) {
                                              id2 = input$sel_fam,
                                              id3 = input$sel_conf)
         
-        species_choices <- dbGetQuery(con,
+        species_choices_raw <- dbGetQuery(con,
                                       species_choice_san)
         
       } else {
         species_choices_q <- "
-          SELECT distinct species_latin_gbif
-          from views.species_list
-          WHERE id_order = ?id1
-          AND id_family = ?id2
-          AND species_latin_gbif IS NOT NULL
-          ORDER BY species_latin_gbif
+          SELECT sl.species_latin_gbif, sl.id_genus, sl.id_species, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
+        FROM
+        (SELECT distinct on(species_latin_gbif) 
+    		 id_genus,
+    		 id_species,
+    		 species_latin_gbif
+         from views.species_list
+         WHERE id_genus IS NOT NULL
+      	 AND id_species IS NOT NULL
+      	 AND id_order = ?id1
+         AND id_family = ?id2) sl LEFT JOIN
+        
+        (SELECT *
+         FROM 
+        lookup.artsnavnebasen
+        WHERE slekt IS NOT NULL
+    		AND art IS NOT NULL
+    		AND orden = ?id1
+    		AND familie = ?id2
+        ) names
+        ON sl.id_genus = names.slekt
+		    AND sl.id_species = names.art
+        ORDER BY species_latin_gbif
         "
         
         species_choice_san <- sqlInterpolate(con,
@@ -166,16 +247,21 @@ asvmap_server <- function(id, login_import) {
                                              id1 = input$sel_order,
                                              id2 = input$sel_fam)
         
-        species_choices <- dbGetQuery(con,
+        species_choices_raw <- dbGetQuery(con,
                                       species_choice_san) 
         
       }
       
       
+      species_choices_list <- as.list(species_choices_raw$species_latin_gbif)
+      
+      if(length(species_choices_list) >0){
+        names(species_choices_list) <- paste0(species_choices_raw$species_latin_gbif, ' - ', species_choices_raw$bokmal)
+      }
       
       selectInput(ns("asv_species"),
                   label = "Velg art",
-                  choices = species_choices$species_latin_gbif,
+                  choices = species_choices_list,
                   selected = "",
                   selectize = TRUE)
       
@@ -257,9 +343,9 @@ asvmap_server <- function(id, login_import) {
       
     })
     
-    output$asvmap_text <- renderText("Som en del i metastrekkodingen, registreres også innenartsvariasjon. Det betyr at vi noterer hver unik genetisk variant av den del av den genetiske koden vi leser av. Noen arter har større variasjon i dette område enn andre arter, og vi fanger ikke all genetisk variasjon med denne metodikk. Likevel kan det være ett nyttig verktøy for å undersøke separerte populasjoner, anpassinger til lokalt klima, spredningshistorikk, og forandringer i populasjonsstørrelse.
+    output$asvmap_text <- renderText("Som en del i metastrekkodingen registreres også innenartsvariasjon. Dette betyr at vi noterer hver unik variant av den genetiske koden i den porsjon av genomet vi registrerer. Denne metodikk fanger ikke all genetisk variasjon, og ulike arter har også ulik mye variasjon i dette område. Likevel kan det være ett nyttig verktøy for å oppdage distinkte populasjoner, lokale anpassinger til klima og miljø, tilfeldig spredningshistorikk, og forandringer i populasjonsstørrelse.
        
-Kakediagrammene til venstre viser komposisjonen av genetiske varianter for en gitt art på hver overvåkingslokalitet den er blitt funnet.  [Mer detaljer...]   
+Kakediagrammene til venstre viser komposisjonen av genetiske varianter der hver farge representerer en gitt genetisk variant. Størrelsen på kakene er skalert etter hvor mange DNA-sekvenser det totalt er blitt funnet av arten i hver lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
 Bruk menyene nedenfor for å finne frem til en art av interesse. Notere at orervåkingsprogrammet fortsatt har en begrenset geografisk og tidsmessig utbredelse. Kart for arter som er observert bare ved et fåtall individer på et fåtall plasser vil være mer tilfeldige enn arter med mange individer fanget på mange plasser.
 "
