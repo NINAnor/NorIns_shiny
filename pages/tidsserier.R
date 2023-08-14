@@ -48,11 +48,11 @@ tidsserier_server <- function(id, login_import) {
                height = "300px")
     })
     
-    output$tidsserie_text <- renderText("Overvåkingen innebærer starten på en sammenlignbar tidsserie over insektmengder og artskomposisjon for store insektsamfunn i landet. Insekter varierer ofte kraftig, både innen år, mellom år, og mellom lokaliteter, og man trenger derfor lange tidsserier før man kan observere statistisk sikre forandringer. Det er ikke mulig å forutse nøyaktig hvor lang tid, da det er avhengig hvor store forandringene blir, og hvor mye tilfeldig variasjon man har, men tidshorisonten er snarere 10-talls år enn enkeltår.
+    output$tidsserie_text <- renderText("Dette prosjekt vil danne en standardisert tidserie som kan brukes for å undersøke endringer i insektfaunaen over tid. Mengdene insekter varierer ofte kraftig innen en sesong, og mellom år og mellom lokaliteter. Man skal derfor ikke forvente seg å statistisk sikre forandringer etter bare noen år, da dette ville kreve svært store forandringer for å vise seg. 
 
-Overvåkingen kartlegger ikke bara forandringer, uten gir også verdifull kunnskap om dagens artsforekomster. For eksempel kan det brukes som en standardisert datakilde for forekomst av rødlistete arter, og arter som ikke tidligere er registrert fra landet. Det er da viktig å huske at funnen ikke er manuelt verifisert, uten baserer seg utelukkende på DNA-treffer, hvilke gjenspeiler kvaliteten på referansebasene. 
+Overvåkingen kartlegger ikke bara forandringer, uten gir også verdifull kunnskap om dagens artsforekomster. For eksempel kan det informere om forekomsten av rødlistete arter, eller arter som ikke tidligere er registrert fra landet. Merk at funnene ikke er manuelt verifisert, uten baseres på DNA-treffer, der man er avhengig kvaliteten på referansebasene. 
 
-De fleste av de vanlige artene er allerede strekkodete, og vi kan dermed tildele et artsnavn for disse funn. Men et stort antall arter er ennå ikke strekkodet, og kan derfor ikke bestemmes kobles til et navn. Særskilt for tovinger of vepser har vi begrenset evne til å sette artsnavn, da mange av disse arter fortsatt mangler i referansebasene. Programmet strekkoder derfor hvert år arter som mangler i samarbeide med NTNU Vitenskapsmuseet, hittil mellom 300 og 500 nye arter per år.
+Artene danner også \"sammfunn\" av insekter som fordeler seg i regelmessig i tid og rom. Forandring av slike artssamfunn er også vert å følge med på, selv om enkelte arter ikke nødvendigvis forsvinner.
 "
     )
     

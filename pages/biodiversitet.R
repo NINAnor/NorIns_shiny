@@ -7,7 +7,7 @@ biodiv_ui <- function(id){
            fluidRow(
              box(
                uiOutput(ns("rankabund")),
-               title = "Mange arter fanges ofte, men de fleste artene er uvanlige",
+               title = "Tusenvis arter fanges ofte, men de fleste er sjeldne",
                solidHeader = TRUE,
                height = "400px"
              ),
@@ -52,9 +52,11 @@ output$rankabund <- renderUI({
            )
 })
 
-output$rankabund_text <- renderText("Insektsamfunn er ekstremt artsrike. Av de ca. 30 000 kjente artene i Norge fra dyreriket, er nesten 20 000 insekter, men  sannsynligvis finnes det ytterligere flere tusen insektarter i Norge som venter på å oppdages. Nesten alle artsrike samfunn domineres av et relativ fåtall antall arter og har en lang hale med skjeldne arter. Dette er spesielt tydelig med insektfunnen fra dette prosjekt, der flere tusen arter blir funnet svært sjeldent. Alt ettersom innsamlingen fortsetter kan man forvente seg at halen til høyre vil fortsette utvides, med nye sjeldne arter.
+output$rankabund_text <- renderText("Insektsamfunn er ekstremt artsrike. Av de ca. 30 000 kjente artene i Norge fra dyreriket, er nesten 20 000 insekter, og sannsynligvis finnes det flere tusen insektarter i Norge som venter på å oppdages. De fleste artssamfunn domineres av et fåtall arter mens de andre er relativt skjeldne. Dette er spesielt tydelig i innsektovervåkingen, der halen med sjeldne arter er svært lang og mange tusen arter er blitt funnet bare et fåtall ganger. Alt ettersom innsamlingen fortsetter kan man forvente seg at halen til høyre vil fortsette utvides med nye sjeldne arter, og at akkumuleringskurvene fortsetter øke en tid fremover.
 
-Slike skjeve abundanser innebærer at man ikke kan forvente seg å observere et helt insektsamfunn på enkelte lokaliteter, og at det vil ta lang tid før artskurvene flater ut. Likevel er det flere tusen av arter som observeres relativt ofte, og sett sammen er registreringen av insektsamfunnen konsistente nok til å undersøke forskjeller mellom naturtyper, og overvåke forandringer.
+Tilfeldige forekomster av mange uvanlige arter innebærer at man ikke kan forvente seg å observere hele insektsamfunn på en enkelt lokalitet. Likevel er det flere tusen av arter som observeres relativt ofte, og sett sammen er registreringen av insektsamfunnen konsistente nok til å undersøke forskjeller mellom naturtyper og overvåke forandringer.
+
+Fortsatt finner vi mye DNA som kan grupperes til distinkte arter, men som vi ennå ikke kan koble til et artsnavn fordi ingen har registrert deres artstilhørighet i offentlige kilder. Dette gjelder fremforalt de uvanlige artene, der spesielt tovinger og veps har mange \"arter\" foreløpig uten navn. For å forbedre denne situasjon fyller prosjektet i samarbeide med NTNU Vitenskapsmuseet årlig på offentlige datakilder med flere hundre tidligere uregistrerte arter.
 "
 )
 

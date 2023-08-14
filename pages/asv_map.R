@@ -69,7 +69,7 @@ asvmap_server <- function(id, login_import) {
       
       
       selectInput(inputId = ns("sel_conf"),
-                  label = "Velg konfidansenivå",
+                  label = "Velg konfidansenivå på navngiving",
                   choices = conf_choices,
                   selected = "")
     })
@@ -343,7 +343,7 @@ asvmap_server <- function(id, login_import) {
       
     })
     
-    output$asvmap_text <- renderText("Som en del i metastrekkodingen registreres også innenartsvariasjon. Dette betyr at vi noterer hver unik variant av den genetiske koden i den porsjon av genomet vi registrerer. Denne metodikk fanger ikke all genetisk variasjon, og ulike arter har også ulik mye variasjon i dette område. Likevel kan det være ett nyttig verktøy for å oppdage distinkte populasjoner, lokale anpassinger til klima og miljø, tilfeldig spredningshistorikk, og forandringer i populasjonsstørrelse.
+    output$asvmap_text <- renderText("Som en del i metastrekkodingen registrerer vi også innenartsvariasjon. Dette betyr at vi noterer hver unik variant i den porsjon av genomet vi registrerer. Denne metodikk fanger ikke all genetisk variasjon, og ulike arter har også ulik mye variasjon i dette område. Likevel kan det være ett nyttig verktøy for å oppdage distinkte populasjoner, lokale anpassinger til klima og miljø, tilfeldig spredningshistorikk, og forandringer i populasjonsstørrelse.
        
 Kakediagrammene til venstre viser komposisjonen av genetiske varianter der hver farge representerer en gitt genetisk variant. Størrelsen på kakene er skalert etter hvor mange DNA-sekvenser det totalt er blitt funnet av arten i hver lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
