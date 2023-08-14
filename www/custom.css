@@ -1,17 +1,93 @@
 
 
 /*
- * Skin: NINA
+ * Custom css to style a shiny dashboard into NINA-style.
+ * For use in an iframe on www.nina.no
  * ----------
  */
  
- .navbar {
-  background-color: #435768;
- }
-.navbar .nav > li > a {
-  color: #ffffff;
-
+ /*
+ .logo {
+  font-family: "Open Sans", Helvetica, Arial;
+  font-weight: bold;
 }
+*/
+
+.box {
+  border: 2px solid #A2AAAD;
+  border-radius: 4px;
+  box-shadow: none;
+  background-color: none;
+  margin: none;
+/*
+  width: 400px;
+  height: 300px;
+  box-sizing: border-box;
+*/
+}
+
+
+.box-header {
+  margin-left: none;
+  border-bottom: 2px solid #A2AAAD;
+}
+
+.box-title {
+  font-size: 20px;
+}
+
+.box-body {
+  white-space: pre-wrap;
+  margin-left: 10px;
+  margin-top: none;
+  margin-bottom: none;
+  font-family: "Open Sans", Helvetica, Arial;
+  font-weight: normal;
+  font-size: 12px;
+}
+
+
+#speciesbox > .box-body {
+white-space: nowrap;
+}
+
+
+img {
+  display: block;
+  margin-left: auto; 
+  margin-right: auto;
+}
+
+
+body {
+  font-family: "Open Sans", Helvetica, Arial;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+ 
+.navbar {
+  background-color: #435768;
+}
+
+
+.navbar .nav > li > a {
+ color: #ffffff;
+ font-size: 14px;
+}
+
+.navbar-brand {
+  font-size: 16px;
+}
+
+.navbar-nav li a:hover, .navbar-nav > .active > a {
+
+color: #e57200 !important;
+
+background-color: #435768 !important;
+background-image: none !important;
+}
+
 
 .navbar-default .navbar-brand{color: white;}
 .navbar-default .navbar-brand:hover{color: white;}
@@ -55,6 +131,7 @@
   color: #ffffff;
   border-bottom: 0 solid transparent;
 }
+
 .navbar .logo:hover {
   background-color: #004F71;
 }
@@ -137,244 +214,10 @@
   border-bottom-right-radius: 2px;
   border-bottom-left-radius: 0;
 }
-.skin-nina.layout-top-nav .main-header > .logo {
-  background-color: #004F71;
-  color: #ffffff;
-  border-bottom: 0 solid transparent;
-}
-.skin-nina.layout-top-nav .main-header > .logo:hover {
-  background-color: #3b8ab8;
-}
-/*
- * Skin: Blue
- * ----------
- */
-.skin-nina-light .main-header .navbar {
-  background-color: #004F71;
-}
-.skin-nina-light .main-header .navbar .nav > li > a {
-  color: #ffffff;
-}
-.skin-nina-light .main-header .navbar .nav > li > a:hover,
-.skin-nina-light .main-header .navbar .nav > li > a:active,
-.skin-nina-light .main-header .navbar .nav > li > a:focus,
-.skin-nina-light .main-header .navbar .nav .open > a,
-.skin-nina-light .main-header .navbar .nav .open > a:hover,
-.skin-nina-light .main-header .navbar .nav .open > a:focus,
-.skin-nina-light .main-header .navbar .nav > .active > a {
-  background: rgba(0, 0, 0, 0.1);
-  color: #f6f6f6;
-}
-.skin-nina-light .main-header .navbar .sidebar-toggle {
-  color: #ffffff;
-}
-.skin-nina-light .main-header .navbar .sidebar-toggle:hover {
-  color: #f6f6f6;
-  background: rgba(0, 0, 0, 0.1);
-}
-.skin-nina-light .main-header .navbar .sidebar-toggle {
-  color: #fff;
-}
-.skin-nina-light .main-header .navbar .sidebar-toggle:hover {
-  background-color: #367fa9;
-}
-@media (max-width: 767px) {
-  .skin-nina-light .main-header .navbar .dropdown-menu li.divider {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  .skin-nina-light .main-header .navbar .dropdown-menu li a {
-    color: #fff;
-  }
-  .skin-nina-light .main-header .navbar .dropdown-menu li a:hover {
-    background: #367fa9;
-  }
-}
-.skin-nina-light .main-header .logo {
-  background-color: #004F71;
-  color: #ffffff;
-  border-bottom: 0 solid transparent;
-}
-.skin-nina-light .main-header .logo:hover {
-  background-color: #3b8ab8;
-}
-.skin-nina-light .main-header li.user-header {
-  background-color: #004F71;
-}
-.skin-nina-light .content-header {
-  background: transparent;
-}
-.skin-nina-light .wrapper,
-.skin-nina-light .main-sidebar,
-.skin-nina-light .left-side {
-  background-color: #f9fafc;
-}
-.skin-nina-light .content-wrapper,
-.skin-nina-light .main-footer {
-  border-left: 1px solid #d2d6de;
-}
-.skin-nina-light .user-panel > .info,
-.skin-nina-light .user-panel > .info > a {
-  color: #444444;
-}
-.skin-nina-light .sidebar-menu > li {
-  -webkit-transition: border-left-color 0.3s ease;
-  -o-transition: border-left-color 0.3s ease;
-  transition: border-left-color 0.3s ease;
-}
-.skin-nina-light .sidebar-menu > li.header {
-  color: #848484;
-  background: #f9fafc;
-}
-.skin-nina-light .sidebar-menu > li > a {
-  border-left: 3px solid transparent;
-  font-weight: 600;
-}
-.skin-nina-light .sidebar-menu > li:hover > a,
-.skin-nina-light .sidebar-menu > li.active > a {
-  color: #000000;
-  background: #f4f4f5;
-}
-.skin-nina-light .sidebar-menu > li.active {
-  border-left-color: #004F71;
-}
-.skin-nina-light .sidebar-menu > li.active > a {
-  font-weight: 600;
-}
-.skin-nina-light .sidebar-menu > li > .treeview-menu {
-  background: #f4f4f5;
-}
-.skin-nina-light .sidebar a {
-  color: #444444;
-}
-.skin-nina-light .sidebar a:hover {
-  text-decoration: none;
-}
-.skin-nina-light .treeview-menu > li > a {
-  color: #777777;
-}
-.skin-nina-light .treeview-menu > li.active > a,
-.skin-nina-light .treeview-menu > li > a:hover {
-  color: #000000;
-}
-.skin-nina-light .treeview-menu > li.active > a {
-  font-weight: 600;
-}
-.skin-nina-light .sidebar-form {
-  border-radius: 3px;
-  border: 1px solid #d2d6de;
-  margin: 10px 10px;
-}
-.skin-nina-light .sidebar-form input[type="text"],
-.skin-nina-light .sidebar-form .btn {
-  box-shadow: none;
-  background-color: #fff;
-  border: 1px solid transparent;
-  height: 35px;
-}
-.skin-nina-light .sidebar-form input[type="text"] {
-  color: #666;
-  border-top-left-radius: 2px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 2px;
-}
-.skin-nina-light .sidebar-form input[type="text"]:focus,
-.skin-nina-light .sidebar-form input[type="text"]:focus + .input-group-btn .btn {
-  background-color: #fff;
-  color: #666;
-}
-.skin-nina-light .sidebar-form input[type="text"]:focus + .input-group-btn .btn {
-  border-left-color: #fff;
-}
-.skin-nina-light .sidebar-form .btn {
-  color: #999;
-  border-top-left-radius: 0;
-  border-top-right-radius: 2px;
-  border-bottom-right-radius: 2px;
-  border-bottom-left-radius: 0;
-}
-@media (min-width: 768px) {
-  .skin-nina-light.sidebar-mini.sidebar-collapse .sidebar-menu > li > .treeview-menu {
-    border-left: 1px solid #d2d6de;
-  }
-}
-.skin-nina-light .main-footer {
-  border-top-color: #d2d6de;
-}
-.skin-nina.layout-top-nav .main-header > .logo {
-  background-color: #004F71;
-  color: #ffffff;
-  border-bottom: 0 solid transparent;
-}
-.skin-nina.layout-top-nav .main-header > .logo:hover {
-  background-color: #3b8ab8;
-}
-
-.tab-panel {
-  background-color: red; color: white;  
-}
-
-
-.navbar-nav li a:hover, .navbar-nav > .active > a {
-color: #e57200 !important;
-
-background-color: #435768 !important;
-background-image: none !important;
-}
-
-
-.logo {
-  font-family: "Open Sans", Helvetica, Arial;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.box {
-  border: 2px solid #A2AAAD;
-  border-radius: 4px;
-  box-shadow: none;
-  background-color: none;
-  margin: none;
-/*  width: 400px;
-  height: 300px;
-  box-sizing: border-box;
-*/
-}
-
-
-.box-header{
-  margin-left: none;
-  border-bottom: 2px solid #A2AAAD;
-}
 
 
 
-.box-body {
-  white-space: pre-wrap;
-  margin-left: 10px;
-  margin-top: none;
-  margin-bottom: none;
-  font-family: "Open Sans", Helvetica, Arial;
-  font-weight: normal;
-  font-size: 12px;
-}
 
 
-#speciesbox > .box-body {
-white-space: nowrap;
-}
 
 
-img {
-  display: block;
-  margin-left: auto; 
-  margin-right: auto;
-  
-}
-
-
-body {
-  font-family: "Open Sans", Helvetica, Arial;
-  font-weight: bold;
-  font-size: 12px;
-}
