@@ -348,6 +348,9 @@ asvmap_server <- function(id, login_import) {
 Kakediagrammene til venstre viser komposisjonen av genetiske varianter der hver farge representerer en gitt genetisk variant. Størrelsen på kakene er skalert etter hvor mange DNA-sekvenser det totalt er blitt funnet av arten i hver lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
 Bruk menyene nedenfor for å finne frem til en art av interesse. Notere at orervåkingsprogrammet fortsatt har en begrenset geografisk og tidsmessig utbredelse. Kart for arter som er observert bare ved et fåtall individer på et fåtall plasser vil være mer tilfeldige enn arter med mange individer fanget på mange plasser.
+
+Konfidansenivå angir usikkerheten knyttet til den automatiske identifiseringen med DNA. De fleste av funnene er ikke gjennomgått manuelt og det kan være feil i artsnavn innenfor alle konfidansenivåer.
+
 "
     )
     

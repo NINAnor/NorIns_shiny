@@ -11,17 +11,6 @@ source("pages/biodiversitet.R", local = TRUE)
 source("pages/tidsserier.R", local = TRUE)
 source("pages/asv_map.R", local = TRUE)
 
-# library(knitr)
-# require(Norimon)
-# #require(knitr)
-# require(leaflet)
-# require(leaflet.minicharts)
-# require(DBI)
-# require(dbplyr)
-# require(dplyr)
-# require(forcats)
-# require(tidyr)
-
 
 #To make the app find the figures folder (and expose it to the web)
 addResourcePath(prefix = "figures", directoryPath = "figures")

@@ -1,8 +1,12 @@
+require(shinyjs)
+
+
+jsCode <- "shinyjs.pageCol = function(params){$('body').css('background', params);}"
 
 
 felt_ui <- function(id){
   ns <- NS(id)
-  
+
   tabPanel(title = "Feltarbeid",
            fluidRow(
              box(
@@ -44,13 +48,15 @@ felt_ui <- function(id){
 felt_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
+   
     
-
-
 output$felletyper <- renderUI({
   tags$img(src = "figures/felletyper.jpg", 
            height = "300px",
-           width = "95%")
+           width = "95%",
+           #onclick="enlargeImg()",
+           #id ="img1"
+           )
   
 })
 
