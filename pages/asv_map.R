@@ -289,7 +289,8 @@ asvmap_server <- function(id, login_import) {
         collect() %>% 
         #  filter(!!input$species_select_asv %in% (species_latin_gbif)) %>%
         mutate(asv = as_factor(sequence_id),
-               perc_reads = round(perc_reads*100, 2))
+               perc_reads = round(perc_reads*100, 2)) %>% 
+        arrange(sequence_id)
       
       
       to_plot  <- sel_asv %>% 

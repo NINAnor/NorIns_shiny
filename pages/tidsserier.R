@@ -64,6 +64,9 @@ Artene danner også \"sammfunn\" av insekter som fordeler seg i regelmessig i ti
       )
     })
     
+
+
+    
     output$betacom <- renderUI({
       tags$img(src = "figures/beta-div-patterns-overall-1.svg", 
                height = "300px"
