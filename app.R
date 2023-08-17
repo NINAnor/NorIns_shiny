@@ -10,6 +10,8 @@ source("pages/bioinformatikk.R", local = TRUE)
 source("pages/biodiversitet.R", local = TRUE)
 source("pages/tidsserier.R", local = TRUE)
 source("pages/asv_map.R", local = TRUE)
+source("pages/local_spec.R", local = TRUE)
+
 
 
 #To make the app find the figures folder (and expose it to the web)
@@ -33,7 +35,9 @@ ui <- navbarPage(title = "Norsk insektovervåking - en innblikk",
                  
                  tidsserier_ui(id = "id_5"),
                  
-                 asvmap_ui(id = "id_6")
+                 asvmap_ui(id = "id_6"),
+                 
+                 locspec_ui(id = "id_7")
                  
 )
 
@@ -41,7 +45,7 @@ ui <- navbarPage(title = "Norsk insektovervåking - en innblikk",
 
 server <- function(input, output, session) {
   
-  felt_server(id = "id_1")
+  login_export <- felt_server(id = "id_1")
   
   labarbeid_server(id = "id_2")
   
@@ -51,7 +55,9 @@ server <- function(input, output, session) {
   
   tidsserier_server(id = "id_5")
   
-  asvmap_server(id = "id_6")
+  asvmap_server(id = "id_6", login_import = login_export)
+  
+  locspec_server(id = "id_7", login_import = login_export)
   
 }
 

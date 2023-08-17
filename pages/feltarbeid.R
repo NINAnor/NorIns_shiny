@@ -50,15 +50,25 @@ felt_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
    
     
-output$felletyper <- renderUI({
-  tags$img(src = "figures/felletyper.jpg", 
-           height = "300px",
-           width = "95%",
-           #onclick="enlargeImg()",
-           #id ="img1"
-           )
-  
-})
+    login_export <- reactiveValues()
+    
+    load("data/shinyPass.Rdata")
+    
+    connect_to_insect_db(user = my_username,
+                         password = my_password)
+    
+    login_export$con <- con
+    
+    
+    output$felletyper <- renderUI({
+      tags$img(src = "figures/felletyper.jpg", 
+               height = "300px",
+               width = "95%",
+               #onclick="enlargeImg()",
+               #id ="img1"
+               )
+      
+    })
 
 output$felletyper_text <- renderText("Overvåkingen ble startet på Østlandet i 2020 og utvides suksesivt over landet. Fra og med 2023 dekker programmet semi-naturlig mark i alle landsdeler bortsett fra Vestlandet, samt skogsmark på Østlandet. På sikt er ambisjonen å dekke hele landet i begge disse økosystemtyper.
   
@@ -78,6 +88,11 @@ output$localities <- renderUI({
   tags$img(src = "figures/lokaler_20202023-1.svg",
            height = '300px')
 })
+
+  return(
+    list(con = reactive(login_export$con))
+  )
+
 
   })
 }

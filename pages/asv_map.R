@@ -44,25 +44,7 @@ asvmap_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
     
-    
-
-    load("data/shinyPass.Rdata")
-    
-    connect_to_insect_db(user = my_username,
-                         password = my_password)
-   
-    
-    asv_perc_reads <- tbl(con,
-                          Id(schema = "views",
-                             table = "asv_perc_reads"))
-    
-    
-    species_list <- tbl(con,
-                        Id(schema = "views",
-                           table = "species_list")) 
-    
-    
-    
+  
     output$choose_conf <- renderUI({
       
       conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR", "ALL")
@@ -76,6 +58,8 @@ asvmap_server <- function(id, login_import) {
     
     
     output$choose_order <- renderUI({
+      
+      con <- login_import$con()
       
       order_choices_q <- "
 
@@ -119,6 +103,8 @@ asvmap_server <- function(id, login_import) {
     
     
     output$choose_fam <- renderUI({
+      
+      con <- login_import$con()
       
       req(input$sel_order)
       
@@ -173,6 +159,8 @@ asvmap_server <- function(id, login_import) {
       req(input$sel_order)
       req(input$sel_fam)
       req(input$sel_conf)
+      
+      con <- login_import$con()
       
       
       
@@ -283,6 +271,12 @@ asvmap_server <- function(id, login_import) {
     })
     
     asv_to_leaflet <- function(species = "NULL"){
+      
+      con <- login_import$con()
+      
+      asv_perc_reads <- tbl(con,
+                            Id(schema = "views",
+                               table = "asv_perc_reads"))
       
       sel_asv <- asv_perc_reads %>%
         filter(species_latin_gbif == !!selected_species())  %>%
