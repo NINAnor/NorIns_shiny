@@ -296,13 +296,23 @@ locspec_server <- function(id, login_import) {
       #req(ns("loc_map"))
 
       loc_species_q <- paste0("
-      SELECT locality, count(distinct(species_latin_gbif))::numeric no_spec
-      FROM views.loc_species_list
-      WHERE locality IN ('",
-                             # paste(loc$locality, collapse = "','"),
-                             paste(ruterInBounds()$locality, collapse = "','"),
-                              "') GROUP BY locality
-      ORDER BY locality
+      
+      SELECT year, habitat_type, avg(no_spec) as tot_spec
+      FROM
+      (SELECT l.locality,
+      yl.year, 
+      l.habitat_type, 
+      count(distinct(loc_spec.species_latin_gbif))::numeric no_spec
+      FROM views.loc_species_list loc_spec,
+      locations.localities l,
+      events.year_locality yl
+      WHERE loc_spec.locality = l.locality
+      AND yl.locality_id = l.id
+      AND l.locality IN ('",
+      paste(ruterInBounds()$locality, collapse = "','"),
+      "') GROUP BY yl.year, l.habitat_type, l.locality) foo
+      GROUP BY year, habitat_type                        
+      
       " )
 
 
@@ -310,10 +320,16 @@ locspec_server <- function(id, login_import) {
 
 
       loc_species_res <- dbGetQuery(con,
-                                    loc_species_q)
+                                    loc_species_q) 
 
-      p <- ggplot2::ggplot(aes(y = no_spec, x = locality), data = loc_species_res) +
-       ggplot2::geom_bar(stat = "identity")
+      p <- ggplot2::ggplot(aes(y = tot_spec, x = year), 
+                           data = loc_species_res) +
+       ggplot2::geom_point(aes(group = habitat_type, 
+                               col = habitat_type)) +
+        ggplot2::geom_line(aes(y = tot_spec, 
+                               x = year,
+                               group = habitat_type, 
+                               col = habitat_type))
        
       #p <- ggplot() +
        # geom_point(aes(x = 1:10, y = 1:10))
