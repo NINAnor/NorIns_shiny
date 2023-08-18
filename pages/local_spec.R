@@ -151,7 +151,7 @@ locspec_server <- function(id, login_import) {
     
     trap_points <- reactive({
       
-      con <- login_import$con()
+      #con <- login_import$con()
       
       trap_sql <- "
     SELECT projects.project_name,
@@ -270,10 +270,10 @@ locspec_server <- function(id, login_import) {
       latRng <- range(bounds$south, bounds$north)
       lngRng <- range(bounds$west, bounds$east)
       
-      ruter <- ruter() %>% 
-        dplyr::mutate(lon = sf::st_coordinates(.)[,1],
-                      lat = sf::st_coordinates(.)[,2]) %>% 
-        st_drop_geometry() 
+      suppressWarnings({ ruter <- ruter() %>% 
+        dplyr::mutate(lon = sf::st_coordinates(st_centroid(.))[,1],
+                      lat = sf::st_coordinates(st_centroid(.))[,2]) %>% 
+        st_drop_geometry()}) 
       
       out <- ruter %>%
         filter(lat >= local(latRng[1]) & lat <= local(latRng[2]) &
@@ -294,29 +294,29 @@ locspec_server <- function(id, login_import) {
     
     output$loc_spec <- renderPlot({
       #req(ns("loc_map"))
-      
-      # loc_species_q <- paste0("
-      # SELECT locality, count(distinct(species_latin_gbif))::numeric no_spec
-      # FROM views.loc_species_list
-      # WHERE locality IN ('",
-      #                        # paste(loc$locality, collapse = "','"),
-      #                         paste(ruterInBounds()$locality, collapse = "','"),  
-      #                         "') GROUP BY locality
-      # ORDER BY locality
-      # " )
-      # 
-      # 
-      # #loc <- tibble(locality = c("Semi-nat_01", "Semi-nat_02"))
-      # 
-      # 
-      # loc_species_res <- dbGetQuery(con,
-      #                               loc_species_q) 
-      # 
-      # ggplot2::ggplot(aes(y = no_spec, x = locality), data = loc_species_res) +
-       #  ggplot2::geom_bar(stat = "identity")
+
+      loc_species_q <- paste0("
+      SELECT locality, count(distinct(species_latin_gbif))::numeric no_spec
+      FROM views.loc_species_list
+      WHERE locality IN ('",
+                             # paste(loc$locality, collapse = "','"),
+                             paste(ruterInBounds()$locality, collapse = "','"),
+                              "') GROUP BY locality
+      ORDER BY locality
+      " )
+
+
+      #loc <- tibble(locality = c("Semi-nat_01", "Semi-nat_02"))
+
+
+      loc_species_res <- dbGetQuery(con,
+                                    loc_species_q)
+
+      p <- ggplot2::ggplot(aes(y = no_spec, x = locality), data = loc_species_res) +
+       ggplot2::geom_bar(stat = "identity")
        
-      p <- ggplot() +
-        geom_point(aes(x = 1:10, y = 1:10))
+      #p <- ggplot() +
+       # geom_point(aes(x = 1:10, y = 1:10))
       
       return(p)
       
