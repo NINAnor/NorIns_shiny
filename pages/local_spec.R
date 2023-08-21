@@ -7,6 +7,8 @@ require(dplyr)
 require(forcats)
 require(tidyr)
 require(Norimon)
+require(plotly)
+require(NinaR)
 
 locspec_ui <- function(id){
   ns <- NS(id)
@@ -31,7 +33,7 @@ locspec_ui <- function(id){
            ),
            fluidRow(
              box(title = "Tidstrend",
-             plotOutput(ns("loc_spec"),
+               plotlyOutput(ns("loc_spec"),
                         height = "200px")
              )
              
@@ -65,7 +67,7 @@ locspec_server <- function(id, login_import) {
       selectInput(inputId = ns("project"),
                   label = "Prosjekt",
                   choices = c("", projects$project_name),
-                  selected = c(""),
+                  selected = c("Nasjonal insektovervåking"),
                   selectize = FALSE)
       
     })
@@ -73,7 +75,6 @@ locspec_server <- function(id, login_import) {
     ## Choose region of available regions in database
     
     output$choose_region <- renderUI({
-      
       req(input$project)
       con <- login_import$con()
       
@@ -102,7 +103,8 @@ locspec_server <- function(id, login_import) {
       
       selectInput(inputId = ns("region"),
                   label = "Region",
-                  choices = c("", regions$region_name),
+                  choices = c("All", regions$region_name),
+                  selected = "All",
                   selectize = FALSE,
                   size = 1)
       
@@ -113,8 +115,6 @@ locspec_server <- function(id, login_import) {
     output$choose_habitattype <- renderUI({
       
       req(input$project)
-      req(input$region)
-      
       con <- login_import$con()
       
       habtypes_q <- "
@@ -125,21 +125,20 @@ locspec_server <- function(id, login_import) {
       WHERE yl.locality_id = l.id
       AND yl.project_short_name = projects.project_short_name
       AND projects.project_name = ?id1
-      AND l.region_name = ?id2
       "
       
       habtypes_sql <- sqlInterpolate(con,
                                      habtypes_q,
-                                     id1 = input$project,
-                                     id2 = input$region)
+                                     id1 = input$project)
       
       habtypes <- dbGetQuery(con,
-                             habtypes_sql)
+                             habtypes_sql) 
       
       
       selectInput(inputId = ns("habitat_type"),
                   label = "Habitat type",
-                  choices = c("", habtypes$habitat_type),
+                  choices = c("All", habtypes$habitat_type),
+                  selected = "All",
                   selectize = FALSE,
                   size = 1
     )
@@ -154,26 +153,26 @@ locspec_server <- function(id, login_import) {
       #con <- login_import$con()
       
       trap_sql <- "
-    SELECT projects.project_name,
-    trap.trap_name, 
-    trap.locality,
-    trap.year,
-    trap_short_name,
-    trap_model,
-    liquid_name,
-    coordinate_precision_m,
-    elev_m,
-    loc.habitat_type,
-    st_transform(trap.geom, 4326) as point_geom,
-    loc.region_name, 
-    st_transform(loc.geom, 4326) as rute_geom
-    FROM locations.traps trap,
-    locations.localities loc,
-    events.year_locality yl,
-    lookup.projects
-    WHERE trap.locality = loc.locality
-    AND yl.locality_id = loc.id
-    AND yl.project_short_name = projects.project_short_name
+        SELECT projects.project_name,
+        trap.trap_name, 
+        trap.locality,
+        trap.year,
+        trap_short_name,
+        trap_model,
+        liquid_name,
+        coordinate_precision_m,
+        elev_m,
+        loc.habitat_type,
+        st_transform(trap.geom, 4326) as point_geom,
+        loc.region_name, 
+        st_transform(loc.geom, 4326) as rute_geom
+        FROM locations.traps trap,
+        locations.localities loc,
+        events.year_locality yl,
+        lookup.projects
+        WHERE trap.locality = loc.locality
+        AND yl.locality_id = loc.id
+        AND yl.project_short_name = projects.project_short_name
     
     "
       
@@ -192,7 +191,7 @@ locspec_server <- function(id, login_import) {
       
       
       if(!is.null(input$region)){
-        if(input$region != ""){
+        if(input$region != "All"){
           dat <- dat %>% 
             filter(region_name == input$region)
         }
@@ -200,7 +199,7 @@ locspec_server <- function(id, login_import) {
       
    
       if(!is.null(input$habitat_type)){
-        if(input$habitat_type != ""){
+        if(input$habitat_type != "All"){
           dat <- dat %>% 
             filter(habitat_type == input$habitat_type)
         }
@@ -223,13 +222,20 @@ locspec_server <- function(id, login_import) {
       collect()  
     
     
-    
     pal_cat <- isolate(ruter()$habitat_type) 
     
     pal <- leaflet::colorFactor(palette = NinaR::ninaPalette(),
                                 domain = pal_cat)
+   
+    derived_pal <- pal(unique(pal_cat)) 
+    names(derived_pal) <- unique(pal_cat)
     
+
     output$loc_map <- leaflet::renderLeaflet({
+      req(input$project)
+      req(input$region)
+      req(input$habitat_type)
+      
       leaflet::leaflet(width = "70%", height = 800) %>%
         
         leaflet::addTiles(group = "OpenStreetMap") %>%
@@ -258,7 +264,8 @@ locspec_server <- function(id, login_import) {
                            values  = ruter()$habitat_type,
                            position = "bottomright",
                            title = "Habitat type",
-                           labFormat = leaflet::labelFormat(digits=1))
+                           labFormat = leaflet::labelFormat(digits = 1),
+                           opacity = 1)
     })
     
     
@@ -289,53 +296,58 @@ locspec_server <- function(id, login_import) {
     
     
     
-    
-    
-    
-    output$loc_spec <- renderPlot({
-      #req(ns("loc_map"))
+    loc_species_data <- reactive({
 
       loc_species_q <- paste0("
       
-      SELECT year, habitat_type, avg(no_spec) as tot_spec
+      SELECT year, locality, habitat_type, no_spec as tot_spec
       FROM
-      (SELECT l.locality,
-      yl.year, 
-      l.habitat_type, 
+      (SELECT locality,
+      year, 
+      habitat_type, 
       count(distinct(loc_spec.species_latin_gbif))::numeric no_spec
-      FROM views.loc_species_list loc_spec,
-      locations.localities l,
-      events.year_locality yl
-      WHERE loc_spec.locality = l.locality
-      AND yl.locality_id = l.id
-      AND l.locality IN ('",
-      paste(ruterInBounds()$locality, collapse = "','"),
-      "') GROUP BY yl.year, l.habitat_type, l.locality) foo
-      GROUP BY year, habitat_type                        
+      FROM views.loc_traptype_species_list loc_spec
+      WHERE trap_type = 'Malaise'
+                              
+      AND locality IN ('",
+                              paste(ruterInBounds()$locality, collapse = "','"),
+                              "') GROUP BY year, habitat_type, locality) foo
+           
       
       " )
-
-
-      #loc <- tibble(locality = c("Semi-nat_01", "Semi-nat_02"))
-
-
+     
+      
       loc_species_res <- dbGetQuery(con,
-                                    loc_species_q) 
+                                    loc_species_q)  %>% 
+        mutate(year = as.factor(year)) 
 
-      p <- ggplot2::ggplot(aes(y = tot_spec, x = year), 
-                           data = loc_species_res) +
-       ggplot2::geom_point(aes(group = habitat_type, 
-                               col = habitat_type)) +
-        ggplot2::geom_line(aes(y = tot_spec, 
+      return(loc_species_res)
+      
+    })
+    
+    
+    output$loc_spec <- renderPlotly({
+      req(ns("loc_map"))
+
+      p <- ggplot2::ggplot(aes(y = tot_spec, 
                                x = year,
                                group = habitat_type, 
-                               col = habitat_type))
-       
-      #p <- ggplot() +
-       # geom_point(aes(x = 1:10, y = 1:10))
+                               col = habitat_type),
+                           data =  loc_species_data()
+                           ) +
+       ggplot2::geom_point(position = position_dodge(width = 0.1)) +
+       ggplot2::geom_smooth() +
+        xlab("År") +
+        ylab("Antall arter per lok.") +
+        scale_color_manual(values = derived_pal,
+                            name = "Habitatstype")
       
-      return(p)
+      suppressWarnings(suppressMessages(
+        ggplotly(p) %>%
+        style(hovertext = loc_species_data()[, "locality"])
+      ))
       
+   
     })
     
   })
