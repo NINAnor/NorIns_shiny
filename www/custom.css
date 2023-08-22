@@ -50,8 +50,9 @@
 white-space: nowrap;
 }
 
+
 #taxabox > .box-body {
-white-space: nowrap;
+white-space: normal;
 }
 
 

@@ -25,10 +25,16 @@ asvmap_ui <- function(id){
                  height = "400px"),
              shinydashboardPlus::box(id = "speciesbox",
                                      title = "Artsutvalg",
+                                     fluidRow(
+                                       column(3,
                                      uiOutput(ns("choose_conf")),
                                      uiOutput(ns("choose_order")),
-                                     uiOutput(ns("choose_fam")),
+                                     uiOutput(ns("choose_fam"))),
+                                     column(3,
                                      uiOutput(ns("choose_spec")),
+                                     uiOutput(ns("choose_species_filter"))
+                                     )
+                                     ),
                                      height = "300px"
                                      
              )
@@ -162,8 +168,7 @@ asvmap_server <- function(id, login_import) {
       
       con <- login_import$con()
       
-      
-      
+
       if(input$sel_conf != "ALL"){ 
         species_choices_q <- "
           SELECT sl.species_latin_gbif, sl.id_genus, sl.id_species, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
@@ -190,8 +195,6 @@ asvmap_server <- function(id, login_import) {
         ON sl.id_genus = names.slekt
 		    AND sl.id_species = names.art
         ORDER BY species_latin_gbif
-          
-          
         "
         
         species_choice_san <- sqlInterpolate(con,
@@ -248,9 +251,9 @@ asvmap_server <- function(id, login_import) {
       }
       
       selectInput(ns("asv_species"),
-                  label = "Velg art",
-                  choices = species_choices_list,
-                  selected = "",
+                  label = "Velg art fra familie",
+                  choices = c(species_choices_list, ""),
+                  #selected = "",
                   selectize = TRUE)
       
     })
@@ -262,15 +265,104 @@ asvmap_server <- function(id, login_import) {
       addTiles(group = "OpenStreetMap")
     
     
+
+  output$choose_species_filter <- renderUI({
+    #req(input$asv_species)
+
+    selectizeInput(inputId = ns("species_filter"),
+                   label = "Overstyr via fritekst",
+                   choices = NULL,
+                   selected = NULL
+    )
+    
+
+  })
+  
+
+    
+
+  observeEvent(input$asv_species,{
+    
+    con <- login_import$con()
+    
+      loc_species_list <- tbl(con,
+                              Id(schema = "views",
+                                 table = "loc_species_list"))
+
+
+      species_choices <- loc_species_list %>%
+        select(species_latin_gbif) %>%
+        distinct() %>%
+        arrange(species_latin_gbif) %>%
+        pull()
+
+      #if(input$species_filter != "Ingen"){
+      updateSelectizeInput(session = getDefaultReactiveDomain(),
+                           inputId = "species_filter",
+                           choices = c("Ingen", species_choices),
+                           selected = "Ingen",
+                           server = TRUE,
+                           options = list(maxOptions = 10)
+                           )
+      #}
+  }
+)
+
+  
+    # observeEvent(input$species_filter,{
+    # 
+    # 
+    #   if(input$species_filter != "Ingen") {
+    #     
+    #     con <- login_import$con()
+    #     
+    #     taxa_reverse_q <- "
+    #     SELECT *
+    #     FROM views.species_list
+    #     WHERE species_latin_gbif = ?id1
+    #     "
+    #     
+    #     taxa_reverse_sql <- sqlInterpolate(con,
+    #                                        taxa_reverse_q,
+    #                                        id1 = input$species_filter)
+    #     
+    #     taxa_reverse_res <- dbGetQuery(con,
+    #                                    taxa_reverse_sql)
+    #     
+    #   updateSelectInput(inputId = "sel_conf",
+    #                       selected = taxa_reverse_res$identification_confidence)
+    #   
+    #   updateSelectInput(inputId = "sel_order",
+    #                     selected = taxa_reverse_res$id_order)
+    #   
+    #   updateSelectInput(inputId = "sel_fam",
+    #                     selected = taxa_reverse_res$id_family)
+    #   
+    #   updateSelectInput(inputId = "asv_species",
+    #                     selected = taxa_reverse_res$species_latin_gbif)
+    #     
+    #   }
+    # 
+    # },
+    # ignoreNULL = TRUE,
+    # ignoreInit = TRUE,
+    # priority = 0)
+    
+    
     selected_species <- reactive({
       if(is.na(input$asv_species)) return(NULL)
       
-      species <- input$asv_species
+      if(input$species_filter == "Ingen"){
+        species <- input$asv_species
+      } else {
+        species <- input$species_filter
+      }
+      
       return(species) 
       
     })
-    
-    asv_to_leaflet <- function(species = "NULL"){
+    #species = "NULL"
+    asv_to_leaflet <- function(){
       
       con <- login_import$con()
       
@@ -311,8 +403,9 @@ asvmap_server <- function(id, login_import) {
     
     output$asv_map <- renderLeaflet({
       req(input$asv_species)
+      req(input$species_filter)
       
-      to_plot <- asv_to_leaflet(input$asv_species)
+      to_plot <- asv_to_leaflet()
       
       basemap  %>% 
         leaflet::addProviderTiles(providers$Esri.WorldImagery,
