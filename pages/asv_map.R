@@ -32,7 +32,8 @@ asvmap_ui <- function(id){
                                      uiOutput(ns("choose_fam"))),
                                      column(3,
                                      uiOutput(ns("choose_spec")),
-                                     uiOutput(ns("choose_species_filter"))
+                                     uiOutput(ns("choose_species_filter")),
+                                     actionButton(ns("search_btn"), "Søk", class = "btn-primary")
                                      )
                                      ),
                                      height = "300px"
@@ -278,88 +279,92 @@ asvmap_server <- function(id, login_import) {
 
   })
   
+species_choices <- reactive({
 
+  con <- login_import$con()
+  
+  loc_species_list <- tbl(con,
+                          Id(schema = "views",
+                             table = "loc_species_list"))
+  
+  
+  species_choices <- loc_species_list %>%
+    select(species_latin_gbif) %>%
+    distinct() %>%
+    arrange(species_latin_gbif) %>%
+    pull()
+  
+  return(species_choices)
+})
+
+
+  observeEvent(input$sel_conf,{
     
-
-  observeEvent(input$asv_species,{
-    
-    con <- login_import$con()
-    
-      loc_species_list <- tbl(con,
-                              Id(schema = "views",
-                                 table = "loc_species_list"))
-
-
-      species_choices <- loc_species_list %>%
-        select(species_latin_gbif) %>%
-        distinct() %>%
-        arrange(species_latin_gbif) %>%
-        pull()
-
-      #if(input$species_filter != "Ingen"){
+  #        if(input$species_filter != "Ingen"){
       updateSelectizeInput(session = getDefaultReactiveDomain(),
                            inputId = "species_filter",
-                           choices = c("Ingen", species_choices),
-                           selected = "Ingen",
+                           choices =  species_choices(),
+                           selected = "",
                            server = TRUE,
                            options = list(maxOptions = 10)
                            )
-      #}
+     # }
   }
 )
 
+  #!!Problem here
   
-    # observeEvent(input$species_filter,{
-    # 
-    # 
-    #   if(input$species_filter != "Ingen") {
-    #     
-    #     con <- login_import$con()
-    #     
-    #     taxa_reverse_q <- "
-    #     SELECT *
-    #     FROM views.species_list
-    #     WHERE species_latin_gbif = ?id1
-    #     "
-    #     
-    #     taxa_reverse_sql <- sqlInterpolate(con,
-    #                                        taxa_reverse_q,
-    #                                        id1 = input$species_filter)
-    #     
-    #     taxa_reverse_res <- dbGetQuery(con,
-    #                                    taxa_reverse_sql)
-    #     
-    #   updateSelectInput(inputId = "sel_conf",
-    #                       selected = taxa_reverse_res$identification_confidence)
-    #   
-    #   updateSelectInput(inputId = "sel_order",
-    #                     selected = taxa_reverse_res$id_order)
-    #   
-    #   updateSelectInput(inputId = "sel_fam",
-    #                     selected = taxa_reverse_res$id_family)
-    #   
-    #   updateSelectInput(inputId = "asv_species",
-    #                     selected = taxa_reverse_res$species_latin_gbif)
-    #     
-    #   }
-    # 
-    # },
-    # ignoreNULL = TRUE,
-    # ignoreInit = TRUE,
-    # priority = 0)
+    observeEvent(input$search_btn,{
+
+      if(input$species_filter != "Ingen") {
+
+        con <- login_import$con()
+
+        taxa_reverse_q <- "
+        SELECT *
+        FROM views.species_list
+        WHERE species_latin_gbif = ?id1
+        "
+
+        taxa_reverse_sql <- sqlInterpolate(con,
+                                           taxa_reverse_q,
+                                           id1 = input$species_filter)
+
+        taxa_reverse_res <- dbGetQuery(con,
+                                       taxa_reverse_sql)
+
+        updateSelectInput(inputId = "sel_conf",
+                            selected = taxa_reverse_res$identification_confidence)
+  
+        updateSelectInput(inputId = "sel_order",
+                          selected = taxa_reverse_res$id_order)
+  
+        updateSelectInput(inputId = "sel_fam",
+                          selected = taxa_reverse_res$id_family)
+  
+        updateSelectInput(inputId = "asv_species",
+                           selected = taxa_reverse_res$species_latin_gbif)
+
+      }
+
+    },
+    ignoreNULL = TRUE,
+    ignoreInit = TRUE, 
+    priority = 10)
     
     
     selected_species <- reactive({
-      if(is.na(input$asv_species)) return(NULL)
+      if(is.na(input$asv_species)) return(NULL) else{
       
-      if(input$species_filter == "Ingen"){
+      #if(input$species_filter == "Ingen"){
         species <- input$asv_species
-      } else {
-        species <- input$species_filter
-      }
+      #} else {
+        
+        #species <- input$species_filter
+      #}
       
       return(species) 
-      
+      }
     })
     #species = "NULL"
     asv_to_leaflet <- function(){
@@ -403,7 +408,7 @@ asvmap_server <- function(id, login_import) {
     
     output$asv_map <- renderLeaflet({
       req(input$asv_species)
-      req(input$species_filter)
+      #req(input$species_filter)
       
       to_plot <- asv_to_leaflet()
       
