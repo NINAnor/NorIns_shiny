@@ -37,9 +37,13 @@ asvmap_ui <- function(id){
                                      column(3,
                                      uiOutput(ns("choose_spec")),
                                      selectizeInput(inputId = ns("species_filter"),
-                                                    label = "Overstyr via fritekst",
+                                                    label = "Fritekst",
                                                     choices = NULL,
-                                                    selected = NULL)
+                                                    selected = NULL),
+                                     actionButton(ns("filter_btn"),
+                                                  label = "Fritekssøk"),
+                                     actionButton(ns("filter_clear_btn"),
+                                                  label = "Rens fritext")
                                      )
                                      ),
                                      height = "300px"
@@ -61,11 +65,13 @@ asvmap_server <- function(id, login_import) {
     
     
     output$choose_conf <- renderUI({
+      input$filter_btn
       
       conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR", "ALL")
       
-      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
-        
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
+
       selectInput(inputId = ns("sel_conf"),
                   label = "Velg konfidansenivå på navngiving",
                   choices = conf_choices,
@@ -82,7 +88,7 @@ asvmap_server <- function(id, login_import) {
     
     
     output$choose_order <- renderUI({
-      
+      input$filter_btn
       #Assign to higher environment, to not require again
       con <<- login_import$con() 
       
@@ -119,8 +125,10 @@ asvmap_server <- function(id, login_import) {
       names(order_choices_list) <- paste0(order_choices_raw$id_order, ' - ', order_choices_raw$bokmal)
       }
       
-      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
-      
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
+        
+
       selectInput(inputId = ns("sel_order"),
                   label = "Velg orden",
                   choices = order_choices_list,
@@ -137,7 +145,7 @@ asvmap_server <- function(id, login_import) {
     
     
     output$choose_fam <- renderUI({
-      
+      input$filter_btn
       con <- login_import$con()
       
       req(input$sel_order)
@@ -178,8 +186,10 @@ asvmap_server <- function(id, login_import) {
       names(family_choices_list) <- paste0(family_choices_raw$id_family, ' - ', family_choices_raw$bokmal)
       }
       
-      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
         
+
       selectInput(inputId = ns("sel_fam"),
                   label = "Velg familie",
                   choices = family_choices_list,
@@ -202,6 +212,7 @@ asvmap_server <- function(id, login_import) {
       req(input$sel_fam)
       req(input$sel_conf)
       
+      input$filter_btn
       con <- login_import$con()
       
 
@@ -286,8 +297,10 @@ asvmap_server <- function(id, login_import) {
         names(species_choices_list) <- paste0(species_choices_raw$species_latin_gbif, ' - ', species_choices_raw$bokmal)
       }
       
-      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
-      
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
+        
+
       selectInput(ns("asv_species"),
                   label = "Velg art fra familie",
                   choices = c(species_choices_list, ""),
@@ -341,28 +354,22 @@ species_choices <- function(){
                            )
 
 
-#observe({
-#  input$asv_species
-#  Sys.sleep(2)
-#reset(id = ns("species_filter"),
-#      asis = TRUE)
-  
-  # updateSelectizeInput(inputId = "species_filter",
-  #                      choices =  c("Ingen", species_choices()),
-  #                      selected = "Ingen",
-  #                      server = TRUE,
-  #                      options = list(maxOptions = 10)
-#  )
+observeEvent(input$filter_clear_btn, {
 
-#}#,
-# priority = -10,
-# ignoreNULL = TRUE,
-# ignoreInit = TRUE,
-# once = TRUE
-#)      
+
+updateSelectizeInput(inputId = "species_filter",
+                     choices =  c("Ingen", species_choices()),
+                     selected = "Ingen",
+                     server = TRUE,
+                     options = list(maxOptions = 10)
+ )
+
+},
+ignoreNULL = TRUE,
+ignoreInit = TRUE
+)
       
     species_filter_out <- reactive({
-      req(input$species_filter)
 
       if(input$species_filter != "Ingen") {
 
@@ -380,25 +387,25 @@ species_choices <- function(){
 
         taxa_reverse_res <- dbGetQuery(con,
                                        taxa_reverse_sql)
+# 
+#         updateSelectInput(inputId = "sel_conf",
+#                             selected = taxa_reverse_res$identification_confidence)
+# 
+#         updateSelectInput(inputId = "sel_order",
+#                           selected = taxa_reverse_res$id_order)
+# 
+#         updateSelectInput(inputId = "sel_fam",
+#                           selected = taxa_reverse_res$id_family)
+# 
+#         updateSelectInput(inputId = "asv_species",
+#                            selected = taxa_reverse_res$species_latin_gbif)
 
-        # updateSelectInput(inputId = "sel_conf",
-        #                     selected = taxa_reverse_res$identification_confidence)
-        # 
-        # updateSelectInput(inputId = "sel_order",
-        #                   selected = taxa_reverse_res$id_order)
-        # 
-        # updateSelectInput(inputId = "sel_fam",
-        #                   selected = taxa_reverse_res$id_family)
-        # 
-        # updateSelectInput(inputId = "asv_species",
-        #                    selected = taxa_reverse_res$species_latin_gbif)
-
-        
-      } else {
-        taxa_reverse_res <- tibble("species_latin_gbif" = "Ingen")
-      }
-      
-      return(taxa_reverse_res)
+      #}
+       } else {
+         taxa_reverse_res <- tibble("species_latin_gbif" = "Ingen")
+       }
+       
+      # return(taxa_reverse_res)
 
     })
     
