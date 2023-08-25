@@ -16,25 +16,20 @@ asvmap_ui <- function(id){
   useShinyjs()
   
   tabPanel(title = "Innenartsvariasjon",
-           fluidRow(
-             box(title = "Fordeling av genetiske varianter",
-                 leaflet::leafletOutput(ns("asv_map"),
-                                        width = "95%",
-                                        height = 600),
-                 height = "800px"
-                 
-             ),
-             box(title = "Vi registrerer innenartsvariasjon",
+           column(6,
+             box(width = 12,
+                 title = "Vi registrerer innenartsvariasjon",
                  textOutput(ns("asvmap_text")),
-                 height = "400px"),
-             shinydashboardPlus::box(id = "speciesbox",
+                 height = "500px"),
+             shinydashboardPlus::box(width = 12,
+                                     id = "speciesbox",
                                      title = "Artsutvalg",
                                      fluidRow(
-                                       column(3,
+                                       column(6,
                                      uiOutput(ns("choose_conf")),
                                      uiOutput(ns("choose_order")),
                                      uiOutput(ns("choose_fam"))),
-                                     column(3,
+                                     column(6,
                                      uiOutput(ns("choose_spec")),
                                      selectizeInput(inputId = ns("species_filter"),
                                                     label = "Fritekst",
@@ -46,10 +41,16 @@ asvmap_ui <- function(id){
                                                   label = "Rens fritext")
                                      )
                                      ),
-                                     height = "300px"
-                                     
-             )
+                                     height = "400px"
+             )),
+           box(title = "Fordeling av genetiske varianter",
+               leaflet::leafletOutput(ns("asv_map"),
+                                      width = "95%",
+                                      height = 600),
+               height = "800px"
+               
            )
+           
   )
   
 }

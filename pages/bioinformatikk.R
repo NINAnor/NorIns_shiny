@@ -4,37 +4,27 @@ bioinformatikk_ui <- function(id){
   ns <- NS(id)
   
 tabPanel(title = "Bioinformatikk",
-         fluidRow(
-           box(
-             uiOutput(ns("flytskjema")),
-             title = "DNA-resultat kvalitetssikres og kobles til navn",
-             solidHeader = TRUE,
-             height = "400px"
-           ),
-           
-           box(
-             textOutput(ns("flytskjema_text")),
-             title = "Dataprosessering og håndtering",
-             solidHeader = TRUE,
-             height = "400px"
-           )
+         
+         box(
+           textOutput(ns("flytskjema_text")),
+           title = "Dataprosessering og håndtering",
+           solidHeader = TRUE,
+           height = "800px"
+         ),
+         box(
+           uiOutput(ns("flytskjema")),
+           title = "DNA-resultat kvalitetssikres og kobles til navn",
+           solidHeader = TRUE,
+           height = "400px"
          ),
          br(),
-         fluidRow(
-           box(
-             uiOutput(ns("data_storage")),
-             title = "Prosjektet danner store datamengder",
-             solidHeader = TRUE,
-             height = "400px"
-           ),
-           
-           box(
-             uiOutput(ns("data_links")),
-             title = "Linker til data",
-             solidHeader = TRUE,
-             height = "400px"
-           )
+         box(
+           uiOutput(ns("data_links")),
+           title = "Linker til data",
+           solidHeader = TRUE,
+           height = "400px"
          )
+         
 )
 }
 

@@ -8,39 +8,27 @@ felt_ui <- function(id){
   ns <- NS(id)
 
   tabPanel(title = "Feltarbeid",
-           fluidRow(
-             box(
-               uiOutput(ns("felletyper")),
-               title = "Innsamling med malaise- og vindusfeller",
-               solidHeader = TRUE,
-               height = "400px"
-             ),
-             
-             box(
-               textOutput(ns("felletyper_text")),
-               # tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
-               title = "Overvåkingsdesign",
-               solidHeader = TRUE,
-               height = "400px"
-               
-             )
+           box(
+             textOutput(ns("felletyper_text")),
+             # tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
+             title = "Overvåkingsdesign",
+             solidHeader = TRUE,
+             height = "800px"
            ),
-           br(),
-           fluidRow(
-             box(
-               uiOutput(ns("stagger")),
-               title = "Lokaliteter gjenbesøkes hvert 5:e år",
-               solidHeader = TRUE,
-               height = "400px"
-             ),
-             
-             box(
-               uiOutput(ns("localities")),
-               title = "Overvåkingslokaliteter i perioden 2020-2023",
-               solidHeader = TRUE,
-               height = "400px"
-             )
-           )
+          box(
+            uiOutput(ns("localities")),
+            title = "Overvåkingslokaliteter i perioden 2020-2023",
+            solidHeader = TRUE,
+            height = "400px"
+          ),
+          br(),
+           box(
+            uiOutput(ns("felletyper")),
+            title = "Innsamling med malaise- og vindusfeller",
+            solidHeader = TRUE,
+            height = "400px"
+          )
+     
   )
 }
 

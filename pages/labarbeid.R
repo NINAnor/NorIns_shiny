@@ -4,39 +4,27 @@ labarbeid_ui <- function(id){
   ns <- NS(id)
   
 tabPanel(title = "Labarbeid",
-         
-         fluidRow(
-           box(
-             uiOutput(ns("bottle")),
-             title = "En malalisefelle samler tusenvis av insekter",
-             solidHeader = TRUE,
-             height = "400px"
-           ),
-           
-           box(
-             textOutput(ns("proc_text")),
-             tags$style(type="text/css", "#proc_text {white-space: pre-wrap;}"),
-             title = "Prosessering av prøver",
-             solidHeader = TRUE,
-             height = "400px"
-           )
+         box(
+           textOutput(ns("proc_text")),
+           tags$style(type="text/css", "#proc_text {white-space: pre-wrap;}"),
+           title = "Prosessering av prøver",
+           solidHeader = TRUE,
+           height = "800px"
          ),
-         br(),
-         fluidRow(
-           box(
-             uiOutput(ns("syrphidae")),
-             title = "Eksempel på blomfluer fra en felletømming",
-             solidHeader = TRUE,
-             height = "400px"
-           ),
-           
-           box(
-             uiOutput(ns("lab")),
-             title = "Veing og identifisering med metastrekkoding",
-             solidHeader = TRUE,
-             height = "400px"
-           )
-         )
+        box(
+           uiOutput(ns("bottle")),
+           title = "En malalisefelle samler tusenvis av insekter",
+           solidHeader = TRUE,
+           height = "400px"
+         ),
+        br(),
+        box(
+           uiOutput(ns("lab")),
+           title = "Veing og identifisering med metastrekkoding",
+           solidHeader = TRUE,
+           height = "400px"
+        )
+         
 )
 }
 

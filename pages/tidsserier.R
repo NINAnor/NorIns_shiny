@@ -3,37 +3,28 @@ tidsserier_ui <- function(id){
   ns <- NS(id)
   
   tabPanel(title = "Insekter i tid og rom",
-           fluidRow(
-             box(
-               uiOutput(ns("tidsserie")),
-               title = "Biomasse og artsantall",
-               solidHeader = TRUE,
-               height = "400px"
-             ),
-             box(
-               textOutput(ns("tidsserie_text")),
-               title = "Starten på en tidsserie",
-               solidHeader = TRUE,
-               height = "400px"
-             )
+           box(
+             textOutput(ns("tidsserie_text")),
+             title = "Starten på en tidsserie",
+             solidHeader = TRUE,
+             height = "800px"
+           ),  
+           box(
+             uiOutput(ns("tidsserie")),
+             title = "Biomasse og artsantall",
+             solidHeader = TRUE,
+             height = "400px"
            ),
            br(),
-           fluidRow(
-             box(
-               uiOutput(ns("redlist")),
-               title = "Rødlistede og ikke tidligere registrerte funn",
-               background = "lime",
-               solidHeader = TRUE,
-               height = "400px"
-             ),
-             
-             box(
-               uiOutput(ns("betacom")),
-               title = "Artsamfunn varierer med økosystem, og over tid",
-               solidHeader = TRUE,
-               height = "400px"
-             )
-           ))
+           box(
+             uiOutput(ns("redlist")),
+             title = "Rødlistede og ikke tidligere registrerte funn",
+             background = "lime",
+             solidHeader = TRUE,
+             height = "400px"
+           )
+
+           )
   
 }
 
