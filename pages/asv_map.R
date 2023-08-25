@@ -7,9 +7,13 @@ require(dplyr)
 require(forcats)
 require(tidyr)
 require(Norimon)
+require(shinyvalidate)
+require(shinyjs)
 
 asvmap_ui <- function(id){
   ns <- NS(id)
+  
+  useShinyjs()
   
   tabPanel(title = "Innenartsvariasjon",
            fluidRow(
@@ -32,8 +36,10 @@ asvmap_ui <- function(id){
                                      uiOutput(ns("choose_fam"))),
                                      column(3,
                                      uiOutput(ns("choose_spec")),
-                                     uiOutput(ns("choose_species_filter")),
-                                     actionButton(ns("search_btn"), "Søk", class = "btn-primary")
+                                     selectizeInput(inputId = ns("species_filter"),
+                                                    label = "Overstyr via fritekst",
+                                                    choices = NULL,
+                                                    selected = NULL)
                                      )
                                      ),
                                      height = "300px"
@@ -51,22 +57,34 @@ asvmap_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
     
-  
+    values <- reactiveValues(a = 1)
+    
+    
     output$choose_conf <- renderUI({
       
       conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR", "ALL")
       
-      
+      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
+        
       selectInput(inputId = ns("sel_conf"),
                   label = "Velg konfidansenivå på navngiving",
                   choices = conf_choices,
                   selected = "")
+      } else {
+
+        selectInput(inputId = ns("sel_conf"),
+                    label = "Velg konfidansenivå på navngiving",
+                    choices = conf_choices,
+                    selected = species_filter_out()$identification_confidence)
+
+      }
     })
     
     
     output$choose_order <- renderUI({
       
-      con <- login_import$con()
+      #Assign to higher environment, to not require again
+      con <<- login_import$con() 
       
       order_choices_q <- "
 
@@ -101,10 +119,19 @@ asvmap_server <- function(id, login_import) {
       names(order_choices_list) <- paste0(order_choices_raw$id_order, ' - ', order_choices_raw$bokmal)
       }
       
+      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
+      
       selectInput(inputId = ns("sel_order"),
                   label = "Velg orden",
                   choices = order_choices_list,
                   selected = "Blattodea")
+      } else {
+        selectInput(inputId = ns("sel_order"),
+                    label = "Velg orden",
+                    choices = order_choices_list,
+                    selected = species_filter_out()$id_order)
+        
+        }
     })
     
     
@@ -151,11 +178,19 @@ asvmap_server <- function(id, login_import) {
       names(family_choices_list) <- paste0(family_choices_raw$id_family, ' - ', family_choices_raw$bokmal)
       }
       
+      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
+        
       selectInput(inputId = ns("sel_fam"),
                   label = "Velg familie",
                   choices = family_choices_list,
                   selected = "")
-      
+      } else {
+        
+        selectInput(inputId = ns("sel_fam"),
+                    label = "Velg familie",
+                    choices = family_choices_list,
+                    selected = species_filter_out()$id_family)
+      }
       
     })
     
@@ -251,11 +286,21 @@ asvmap_server <- function(id, login_import) {
         names(species_choices_list) <- paste0(species_choices_raw$species_latin_gbif, ' - ', species_choices_raw$bokmal)
       }
       
+      if(input$species_filter == "" || is.null(input$species_filter) || species_filter_out()$species_latin_gbif == "Ingen"){
+      
       selectInput(ns("asv_species"),
                   label = "Velg art fra familie",
                   choices = c(species_choices_list, ""),
                   #selected = "",
                   selectize = TRUE)
+      } else {
+        
+        selectInput(ns("asv_species"),
+                    label = "Velg art fra familie",
+                    choices = c(species_choices_list, ""),
+                    selected = species_filter_out()$species_latin_gbif,
+                    selectize = TRUE)
+      }
       
     })
     
@@ -267,23 +312,11 @@ asvmap_server <- function(id, login_import) {
     
     
 
-  output$choose_species_filter <- renderUI({
-    #req(input$asv_species)
 
-    selectizeInput(inputId = ns("species_filter"),
-                   label = "Overstyr via fritekst",
-                   choices = NULL,
-                   selected = NULL
-    )
-    
-
-  })
   
-species_choices <- reactive({
+species_choices <- function(){
 
-  con <- login_import$con()
-  
-  loc_species_list <- tbl(con,
+  loc_species_list <- tbl(con, ##Needs to be loaded into environment, here done by <<- earlier
                           Id(schema = "views",
                              table = "loc_species_list"))
   
@@ -295,26 +328,41 @@ species_choices <- reactive({
     pull()
   
   return(species_choices)
-})
+}
 
 
-  observeEvent(input$sel_conf,{
-    
-  #        if(input$species_filter != "Ingen"){
-      updateSelectizeInput(session = getDefaultReactiveDomain(),
-                           inputId = "species_filter",
-                           choices =  species_choices(),
-                           selected = "",
+
+
+      updateSelectizeInput(inputId = "species_filter",
+                           choices =  c("Ingen", species_choices()),
+                           selected = "Ingen",
                            server = TRUE,
                            options = list(maxOptions = 10)
                            )
-     # }
-  }
-)
 
-  #!!Problem here
+
+#observe({
+#  input$asv_species
+#  Sys.sleep(2)
+#reset(id = ns("species_filter"),
+#      asis = TRUE)
   
-    observeEvent(input$search_btn,{
+  # updateSelectizeInput(inputId = "species_filter",
+  #                      choices =  c("Ingen", species_choices()),
+  #                      selected = "Ingen",
+  #                      server = TRUE,
+  #                      options = list(maxOptions = 10)
+#  )
+
+#}#,
+# priority = -10,
+# ignoreNULL = TRUE,
+# ignoreInit = TRUE,
+# once = TRUE
+#)      
+      
+    species_filter_out <- reactive({
+      req(input$species_filter)
 
       if(input$species_filter != "Ingen") {
 
@@ -333,24 +381,26 @@ species_choices <- reactive({
         taxa_reverse_res <- dbGetQuery(con,
                                        taxa_reverse_sql)
 
-        updateSelectInput(inputId = "sel_conf",
-                            selected = taxa_reverse_res$identification_confidence)
-  
-        updateSelectInput(inputId = "sel_order",
-                          selected = taxa_reverse_res$id_order)
-  
-        updateSelectInput(inputId = "sel_fam",
-                          selected = taxa_reverse_res$id_family)
-  
-        updateSelectInput(inputId = "asv_species",
-                           selected = taxa_reverse_res$species_latin_gbif)
+        # updateSelectInput(inputId = "sel_conf",
+        #                     selected = taxa_reverse_res$identification_confidence)
+        # 
+        # updateSelectInput(inputId = "sel_order",
+        #                   selected = taxa_reverse_res$id_order)
+        # 
+        # updateSelectInput(inputId = "sel_fam",
+        #                   selected = taxa_reverse_res$id_family)
+        # 
+        # updateSelectInput(inputId = "asv_species",
+        #                    selected = taxa_reverse_res$species_latin_gbif)
 
+        
+      } else {
+        taxa_reverse_res <- tibble("species_latin_gbif" = "Ingen")
       }
+      
+      return(taxa_reverse_res)
 
-    },
-    ignoreNULL = TRUE,
-    ignoreInit = TRUE, 
-    priority = 10)
+    })
     
     
     selected_species <- reactive({
