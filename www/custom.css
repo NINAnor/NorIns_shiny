@@ -51,6 +51,11 @@ white-space: nowrap;
 }
 
 
+#taxabox > .box-body {
+white-space: normal;
+}
+
+
 img {
   display: block;
   margin-left: auto; 

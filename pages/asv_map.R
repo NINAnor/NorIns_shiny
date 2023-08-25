@@ -7,9 +7,13 @@ require(dplyr)
 require(forcats)
 require(tidyr)
 require(Norimon)
+require(shinyvalidate)
+require(shinyjs)
 
 asvmap_ui <- function(id){
   ns <- NS(id)
+  
+  useShinyjs()
   
   tabPanel(title = "Innenartsvariasjon",
            fluidRow(
@@ -25,10 +29,23 @@ asvmap_ui <- function(id){
                  height = "400px"),
              shinydashboardPlus::box(id = "speciesbox",
                                      title = "Artsutvalg",
+                                     fluidRow(
+                                       column(3,
                                      uiOutput(ns("choose_conf")),
                                      uiOutput(ns("choose_order")),
-                                     uiOutput(ns("choose_fam")),
+                                     uiOutput(ns("choose_fam"))),
+                                     column(3,
                                      uiOutput(ns("choose_spec")),
+                                     selectizeInput(inputId = ns("species_filter"),
+                                                    label = "Fritekst",
+                                                    choices = NULL,
+                                                    selected = NULL),
+                                     actionButton(ns("filter_btn"),
+                                                  label = "Fritekssøk"),
+                                     actionButton(ns("filter_clear_btn"),
+                                                  label = "Rens fritext")
+                                     )
+                                     ),
                                      height = "300px"
                                      
              )
@@ -44,38 +61,36 @@ asvmap_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
     
-    
-
-    load("data/shinyPass.Rdata")
-    
-    connect_to_insect_db(user = my_username,
-                         password = my_password)
-   
-    
-    asv_perc_reads <- tbl(con,
-                          Id(schema = "views",
-                             table = "asv_perc_reads"))
-    
-    
-    species_list <- tbl(con,
-                        Id(schema = "views",
-                           table = "species_list")) 
-    
+    values <- reactiveValues(a = 1)
     
     
     output$choose_conf <- renderUI({
+      input$filter_btn
       
       conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR", "ALL")
       
-      
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
+
       selectInput(inputId = ns("sel_conf"),
                   label = "Velg konfidansenivå på navngiving",
                   choices = conf_choices,
                   selected = "")
+      } else {
+
+        selectInput(inputId = ns("sel_conf"),
+                    label = "Velg konfidansenivå på navngiving",
+                    choices = conf_choices,
+                    selected = species_filter_out()$identification_confidence)
+
+      }
     })
     
     
     output$choose_order <- renderUI({
+      input$filter_btn
+      #Assign to higher environment, to not require again
+      con <<- login_import$con() 
       
       order_choices_q <- "
 
@@ -110,15 +125,28 @@ asvmap_server <- function(id, login_import) {
       names(order_choices_list) <- paste0(order_choices_raw$id_order, ' - ', order_choices_raw$bokmal)
       }
       
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
+        
+
       selectInput(inputId = ns("sel_order"),
                   label = "Velg orden",
                   choices = order_choices_list,
                   selected = "Blattodea")
+      } else {
+        selectInput(inputId = ns("sel_order"),
+                    label = "Velg orden",
+                    choices = order_choices_list,
+                    selected = species_filter_out()$id_order)
+        
+        }
     })
     
     
     
     output$choose_fam <- renderUI({
+      input$filter_btn
+      con <- login_import$con()
       
       req(input$sel_order)
       
@@ -158,11 +186,21 @@ asvmap_server <- function(id, login_import) {
       names(family_choices_list) <- paste0(family_choices_raw$id_family, ' - ', family_choices_raw$bokmal)
       }
       
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
+        
+
       selectInput(inputId = ns("sel_fam"),
                   label = "Velg familie",
                   choices = family_choices_list,
                   selected = "")
-      
+      } else {
+        
+        selectInput(inputId = ns("sel_fam"),
+                    label = "Velg familie",
+                    choices = family_choices_list,
+                    selected = species_filter_out()$id_family)
+      }
       
     })
     
@@ -174,8 +212,10 @@ asvmap_server <- function(id, login_import) {
       req(input$sel_fam)
       req(input$sel_conf)
       
+      input$filter_btn
+      con <- login_import$con()
       
-      
+
       if(input$sel_conf != "ALL"){ 
         species_choices_q <- "
           SELECT sl.species_latin_gbif, sl.id_genus, sl.id_species, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
@@ -202,8 +242,6 @@ asvmap_server <- function(id, login_import) {
         ON sl.id_genus = names.slekt
 		    AND sl.id_species = names.art
         ORDER BY species_latin_gbif
-          
-          
         "
         
         species_choice_san <- sqlInterpolate(con,
@@ -259,11 +297,23 @@ asvmap_server <- function(id, login_import) {
         names(species_choices_list) <- paste0(species_choices_raw$species_latin_gbif, ' - ', species_choices_raw$bokmal)
       }
       
+      species_filter <- isolate(input$species_filter)
+      if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
+        
+
       selectInput(ns("asv_species"),
-                  label = "Velg art",
-                  choices = species_choices_list,
-                  selected = "",
+                  label = "Velg art fra familie",
+                  choices = c(species_choices_list, ""),
+                  #selected = "",
                   selectize = TRUE)
+      } else {
+        
+        selectInput(ns("asv_species"),
+                    label = "Velg art fra familie",
+                    choices = c(species_choices_list, ""),
+                    selected = species_filter_out()$species_latin_gbif,
+                    selectize = TRUE)
+      }
       
     })
     
@@ -274,15 +324,113 @@ asvmap_server <- function(id, login_import) {
       addTiles(group = "OpenStreetMap")
     
     
-    selected_species <- reactive({
-      if(is.na(input$asv_species)) return(NULL)
+
+
+  
+species_choices <- function(){
+
+  loc_species_list <- tbl(con, ##Needs to be loaded into environment, here done by <<- earlier
+                          Id(schema = "views",
+                             table = "loc_species_list"))
+  
+  
+  species_choices <- loc_species_list %>%
+    select(species_latin_gbif) %>%
+    distinct() %>%
+    arrange(species_latin_gbif) %>%
+    pull()
+  
+  return(species_choices)
+}
+
+
+
+
+      updateSelectizeInput(inputId = "species_filter",
+                           choices =  c("Ingen", species_choices()),
+                           selected = "Ingen",
+                           server = TRUE,
+                           options = list(maxOptions = 10)
+                           )
+
+
+observeEvent(input$filter_clear_btn, {
+
+
+updateSelectizeInput(inputId = "species_filter",
+                     choices =  c("Ingen", species_choices()),
+                     selected = "Ingen",
+                     server = TRUE,
+                     options = list(maxOptions = 10)
+ )
+
+},
+ignoreNULL = TRUE,
+ignoreInit = TRUE
+)
       
-      species <- input$asv_species
-      return(species) 
-      
+    species_filter_out <- reactive({
+
+      if(input$species_filter != "Ingen") {
+
+        con <- login_import$con()
+
+        taxa_reverse_q <- "
+        SELECT *
+        FROM views.species_list
+        WHERE species_latin_gbif = ?id1
+        "
+
+        taxa_reverse_sql <- sqlInterpolate(con,
+                                           taxa_reverse_q,
+                                           id1 = input$species_filter)
+
+        taxa_reverse_res <- dbGetQuery(con,
+                                       taxa_reverse_sql)
+# 
+#         updateSelectInput(inputId = "sel_conf",
+#                             selected = taxa_reverse_res$identification_confidence)
+# 
+#         updateSelectInput(inputId = "sel_order",
+#                           selected = taxa_reverse_res$id_order)
+# 
+#         updateSelectInput(inputId = "sel_fam",
+#                           selected = taxa_reverse_res$id_family)
+# 
+#         updateSelectInput(inputId = "asv_species",
+#                            selected = taxa_reverse_res$species_latin_gbif)
+
+      #}
+       } else {
+         taxa_reverse_res <- tibble("species_latin_gbif" = "Ingen")
+       }
+       
+      # return(taxa_reverse_res)
+
     })
     
-    asv_to_leaflet <- function(species = "NULL"){
+    
+    selected_species <- reactive({
+      if(is.na(input$asv_species)) return(NULL) else{
+      
+      #if(input$species_filter == "Ingen"){
+        species <- input$asv_species
+      #} else {
+        
+        #species <- input$species_filter
+      #}
+      
+      return(species) 
+      }
+    })
+    #species = "NULL"
+    asv_to_leaflet <- function(){
+      
+      con <- login_import$con()
+      
+      asv_perc_reads <- tbl(con,
+                            Id(schema = "views",
+                               table = "asv_perc_reads"))
       
       sel_asv <- asv_perc_reads %>%
         filter(species_latin_gbif == !!selected_species())  %>%
@@ -317,8 +465,9 @@ asvmap_server <- function(id, login_import) {
     
     output$asv_map <- renderLeaflet({
       req(input$asv_species)
+      #req(input$species_filter)
       
-      to_plot <- asv_to_leaflet(input$asv_species)
+      to_plot <- asv_to_leaflet()
       
       basemap  %>% 
         leaflet::addProviderTiles(providers$Esri.WorldImagery,
