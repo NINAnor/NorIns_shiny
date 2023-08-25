@@ -494,9 +494,7 @@ ignoreInit = TRUE
       
     })
     
-    output$asvmap_text <- renderText("Som en del i metastrekkodingen registrerer vi også innenartsvariasjon. Dette betyr at vi noterer hver unik variant i den porsjon av genomet vi registrerer. Denne metodikk fanger ikke all genetisk variasjon, og ulike arter har også ulik mye variasjon i dette område. Likevel kan det være ett nyttig verktøy for å oppdage distinkte populasjoner, lokale anpassinger til klima og miljø, tilfeldig spredningshistorikk, og forandringer i populasjonsstørrelse.
-       
-Kakediagrammene til venstre viser komposisjonen av genetiske varianter der hver farge representerer en gitt genetisk variant. Størrelsen på kakene er skalert etter hvor mange DNA-sekvenser det totalt er blitt funnet av arten i hver lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
+    output$asvmap_text <- renderText("Kakediagrammene til høyre viser komposisjonen av genetiske varianter der hver farge representerer en gitt genetisk variant. Størrelsen på kakene er skalert etter hvor mange DNA-sekvenser det totalt er blitt funnet av arten i hver lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
 Bruk menyene nedenfor for å finne frem til en art av interesse. Notere at orervåkingsprogrammet fortsatt har en begrenset geografisk og tidsmessig utbredelse. Kart for arter som er observert bare ved et fåtall individer på et fåtall plasser vil være mer tilfeldige enn arter med mange individer fanget på mange plasser.
 
