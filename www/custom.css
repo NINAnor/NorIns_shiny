@@ -18,6 +18,7 @@
   border-radius: 4px;
   box-shadow: none;
   margin: none;
+  padding: none;
 /*
   width: 400px;
   height: 300px;
@@ -35,24 +36,33 @@
   font-size: 20px;
 }
 
+.shiny-text-output.shiny-bound-output{
+     margin-top: 0px;
+     padding-top: 0px;
+}
+
 .box-body {
   white-space: pre-wrap;
   margin-left: 10px;
-  margin-top: none;
-  margin-bottom: none;
+  margin-top: -40px;
+  margin-bottom: 0px;
   font-family: "Open Sans", Helvetica, Arial;
   font-weight: normal;
-  font-size: 12px;
+  font-size: 16px;
+  padding-top: 0px;
+  padding-bottom: 0px;
 }
 
 
 #speciesbox > .box-body {
 white-space: nowrap;
+margin-top: 0px;
 }
 
 
 #taxabox > .box-body {
 white-space: normal;
+margin-top: 0px;
 }
 
 

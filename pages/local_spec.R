@@ -14,30 +14,32 @@ locspec_ui <- function(id){
   ns <- NS(id)
   
   tabPanel(title = "Artsantall per lokalitet",
-           fluidRow(
-             box(title = "Overvåkingslokaliteter",
-                 leaflet::leafletOutput(ns("loc_map"),
-                                        width = "95%",
-                                        height = 400),
-                 height = "500px"
-                 
-             ),
+           column(6,
              shinydashboardPlus::box(id = "taxabox",
                                      title = "Taksonomisk utvalg",
                                      textOutput(ns("loc_spec_text")),
                                      uiOutput(ns("choose_project")),
                                      uiOutput(ns("choose_region")),
                                      uiOutput(ns("choose_habitattype")),
-                                     height = "300px"
-                                     
-             )
-           ),
-           fluidRow(
-             box(title = "Tidstrend",
+                                     height = "600px",
+                                     width = 12
+             ),
+             br(),
+             box(width = 12,
+                 title = "Tidstrend",
                plotlyOutput(ns("loc_spec"),
-                        height = "200px")
-             )
-             
+                        height = "300px"),
+               height = "400px"
+             )),
+           column(6,
+           
+           box(width = 12,
+               title = "Overvåkingslokaliteter",
+               leaflet::leafletOutput(ns("loc_map"),
+                                      width = "95%",
+                                      height = 700),
+               height = "800px"
+           )
            )
   )
   

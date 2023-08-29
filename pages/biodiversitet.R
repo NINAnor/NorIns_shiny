@@ -4,37 +4,28 @@ biodiv_ui <- function(id){
   ns <- NS(id)
   
   tabPanel(title = "Artsmangfold",
-           fluidRow(
+           box(
+             textOutput(ns("rankabund_text")),
+             title = "Overvåking av en hyperdivers organismegruppe",
+             solidHeader = TRUE,
+             height = "800px"
+           ),
              box(
                uiOutput(ns("rankabund")),
                title = "Tusenvis arter fanges ofte, men de fleste er sjeldne",
                solidHeader = TRUE,
                height = "400px"
              ),
-             
-             box(
-               textOutput(ns("rankabund_text")),
-               title = "Overvåking av en hyperdivers organismegruppe",
-               solidHeader = TRUE,
-               height = "400px"
-             )
-           ),
            br(),
-           fluidRow(
-             box(
+            box(
                uiOutput(ns("specacc")),
                title = "Mer og mer av insektmangfoldet kartlegges",
                solidHeader = TRUE,
                height = "400px"
-             ),
-             
-             box(
-               uiOutput(ns("artsniva")),
-               title = "Mange arter kan ennå ikke tildeles et navn",
-               solidHeader = TRUE,
-               height = "400px"
              )
-           )
+             
+
+           
   )
   
 }
