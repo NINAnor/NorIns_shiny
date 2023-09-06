@@ -74,13 +74,13 @@ asvmap_server <- function(id, login_import) {
       if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
 
       selectInput(inputId = ns("sel_conf"),
-                  label = "Velg konfidensnivå på navngiving",
+                  label = "Velg konfidensnivå på navn",
                   choices = conf_choices,
                   selected = "")
       } else {
 
         selectInput(inputId = ns("sel_conf"),
-                    label = "Velg konfidensnivå på navngiving",
+                    label = "Velg konfidensnivå på navn",
                     choices = conf_choices,
                     selected = species_filter_out()$identification_confidence)
 
