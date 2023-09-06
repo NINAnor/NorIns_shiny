@@ -1,6 +1,5 @@
 require(shinyjs)
 
-
 jsCode <- "shinyjs.pageCol = function(params){$('body').css('background', params);}"
 
 
@@ -58,7 +57,7 @@ felt_server <- function(id, login_import) {
       
     })
 
-output$felletyper_text <- renderText("Overvåkingen ble startet på Østlandet i 2020 og utvides suksesivt over landet. Fra og med 2023 dekker programmet semi-naturlig mark i alle landsdeler bortsett fra Vestlandet, samt skogsmark på Østlandet. På sikt er ambisjonen å dekke hele landet i begge disse økosystemtyper.
+output$felletyper_text <- renderText("Overvåkingen ble startet på Østlandet i 2020 og utvides sukssesivt over landet. Fra og med 2023 dekker programmet semi-naturlig mark i alle landsdeler bortsett fra Vestlandet, samt skogsmark på Østlandet. På sikt er ambisjonen å dekke hele landet i begge disse økosystemtyper.
   
 Vi bruker et rullerende skjema der man gjenbesøker fellene etter 5 år. Hvert år besøkes 10 lokaliteter innen hvert økosystem i hvert av de 5 landsdelene. Dermed vil programmet på sikt inkludere 250 lokaliteter per økosystem spredt over hele landet.
 

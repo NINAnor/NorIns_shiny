@@ -40,11 +40,11 @@ tidsserier_server <- function(id, login_import) {
     })
     
     
-    output$tidsserie_text <- renderText("Dette prosjekt vil danne en standardisert tidserie som kan brukes for å undersøke endringer i insektfaunaen over tid. Mengdene insekter varierer ofte kraftig innen en sesong, og mellom år og mellom lokaliteter. Man skal derfor ikke forvente seg å statistisk sikre forandringer etter bare noen år, da dette ville kreve svært store forandringer for å vise seg. 
+    output$tidsserie_text <- renderText("Dette prosjekt vil danne en standardisert tidsserie som kan brukes for å undersøke endringer i insektfaunaen over tid. Mengdene insekter varierer ofte kraftig innen en sesong, og mellom år og mellom lokaliteter. Man skal derfor ikke forvente seg å kunne se statistisk sikre forandringer etter bare noen år, da dette ville kreve svært store forandringer for å vise seg. 
 
-Overvåkingen kartlegger ikke bara forandringer, uten gir også verdifull kunnskap om dagens artsforekomster. For eksempel kan det informere om forekomsten av rødlistete arter, eller arter som ikke tidligere er registrert fra landet. Merk at funnene ikke er manuelt verifisert, uten baseres på DNA-treffer, der man er avhengig kvaliteten på referansebasene. 
+Overvåkingen kartlegger ikke bare forandringer, men gir også verdifull kunnskap om dagens artsforekomster. For eksempel kan det informere om forekomsten av rødlistete arter, eller arter som ikke tidligere er registrert fra landet. Merk at funnene ikke er manuelt verifisert, men baseres på DNA-treffe, der man er avhengig kvaliteten på referansebasene. 
 
-Artene danner også \"sammfunn\" av insekter som fordeler seg i regelmessig i tid og rom. Forandring av slike artssamfunn er også vert å følge med på, selv om enkelte arter ikke nødvendigvis forsvinner.
+Artene danner også \"samfunn\" av insekter som fordeler seg regelmessig i tid og rom. Forandring av slike artssamfunn er også verdt å følge med på, selv om enkelte arter ikke nødvendigvis forsvinner.
 "
     )
     

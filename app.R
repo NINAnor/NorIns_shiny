@@ -12,6 +12,7 @@ source("pages/biodiversitet.R", local = TRUE)
 source("pages/tidsserier.R", local = TRUE)
 source("pages/asv_map.R", local = TRUE)
 source("pages/local_spec.R", local = TRUE)
+source("pages/dashboard.R", local = TRUE)
 
 
 
@@ -19,7 +20,7 @@ source("pages/local_spec.R", local = TRUE)
 addResourcePath(prefix = "figures", directoryPath = "figures")
 
 
-ui <- navbarPage(title = "Norsk insektovervåking - en innblikk",
+ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  footer = NULL,
                  header = NULL,
                  tags$head(
@@ -38,7 +39,9 @@ ui <- navbarPage(title = "Norsk insektovervåking - en innblikk",
                  
                  asvmap_ui(id = "id_6"),
                  
-                 locspec_ui(id = "id_7")
+                 locspec_ui(id = "id_7"),
+                 
+                 dashboard_ui(id = "id_8")
                  
 )
 
@@ -59,6 +62,8 @@ server <- function(input, output, session) {
   asvmap_server(id = "id_6", login_import = login_export)
   
   locspec_server(id = "id_7", login_import = login_export)
+  
+  dashboard_server(id = "id_8", login_import = login_export)
   
 }
 

@@ -53,7 +53,7 @@ locspec_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     
     
-    output$loc_spec_text <- renderText("Her vises det totale antallet arter som er observert på hvert lokalitet og en lokal polynomisk modell for trendene da det lar seg gjøre. For å kunne sammenligne resultatene vises kun resultater fra malaisefeller. Det går å filtrere utvalget basert på regioner og habitatstyper, samt gjennom å zoome i kartet. Antallet arter som fanges varierer over tid og mellom plasser, og det vil ta tid for å kunne dra konklusjoner om stabile trender. Resultatene på disse figurer må tolkes med omhu. 
+    output$loc_spec_text <- renderText("Her vises det totale antallet arter som er observert på hver lokalitet og en lokal polynomisk modell for trendene der det lar seg gjøre. For å kunne sammenligne resultatene vises kun resultater fra malaisefeller. Det går an å filtrere utvalget basert på regioner og habitatstyper, samt gjennom å zoome i kartet. Antallet arter som fanges varierer over tid og mellom plasser, og det vil ta tid for å kunne dra konklusjoner om stabile trender. Resultatene på disse figurer må tolkes med omhu. 
 "
     )
     

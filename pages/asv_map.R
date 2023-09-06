@@ -74,13 +74,13 @@ asvmap_server <- function(id, login_import) {
       if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
 
       selectInput(inputId = ns("sel_conf"),
-                  label = "Velg konfidansenivå på navngiving",
+                  label = "Velg konfidensnivå på navngiving",
                   choices = conf_choices,
                   selected = "")
       } else {
 
         selectInput(inputId = ns("sel_conf"),
-                    label = "Velg konfidansenivå på navngiving",
+                    label = "Velg konfidensnivå på navngiving",
                     choices = conf_choices,
                     selected = species_filter_out()$identification_confidence)
 
@@ -388,25 +388,12 @@ ignoreInit = TRUE
 
         taxa_reverse_res <- dbGetQuery(con,
                                        taxa_reverse_sql)
-# 
-#         updateSelectInput(inputId = "sel_conf",
-#                             selected = taxa_reverse_res$identification_confidence)
-# 
-#         updateSelectInput(inputId = "sel_order",
-#                           selected = taxa_reverse_res$id_order)
-# 
-#         updateSelectInput(inputId = "sel_fam",
-#                           selected = taxa_reverse_res$id_family)
-# 
-#         updateSelectInput(inputId = "asv_species",
-#                            selected = taxa_reverse_res$species_latin_gbif)
 
-      #}
        } else {
          taxa_reverse_res <- tibble("species_latin_gbif" = "Ingen")
        }
        
-      # return(taxa_reverse_res)
+      return(taxa_reverse_res)
 
     })
     
@@ -496,9 +483,9 @@ ignoreInit = TRUE
     
     output$asvmap_text <- renderText("Kakediagrammene til høyre viser komposisjonen av genetiske varianter der hver farge representerer en gitt genetisk variant. Størrelsen på kakene er skalert etter hvor mange DNA-sekvenser det totalt er blitt funnet av arten i hver lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
-Bruk menyene nedenfor for å finne frem til en art av interesse. Notere at orervåkingsprogrammet fortsatt har en begrenset geografisk og tidsmessig utbredelse. Kart for arter som er observert bare ved et fåtall individer på et fåtall plasser vil være mer tilfeldige enn arter med mange individer fanget på mange plasser.
+Bruk menyene nedenfor for å finne frem til en art av interesse. Noter at overvåkingsprogrammet fortsatt har en begrenset geografisk og tidsmessig utbredelse. Kart for arter som er observert bare ved et fåtall individer på et fåtall plasser vil være mer tilfeldige enn arter med mange individer fanget på mange plasser.
 
-Konfidansenivå angir usikkerheten knyttet til den automatiske identifiseringen med DNA. De fleste av funnene er ikke gjennomgått manuelt og det kan være feil i artsnavn innenfor alle konfidansenivåer.
+Konfidensnivå angir usikkerheten knyttet til den automatiske identifiseringen med DNA. De fleste av funnene er ikke gjennomgått manuelt og det kan være feil i artsnavn innenfor alle konfidensnivåer.
 
 "
     )

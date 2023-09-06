@@ -13,12 +13,24 @@
 }
 */
 
+.small-box.bg-yellow {
+  background-color: #FFB25B;
+  height: 50px;
+}
+
+.small-box.bg-aqua {
+  background-color: #2DCCD3;
+  height: 50px;
+}
+
+
 .box {
   border: 2px solid #A2AAAD;
   border-radius: 4px;
   box-shadow: none;
   margin: none;
   padding: none;
+
 /*
   width: 400px;
   height: 300px;
