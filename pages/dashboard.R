@@ -10,20 +10,28 @@ dashboard_ui <- function(id){
   ns <- NS(id)
   
   tabPanel(title = "Dashboard",
-           fluidRow(
+           fluidRow(column(1),
+                    column(3, {
              valueBoxOutput(ns("no_loc_semi"),
-                            width = 2),
+                            width = 12)
+                      }),
+             column(3, {
              valueBoxOutput(ns("no_loc_forest"),
-                            width = 2),
+                            width = 12)
+               }),
+             column(3, {
              valueBoxOutput(ns("no_sampl"),
-                            width = 2)
+                            width = 12)
+             })
            ),
            
            column(6,
                   box(width = 12,
                       title = "Prøvetaking",
                       height = "400px",
-                     )
+
+                      plotOutput(ns("project_sum_map"),
+                                 height = "300px")                  )
            
                   ,
              br(),
@@ -167,5 +175,155 @@ dashboard_server <- function(id, login_import) {
     })
     
     
+    get_year_locality_stats <- function(){
+      con <- login_import$con()
+      
+      project_year_localities <-tbl(con,
+                                    Id(schema = "views",
+                                       table = "project_year_localities")
+                                    )
+      
+      proj_sum <- project_year_localities %>% 
+                  filter(project_short_name == "NasIns") %>%
+                  collect() %>% 
+                  mutate(region_name = factor(region_name, 
+                                              levels = c("Sørlandet", 
+                                                         "Østlandet", 
+                                                         "Vestlandet", 
+                                                         "Trøndelag", 
+                                                         "Nord-Norge")
+                                              )
+                         ) %>% 
+                  mutate(habitat_type = factor(habitat_type)) %>% 
+                  mutate(year = factor(year, levels = 2024:2020)) %>% 
+                  group_by(region_name,
+                           habitat_type,
+                           year,
+                           .drop = FALSE) %>% 
+                  summarise(visits = as.integer(n()),
+                            .groups = "drop") %>% 
+                 # mutate(year = as.numeric(as.character(year))) %>% 
+                  mutate(habitat_type = as.character(habitat_type)) %>% 
+                  arrange(region_name,
+                          year, 
+                          habitat_type) 
+
+      
+      return(proj_sum)
+      
+    }
+    
+    
+    plot_project_sum <- function(){
+      
+      raw_data <- get_year_locality_stats()
+      
+      fill_cols <- c("Semi-nat" = "#E57200", 
+                     "Forest" = "#7A9A01",
+                     "Ikke besøkt" = "white")
+      
+      reg_cols <- tibble(region_name = c("Sørlandet",
+                                         "Østlandet",
+                                         "Vestlandet",
+                                         "Trøndelag",
+                                         "Nord-Norge"),
+                         color = c("#E57200",
+                                   "#008C95",
+                                   "#7A9A01",
+                                   "#93328E",
+                                   "#004F71")
+                    
+                      )
+      
+      plot_data <- raw_data %>% 
+           group_by(region_name, year) %>% 
+        mutate(custom_y = cur_group_id()) %>% 
+        mutate(year = as.integer(as.character(year))) %>% 
+        mutate(custom_x = ifelse(habitat_type == "Semi-nat", 
+                                 as.integer(as.character(year)) - 0.2, 
+                                 as.integer(as.character(year)) + 0.2),
+               visited = ifelse(visits > 0, "Ja", "Nei")) 
+
+     
+      yintercepts <- tibble(y = c(0, 5, 10, 15, 20, 25) + 0.5) 
+      
+      p <-  ggplot(plot_data,
+             aes(x = custom_x,
+                 y = custom_y,
+                 color = habitat_type)
+             ) +
+
+       geom_hline(aes(yintercept = y),
+                  lty = 3,
+                  data = yintercepts) +
+      
+        ggpattern::geom_tile_pattern(aes(
+                                         pattern = visited),
+                                     fill = "white",
+                                     pattern_spacing = 0.02,
+                                     pattern_frequency = 5,
+                                     pattern_fill = "black",
+                                     
+                                     
+                  width = .3, 
+                  height = .9,
+                  lwd = 1) + 
+        #scale_fill_manual(name = "",
+        #                  values = fill_cols) +
+        #guides(color = "none") +
+         scale_pattern_manual(name = "Registrert", 
+                              values=c('stripe', 'none')) +
+         scale_color_manual(name = "Habitattype",
+                            values = fill_cols,
+                            aesthetics = "colour") +
+        ylab("") +
+        #xlab("År") +
+        scale_x_continuous(name = "År",
+                           breaks = unique(plot_data$year)) +
+        scale_y_continuous(breaks = c(0, 5, 10, 15, 20) + 2.5,
+                           labels = c("<b style='color:#E57200'>Sørlandet</b>",
+                                      "<b style='color:#008C95'>Østlandet</b>",
+                                      "<b style='color:#7A9A01'>Vestlandet</b>",
+                                      "<b style='color:#93328E'>Trøndelag</b>",
+                                      "<b style='color:#004F71'>Nord-Norge</b>")) +
+        theme(panel.background = element_blank(),
+             axis.text.y = ggtext::element_markdown())
+      
+      
+      p
+      
+      
+    }
+    
+    nor <- Norimon::get_map()
+    
+    plot_region_map <- function(){
+      
+      p <- ggplot(nor) +
+           geom_sf(aes(fill = region)) +
+           scale_fill_nina(name = "") +
+        guides(fill = "none") +
+        ggthemes::theme_map()
+      
+      p
+      
+    }
+    
+    
+    output$project_sum_map <- renderPlot({
+      
+      plot1 <- plot_project_sum()
+      plot2 <- plot_region_map()
+      
+      gridExtra::grid.arrange(plot2, 
+                              plot1, 
+                              ncol = 2,
+                              widths = c(unit(6, "cm"), unit(10, "cm"))
+      )
+      
+    })
+
+  
+
 })
 }

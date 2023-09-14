@@ -1,6 +1,6 @@
 require(shiny)
 require(shinydashboard)
-require(sf)
+#require(sf)
 
 
 
@@ -20,6 +20,7 @@ source("pages/dashboard.R", local = TRUE)
 addResourcePath(prefix = "figures", directoryPath = "figures")
 
 
+#Set up master ui function, fetching module ui-functions and defining ids
 ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  footer = NULL,
                  header = NULL,
@@ -46,7 +47,7 @@ ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
 )
 
 
-
+#Set up master server function, fetching module server-functions and defining ids. Database connection is made once, and shared though modules
 server <- function(input, output, session) {
   
   login_export <- felt_server(id = "id_1")

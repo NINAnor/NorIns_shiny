@@ -19,8 +19,15 @@ locspec_ui <- function(id){
                                      title = "Taksonomisk utvalg",
                                      textOutput(ns("loc_spec_text")),
                                      uiOutput(ns("choose_project")),
-                                     uiOutput(ns("choose_region")),
-                                     uiOutput(ns("choose_habitattype")),
+                                     #uiOutput(ns("choose_region")),
+                                     checkboxInput(ns("hab_split"),
+                                                   label = "Del etter habitat (filtrer på region i figur)",
+                                                   value = TRUE),
+                                     #uiOutput(ns("choose_habitattype")),
+                                     radioButtons(ns("unit_to_plot"),
+                                                  label = "Måleenhet",
+                                                  choices = c("Artsantall",
+                                                              "Biomasse")),
                                      height = "600px",
                                      width = 12
              ),
@@ -67,6 +74,10 @@ locspec_server <- function(id, login_import) {
       projects <- projects_tab %>% 
         select(project_name) %>% 
         distinct() %>% 
+        filter(project_name %in% c("Nasjonal insektovervåking",
+                                   "Tidlig varsling av fremmede arter",
+                                   "Overvåking av insekter i hule eiker")
+               ) %>% 
         collect() %>% 
         arrange()
       
@@ -118,6 +129,7 @@ locspec_server <- function(id, login_import) {
       
       
     })
+    
     
     
     output$choose_habitattype <- renderUI({
@@ -198,12 +210,12 @@ locspec_server <- function(id, login_import) {
       }
       
       
-      if(!is.null(input$region)){
-        if(input$region != "All"){
-          dat <- dat %>% 
-            filter(region_name == input$region)
-        }
-      }
+      # if(!is.null(input$region)){
+      #   if(input$region != "All"){
+      #     dat <- dat %>% 
+      #       filter(region_name == input$region)
+      #   }
+      # }
       
    
       if(!is.null(input$habitat_type)){
@@ -222,27 +234,35 @@ locspec_server <- function(id, login_import) {
       sf::st_set_geometry("rute_geom") %>% 
       select(locality,
              year,
-             habitat_type) %>% 
+             habitat_type,
+             region_name) %>% 
       distinct(locality,
                year,
                habitat_type,
+               region_name,
                .keep_all = T) %>% 
       collect()  
     
     
-    pal_cat <- isolate(ruter()$habitat_type) 
-    
-    pal <- leaflet::colorFactor(palette = NinaR::ninaPalette(),
-                                domain = pal_cat)
+    pal_hab_cat <- isolate(ruter()$habitat_type) 
+    pal_hab <- leaflet::colorFactor(palette = NinaR::ninaPalette(),
+                                domain = pal_hab_cat)
    
-    derived_pal <- pal(unique(pal_cat)) 
-    names(derived_pal) <- unique(pal_cat)
+    derived_pal_hab <- pal_hab(unique(pal_hab_cat)) 
+    names(derived_pal_hab) <- unique(pal_hab_cat)
+    
+    pal_reg_cat <- isolate(ruter()$region_name) 
+    pal_reg <- leaflet::colorFactor(palette = NinaR::ninaPalette(),
+                                    domain = pal_reg_cat)
+    
+    derived_pal_reg <- pal_reg(unique(pal_reg_cat)) 
+    names(derived_pal_reg) <- unique(pal_reg_cat)
     
 
     output$loc_map <- leaflet::renderLeaflet({
       req(input$project)
-      req(input$region)
-      req(input$habitat_type)
+      #req(input$region)
+      #req(input$habitat_type)
       
       leaflet::leaflet(width = "70%", height = 800) %>%
         
@@ -260,15 +280,15 @@ locspec_server <- function(id, login_import) {
         leaflet::hideGroup(c("Topo", "Ortophoto")) %>% 
         
         leaflet::addPolygons(data = ruter(),
-                             color = ~pal(ruter()$habitat_type)) %>% 
+                             color = ~pal_hab(ruter()$habitat_type)) %>% 
         
         leaflet::addCircles(data = trap_points(),
                             popup = htmltools::htmlEscape(trap_points()$trap_name),
                             radius = ~trap_points()$coordinate_precision_m,
-                            color = ~pal(trap_points()$habitat_type)
+                            color = ~pal_hab(trap_points()$habitat_type)
         ) %>% 
         
-        leaflet::addLegend(pal = pal,
+        leaflet::addLegend(pal = pal_hab,
                            values  = ruter()$habitat_type,
                            position = "bottomright",
                            title = "Habitat type",
@@ -308,7 +328,7 @@ locspec_server <- function(id, login_import) {
 
       loc_species_q <- paste0("
       
-      SELECT year, locality, habitat_type, no_spec as tot_spec
+      SELECT year, foo.locality, l.region_name, foo.habitat_type, no_spec as tot_spec
       FROM
       (SELECT locality,
       year, 
@@ -318,8 +338,10 @@ locspec_server <- function(id, login_import) {
       WHERE trap_type = 'Malaise'
                               
       AND locality IN ('",
-                              paste(ruterInBounds()$locality, collapse = "','"),
-                              "') GROUP BY year, habitat_type, locality) foo
+      paste(ruterInBounds()$locality, collapse = "','"),
+      "') GROUP BY year, habitat_type, locality) foo,
+      locations.localities l
+      WHERE foo.locality = l.locality
            
       
       " )
@@ -334,21 +356,84 @@ locspec_server <- function(id, login_import) {
     })
     
     
+    loc_biomass_data <- reactive({
+      
+      ##Something like this...
+      loc_biomass_q <- paste0("
+       SELECT l.locality,
+    yl.year,
+    l.habitat_type,
+    sum(st.wet_weight) as sum_wet_weight,
+	avg(st.wet_weight / (EXTRACT(epoch FROM (ls.end_date - ls.start_date)/86400)::integer)) as wet_weight_per_day
+   FROM 
+    events.sampling_trap st,
+    events.locality_sampling ls,
+    events.year_locality yl,
+    locations.localities l,
+    locations.traps,
+    lookup.trap_types tt
+  WHERE st.locality_sampling_id = ls.id AND 
+  ls.year_locality_id = yl.id AND 
+  yl.locality_id = l.id AND 
+  st.trap_id = traps.id AND 
+  traps.trap_model = tt.trap_model
+  AND tt.trap_type = 'Malaise'
+  AND ls.end_date IS NOT NULL
+  AND ls.start_date IS NOT NULL
+  AND st.wet_weight IS NOT NULL
+  GROUP BY l.locality, yl.year, l.habitat_type
+  ORDER BY wet_weight_per_day ASC
+  --LIMIT 100
+  
+                              
+      AND locality IN ('",
+                              paste(ruterInBounds()$locality, collapse = "','"),
+                              "') GROUP BY year, habitat_type, locality) foo,
+      locations.localities l
+      WHERE foo.locality = l.locality
+           
+      
+      " )
+      
+      
+      loc_species_res <- dbGetQuery(con,
+                                    loc_species_q)  %>% 
+        mutate(year = as.factor(year)) 
+      
+      return(loc_species_res)
+      
+    })
+    
+    
     output$loc_spec <- renderPlotly({
       req(ns("loc_map"))
+      req(ns("hab_split"))
 
+      if(input$unit_to_plot == "Artsantall"){
+        to_plot <- loc_species_data()
+      } else to_plot <- loc_biomass_data()
+      
+      if(is.null(to_plot) | nrow(to_plot) <1 ) return(NULL)
+      
       p <- ggplot2::ggplot(aes(y = tot_spec, 
                                x = year,
-                               group = habitat_type, 
-                               col = habitat_type),
-                           data =  loc_species_data()
+                               group = region_name, 
+                               col = region_name),
+                           data =  to_plot
                            ) +
-       ggplot2::geom_point(position = position_dodge(width = 0.1)) +
+       ggplot2::geom_point(position = position_dodge(width = 0.2)) +
        ggplot2::geom_smooth() +
         xlab("År") +
         ylab("Antall arter per lok.") +
-        scale_color_manual(values = derived_pal,
-                            name = "Habitatstype")
+        scale_color_manual(values = derived_pal_reg,
+                            name = "Region")
+      
+      if(input$hab_split){
+        
+        p <- p +
+          facet_wrap(facets = vars(habitat_type),
+                     nrow = 1)
+      }
       
       suppressWarnings(suppressMessages(
         ggplotly(p) %>%
