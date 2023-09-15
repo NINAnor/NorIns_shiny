@@ -308,7 +308,7 @@ locspec_server <- function(id, login_import) {
       suppressWarnings({ ruter <- ruter() %>% 
         dplyr::mutate(lon = sf::st_coordinates(st_centroid(.))[,1],
                       lat = sf::st_coordinates(st_centroid(.))[,2]) %>% 
-        st_drop_geometry()}) 
+        sf::st_drop_geometry()}) 
       
       out <- ruter %>%
         filter(lat >= local(latRng[1]) & lat <= local(latRng[2]) &
