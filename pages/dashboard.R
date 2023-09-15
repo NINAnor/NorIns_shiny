@@ -176,12 +176,13 @@ dashboard_server <- function(id, login_import) {
     
     
     get_year_locality_stats <- function(){
-      con <- login_import$con()
+      #con <- login_import$con()
       
       project_year_localities <-tbl(con,
                                     Id(schema = "views",
                                        table = "project_year_localities")
-                                    )
+                                    ) %>% 
+        mutate(habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type))
       
       proj_sum <- project_year_localities %>% 
                   filter(project_short_name == "NasIns") %>%
@@ -219,7 +220,7 @@ dashboard_server <- function(id, login_import) {
       raw_data <- get_year_locality_stats()
       
       fill_cols <- c("Semi-nat" = "#E57200", 
-                     "Forest" = "#7A9A01",
+                     "Skog" = "#7A9A01",
                      "Ikke besøkt" = "white")
       
       reg_cols <- tibble(region_name = c("Sørlandet",
@@ -249,30 +250,22 @@ dashboard_server <- function(id, login_import) {
       
       p <-  ggplot(plot_data,
              aes(x = custom_x,
-                 y = custom_y,
-                 color = habitat_type)
+                 y = custom_y)
              ) +
 
-       geom_hline(aes(yintercept = y),
-                  lty = 3,
-                  data = yintercepts) +
-      
-        ggpattern::geom_tile_pattern(aes(
-                                         pattern = visited),
-                                     fill = "white",
-                                     pattern_spacing = 0.02,
-                                     pattern_frequency = 5,
-                                     pattern_fill = "black",
-                                     
-                                     
-                  width = .3, 
-                  height = .9,
-                  lwd = 1) + 
-        #scale_fill_manual(name = "",
-        #                  values = fill_cols) +
-        #guides(color = "none") +
-         scale_pattern_manual(name = "Registrert", 
-                              values=c('stripe', 'none')) +
+         geom_hline(aes(yintercept = y),
+                    lty = 3,
+                    data = yintercepts) +
+        
+          geom_tile(aes(fill = visited,
+                        color = habitat_type),
+                    width = .3, 
+                    height = .9,
+                    lwd = 1) + 
+        
+         scale_fill_manual(name = "Registrert", 
+                              values=c("black", "white")) +
+        
          scale_color_manual(name = "Habitattype",
                             values = fill_cols,
                             aesthetics = "colour") +
@@ -287,10 +280,38 @@ dashboard_server <- function(id, login_import) {
                                       "<b style='color:#93328E'>Trøndelag</b>",
                                       "<b style='color:#004F71'>Nord-Norge</b>")) +
         theme(panel.background = element_blank(),
-             axis.text.y = ggtext::element_markdown())
-      
+             axis.text.y = ggtext::element_markdown()) 
       
       p
+      # 
+      # loc_text_1 <- grid::textGrob("Lok 01-10", gp = grid::gpar(fontsize = 8))
+      # loc_text_2 <- grid::textGrob("Lok 11-20", gp = grid::gpar(fontsize = 8))
+      # loc_text_3 <- grid::textGrob("Lok 21-30", gp = grid::gpar(fontsize = 8))
+      # loc_text_4 <- grid::textGrob("Lok 31-40", gp = grid::gpar(fontsize = 8))
+      # loc_text_5 <- grid::textGrob("Lok 41-50", gp = grid::gpar(fontsize = 8))
+      # 
+      # p +
+      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 5, ymax = 5) +
+      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 10, ymax = 10) +
+      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 15, ymax = 15) +
+      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 20, ymax = 20) +
+      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 25, ymax = 25) +
+      #   
+      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 5 - 1, ymax = 5 - 1) +
+      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 10 - 1, ymax = 10 - 1) +
+      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 15 - 1, ymax = 15 - 1) +
+      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 20 - 1, ymax = 20 - 1) +
+      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 25 - 1, ymax = 25 - 1) +
+      #   
+      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 5 - 2, ymax = 5 - 2) +
+      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 10 - 2, ymax = 10 - 2) +
+      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 15 - 2, ymax = 15 - 2) +
+      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 20 - 2, ymax = 20 - 2) +
+      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 25 - 2, ymax = 25 - 2) +
+      #   coord_cartesian(clip = 'off')
+      #   
+      #   
+      # p  
       
       
     }
