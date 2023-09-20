@@ -44,7 +44,7 @@ dashboard_ui <- function(id){
            column(6,
             shinydashboardPlus::box(id = "notteskallbox",
                                     width = 12,
-                  title = "Mengder i prøver",
+                  title = "Fangstmengde",
                   div(style = "display:inline-block; padding-left: 20px", 
                       radioButtons(ns("data_type"),
                                    label = "Datatype",

@@ -9,6 +9,7 @@ require(tidyr)
 require(Norimon)
 require(plotly)
 require(NinaR)
+require(sf)
 
 locspec_ui <- function(id){
   ns <- NS(id)
@@ -339,6 +340,8 @@ locspec_server <- function(id, login_import) {
                               
       AND locality IN ('",
       paste(ruterInBounds()$locality, collapse = "','"),
+      #paste(c("Semi-nat_01", "Semi-nat_02"), collapse = "','"),
+      
       "') GROUP BY year, habitat_type, locality) foo,
       locations.localities l
       WHERE foo.locality = l.locality
@@ -358,9 +361,8 @@ locspec_server <- function(id, login_import) {
     
     loc_biomass_data <- reactive({
       
-      ##Something like this...
-      loc_biomass_q <- paste0("
-           SELECT l.locality,
+    loc_biomass_q <- paste0("
+    SELECT l.locality,
     yl.year,
     l.habitat_type,
     l.region_name,
