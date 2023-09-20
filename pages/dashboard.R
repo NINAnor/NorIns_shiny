@@ -29,18 +29,16 @@ dashboard_ui <- function(id){
                   box(width = 12,
                       title = "Etablering og omdrev",
                       height = "400px",
-
                       plotOutput(ns("project_sum_map"),
-                                 height = "300px"))
-           
-                  ,
+                                 height = "300px")
+                      ),
              br(),
              box(width = 12,
                  title = "Taksonomisk fordeling",
+                 height = "400px",
                  plotOutput(ns("taxa_share"),
-                            height = "300px"),
-                 height = "400px"
-             )),
+                            height = "300px")),
+             ),
            column(6,
             shinydashboardPlus::box(id = "notteskallbox",
                                     width = 12,
@@ -563,7 +561,7 @@ dashboard_server <- function(id, login_import) {
   
     
     taxonomic_perc <- function(){
-      #con <- login_import$con()
+      con <- login_import$con()
       
       loc_traptype_species_list <- tbl(con,
                                        Id(schema = "views",
