@@ -37,8 +37,8 @@ dashboard_ui <- function(id){
              br(),
              box(width = 12,
                  title = "Taksonomisk fordeling",
-                 # uiOutput(ns("tax_perc"),
-                 #          height = "300px"),
+                 plotOutput(ns("taxa_share"),
+                            height = "300px"),
                  height = "400px"
              )),
            column(6,
@@ -147,7 +147,7 @@ dashboard_server <- function(id, login_import) {
       
       valueBox(
         value = no_loc[no_loc$"habitat_type" == "Semi-nat",]$no_loc,
-        subtitle = "Antall lokaliteter i semi-nat",
+        subtitle = "registrerte lokaliteter i semi-nat",
         color = "yellow",
         width = 2
       )
@@ -159,7 +159,7 @@ dashboard_server <- function(id, login_import) {
       
       valueBox(
         value = no_loc[no_loc$"habitat_type" == "Forest",]$no_loc,
-        subtitle = "Antall lokaliteter i skog",
+        subtitle = "registrerte lokaliteter i skog",
         color = "aqua"
       )
     })
@@ -191,14 +191,14 @@ dashboard_server <- function(id, login_import) {
       
       valueBox(
         value = no_sampl$no_sampl,
-        subtitle = "Antall felleprøver",
+        subtitle = "innsamlete felleprøver",
         color = "aqua"
       )
     })
     
     
     get_year_locality_stats <- function(){
-      #con <- login_import$con()
+      con <- login_import$con()
       
       project_year_localities <-tbl(con,
                                     Id(schema = "views",
@@ -346,6 +346,7 @@ dashboard_server <- function(id, login_import) {
     
     
     catch_per_locality_sampling <- function(){
+      con <- login_import$con()
       
       biomass_per_ls_q <- "
           SELECT (row_number() OVER(ORDER BY(round(sum(st.wet_weight)::numeric, 2)) DESC))::integer,
@@ -404,6 +405,7 @@ dashboard_server <- function(id, login_import) {
     
     catch_per_year_locality <- function(){
       
+      con <- login_import$con()
       
       biomass_per_yl_q <- "
        SELECT (row_number() OVER(ORDER BY(round(sum(st.wet_weight)::numeric, 2)) DESC))::integer ,
@@ -520,7 +522,7 @@ dashboard_server <- function(id, login_import) {
       
       if(dataset == "species"){
         p <- p +
-          xlab("Artsantall")
+          xlab("Antall arter")
       }
         
       
@@ -559,6 +561,114 @@ dashboard_server <- function(id, login_import) {
     })
 
   
+    
+    taxonomic_perc <- function(){
+      #con <- login_import$con()
+      
+      loc_traptype_species_list <- tbl(con,
+                                       Id(schema = "views",
+                                       table = "loc_traptype_species_list")) %>% 
+        filter(id_class == "Insecta")
+      
+      order_level_data_mf <- loc_traptype_species_list %>% 
+        filter(trap_type == "Malaise") %>% 
+        collect() %>% 
+        group_by(id_order,
+                 trap_type) %>% 
+        summarise(share = n()/nrow(.),
+                  .groups = "drop")
+      
+      family_level_data_mf <- loc_traptype_species_list %>% 
+        filter(trap_type == "Malaise")  %>% 
+        collect() %>% 
+        group_by(id_order, 
+                 id_family,
+                 trap_type) %>% 
+        summarise(share = n()/nrow(.),
+                  .groups = "drop")
+      
+      order_level_data_vf <- loc_traptype_species_list %>% 
+        filter(trap_type == "Window") %>% 
+        collect() %>% 
+        group_by(id_order,
+                 trap_type) %>% 
+        summarise(share = n()/nrow(.),
+                  .groups = "drop")
+      
+      family_level_data_vf <- loc_traptype_species_list %>% 
+        filter(trap_type == "Window")  %>% 
+        collect() %>% 
+        group_by(id_order, 
+                 id_family,
+                 trap_type) %>% 
+        summarise(share = n()/nrow(.),
+                  .groups = "drop")
+      
+      list("order_level_data_mf" = order_level_data_mf,
+           "family_level_data_mf" = family_level_data_mf,
+           "order_level_data_vf" = order_level_data_vf,
+           "family_level_data_vf" = family_level_data_vf
+           )
+    }
+    
+    
+      my_donut_plot <- function(trap_type = c("Malaise", 
+                                              "Window"),
+                                legend.position = "bottom",
+                                ggtitle = "none"){
+        
+        data_list <- taxonomic_perc()
+      
+        if(trap_type == "Malaise"){
+        
+         p <- ggplot() +
+             geom_col(aes(x = 2, y = share, fill = id_order), 
+                      data = data_list$order_level_data_mf, color = "black") + 
+             geom_col(aes(x = 3, y = share, fill = id_order), 
+                      data = data_list$family_level_data_mf, color = "black") +
+             #geom_text(aes(label = Group, x= 3, y = Pos), data = metadata2, size = 3)+
+             xlim(0, 3.5) + labs(x = NULL, y = NULL) + 
+             theme(axis.ticks=element_blank(),
+                   axis.text=element_blank(),
+                   axis.title=element_blank()
+                   ) 
+        } else {
+          p <- ggplot() +
+            geom_col(aes(x = 2, y = share, fill = id_order), 
+                     data = data_list$order_level_data_vf, color = "black") + 
+            geom_col(aes(x = 3, y = share, fill = id_order), 
+                     data = data_list$family_level_data_vf, color = "black") +
+            #geom_text(aes(label = Group, x= 3, y = Pos), data = metadata2, size = 3)+
+            xlim(0, 3.5) + labs(x = NULL, y = NULL) + 
+            theme(axis.ticks=element_blank(),
+                  axis.text=element_blank(),
+                  axis.title=element_blank()
+                  )
+        }
+         
+         p <- p + coord_polar(theta = "y") +
+           theme(legend.position = legend.position) +
+           ggtitle(ggtitle)
+        
+        return(p)
+     
+      }
+    
+    output$taxa_share <- renderPlot({
+      plot1 <- my_donut_plot("Malaise",
+                             ggtitle = "Malaisefelle",
+                             legend.position ="none")
+      plot2 <- my_donut_plot("Window",
+                             ggtitle = "Vindusfelle",
+                             legend.position ="none")
+    
+    gridExtra::grid.arrange(plot1, 
+                            plot2, 
+                            ncol = 2,
+                            widths = c(unit(10, "cm"), unit(10, "cm"))
+    )
+    
+    })
 
 })
 }
