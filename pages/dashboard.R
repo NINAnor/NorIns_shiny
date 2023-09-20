@@ -27,11 +27,11 @@ dashboard_ui <- function(id){
            
            column(6,
                   box(width = 12,
-                      title = "Prøvetaking",
+                      title = "Etablering og omdrev",
                       height = "400px",
 
                       plotOutput(ns("project_sum_map"),
-                                 height = "300px")                  )
+                                 height = "300px"))
            
                   ,
              br(),
@@ -42,10 +42,29 @@ dashboard_ui <- function(id){
                  height = "400px"
              )),
            column(6,
-              box(width = 12,
-                  title = "Funn i et nøtteskall",
-                  # uiOutput(ns("agg_res"),
-                  #          height = "300px"),
+            shinydashboardPlus::box(id = "notteskallbox",
+                                    width = 12,
+                  title = "Mengder i prøver",
+                  div(style = "display:inline-block", 
+                      radioButtons(ns("data_type"),
+                                   label = "Datatype",
+                                   choiceNames = c("Antall arter",
+                                               "Biomasse"),
+                                   choiceValues = c("species",
+                                              "biomass"))),
+                  div(style = "display:inline-block", 
+                  radioButtons(ns("agg_level"),
+                               label = "Funn per",
+                               choices = c("Sampling",
+                                           "Sesong"))),
+                  div(style = "display:inline-block", 
+                  radioButtons(ns("rank_dens"),
+                               label = "Plot-type",
+                               choices = c("Ranking",
+                                           "Fordeling"))),
+                 
+                  plotlyOutput(ns("catch_sum_biomass"),
+                             height = "300px"),
                   height = "400px"
                   )
            )
@@ -196,7 +215,7 @@ dashboard_server <- function(id, login_import) {
                                               )
                          ) %>% 
                   mutate(habitat_type = factor(habitat_type)) %>% 
-                  mutate(year = factor(year, levels = 2024:2020)) %>% 
+                  mutate(year = factor(year, levels = max(year):min(year))) %>% 
                   group_by(region_name,
                            habitat_type,
                            year,
@@ -246,16 +265,24 @@ dashboard_server <- function(id, login_import) {
                visited = ifelse(visits > 0, "Ja", "Nei")) 
 
      
-      yintercepts <- tibble(y = c(0, 5, 10, 15, 20, 25) + 0.5) 
+      yline_pos <- tibble(hline = seq(0, 
+                                    length(levels(plot_data$region_name)) * n_distinct(plot_data$year), 
+                                    by =  n_distinct(plot_data$year)) + 0.5
+      )
+      
+      
+      ytext_pos <- tibble(ytext = seq(0, 
+                                        (length(levels(plot_data$region_name))-1) * n_distinct(plot_data$year), 
+                                        by =  n_distinct(plot_data$year)) + (n_distinct(plot_data$year) + 1) /2) 
       
       p <-  ggplot(plot_data,
              aes(x = custom_x,
                  y = custom_y)
              ) +
 
-         geom_hline(aes(yintercept = y),
+         geom_hline(aes(yintercept = hline),
                     lty = 3,
-                    data = yintercepts) +
+                    data = yline_pos) +
         
           geom_tile(aes(fill = visited,
                         color = habitat_type),
@@ -273,7 +300,7 @@ dashboard_server <- function(id, login_import) {
         #xlab("År") +
         scale_x_continuous(name = "År",
                            breaks = unique(plot_data$year)) +
-        scale_y_continuous(breaks = c(0, 5, 10, 15, 20) + 2.5,
+        scale_y_continuous(breaks = ytext_pos$ytext,
                            labels = c("<b style='color:#E57200'>Sørlandet</b>",
                                       "<b style='color:#008C95'>Østlandet</b>",
                                       "<b style='color:#7A9A01'>Vestlandet</b>",
@@ -283,36 +310,6 @@ dashboard_server <- function(id, login_import) {
              axis.text.y = ggtext::element_markdown()) 
       
       p
-      # 
-      # loc_text_1 <- grid::textGrob("Lok 01-10", gp = grid::gpar(fontsize = 8))
-      # loc_text_2 <- grid::textGrob("Lok 11-20", gp = grid::gpar(fontsize = 8))
-      # loc_text_3 <- grid::textGrob("Lok 21-30", gp = grid::gpar(fontsize = 8))
-      # loc_text_4 <- grid::textGrob("Lok 31-40", gp = grid::gpar(fontsize = 8))
-      # loc_text_5 <- grid::textGrob("Lok 41-50", gp = grid::gpar(fontsize = 8))
-      # 
-      # p +
-      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 5, ymax = 5) +
-      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 10, ymax = 10) +
-      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 15, ymax = 15) +
-      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 20, ymax = 20) +
-      #   annotation_custom(loc_text_1, xmin = 2019, xmax = 2019,  ymin = 25, ymax = 25) +
-      #   
-      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 5 - 1, ymax = 5 - 1) +
-      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 10 - 1, ymax = 10 - 1) +
-      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 15 - 1, ymax = 15 - 1) +
-      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 20 - 1, ymax = 20 - 1) +
-      #   annotation_custom(loc_text_2, xmin = 2019, xmax = 2019,  ymin = 25 - 1, ymax = 25 - 1) +
-      #   
-      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 5 - 2, ymax = 5 - 2) +
-      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 10 - 2, ymax = 10 - 2) +
-      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 15 - 2, ymax = 15 - 2) +
-      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 20 - 2, ymax = 20 - 2) +
-      #   annotation_custom(loc_text_3, xmin = 2019, xmax = 2019,  ymin = 25 - 2, ymax = 25 - 2) +
-      #   coord_cartesian(clip = 'off')
-      #   
-      #   
-      # p  
-      
       
     }
     
@@ -341,6 +338,220 @@ dashboard_server <- function(id, login_import) {
                               ncol = 2,
                               widths = c(unit(6, "cm"), unit(10, "cm"))
       )
+      
+    })
+    
+    
+    catch_per_locality_sampling <- function(){
+      
+      biomass_per_ls_q <- "
+          SELECT (row_number() OVER(ORDER BY(round(sum(st.wet_weight)::numeric, 2)) DESC))::integer,
+          ls.id,
+	ls.sampling_name,
+	l.locality,
+    yl.year,
+	l.region_name,
+    l.habitat_type,
+	tt.trap_type,
+    round(sum(st.wet_weight)::numeric, 2) as value	
+   	FROM 
+    events.sampling_trap st,
+    events.locality_sampling ls,
+    events.year_locality yl,
+    locations.localities l,
+    locations.traps,
+    lookup.trap_types tt
+	WHERE st.locality_sampling_id = ls.id AND 
+	ls.year_locality_id = yl.id AND 
+	yl.locality_id = l.id AND 
+	st.trap_id = traps.id AND 
+	traps.trap_model = tt.trap_model
+	AND yl.project_short_name = 'NasIns'	
+	AND ls.end_date IS NOT NULL
+	AND ls.start_date IS NOT NULL
+	AND st.wet_weight IS NOT NULL
+	GROUP BY ls.id, yl.year, l.region_name, l.habitat_type, l.locality, tt.trap_type
+
+  "
+      
+      biomass_per_ls <- dbGetQuery(con,
+                                     biomass_per_ls_q) %>% 
+        filter(value > 0)
+      
+      
+      tot_spec_per_ls_q <- "
+      SELECT *
+      FROM views.no_spec_locality_sampling
+      "
+      
+      tot_spec_per_ls <- dbGetQuery(con,
+                                      tot_spec_per_ls_q) %>% 
+        arrange(desc(tot_no_spec)) %>% 
+        mutate(row_number = as.integer(row_number()),
+               value = as.integer(tot_no_spec)) %>% 
+        select(- tot_no_spec)
+      
+      out <- list("biomass" = biomass_per_ls,
+                  "species" = tot_spec_per_ls)
+      
+      return(out)
+      
+    }
+    
+    
+    catch_per_year_locality <- function(){
+      
+      
+      biomass_per_yl_q <- "
+       SELECT (row_number() OVER(ORDER BY(round(sum(st.wet_weight)::numeric, 2)) DESC))::integer ,
+       yl.id,
+	l.locality,
+    yl.year,
+	l.region_name,
+    l.habitat_type,
+	tt.trap_type,
+    round(sum(st.wet_weight)::numeric, 2) as value	
+   	FROM 
+    events.sampling_trap st,
+    events.locality_sampling ls,
+    events.year_locality yl,
+    locations.localities l,
+    locations.traps,
+    lookup.trap_types tt
+	WHERE st.locality_sampling_id = ls.id AND 
+	ls.year_locality_id = yl.id AND 
+	yl.locality_id = l.id AND 
+	st.trap_id = traps.id AND 
+	traps.trap_model = tt.trap_model
+	AND yl.project_short_name = 'NasIns'	
+	AND ls.end_date IS NOT NULL
+	AND ls.start_date IS NOT NULL
+	AND st.wet_weight IS NOT NULL
+	GROUP BY yl.id, yl.year, l.region_name, l.habitat_type, l.locality, tt.trap_type
+
+      "
+      
+      biomass_per_yl <- dbGetQuery(con,
+                                   biomass_per_yl_q)
+      
+      
+      
+      tot_spec_per_yl_q <- "
+      SELECT *
+      FROM views.no_spec_year_locality
+      "
+      
+      tot_spec_per_yl <- dbGetQuery(con,
+                                    tot_spec_per_yl_q) %>% 
+        arrange(desc(tot_no_spec)) %>% 
+        mutate(row_number = as.integer(row_number()),
+               value = as.integer(tot_no_spec)) %>% 
+        select(- tot_no_spec)
+        
+      
+      out <- list("biomass" = biomass_per_yl,
+                  "species" = tot_spec_per_yl)
+      
+      return(out)
+      
+    }
+    
+    
+    rank_plot <- function(x,
+                          dataset){
+      
+      df <- x
+      p <-  ggplot(data = df[[dataset]])
+      
+      p <- p +
+        geom_bar(aes(y = value,
+                   x = row_number),
+               stat = "identity") +
+        xlab("Rangert rekkefølge") +
+        geom_segment(aes(y = median(value), 
+                         yend = median(value),
+                         x = min(row_number),
+                         xend = max(row_number),
+                         linetype = "Median"),
+                     color = nina_colors[2]) +
+        geom_segment(aes(y = mean(value), 
+                         yend = mean(value),
+                         x = min(row_number),
+                         xend = max(row_number),
+                         linetype = "Middelv."),
+                     color = nina_colors[3]) +
+        scale_linetype_discrete(name = "",
+                                guide = guide_legend(override.aes = list(color = c(nina_colors[2], nina_colors[3])))) 
+      
+      if(dataset == "biomass"){
+        p <- p +
+          ylab("Våtvekt (g.)")
+      } 
+      
+      if(dataset == "species"){
+        p <- p +
+          ylab("Antall arter")
+      } 
+      
+      
+      
+      return(p)
+      
+    }
+    
+    
+    dens_plot <- function(x,
+                          dataset){
+      df <- x
+      p <- ggplot(data = df[[dataset]])
+      
+      p <- p +
+        geom_density(aes(x = value)) +
+        ylab("Densitet")
+        
+      
+      if(dataset == "biomass"){
+        p <- p +
+          xlab("Våtvekt (g.)")
+      } 
+      
+      if(dataset == "species"){
+        p <- p +
+          xlab("Artsantall")
+      }
+        
+      
+      return(p)
+    }
+    
+    output$catch_sum_biomass <- renderPlotly({
+      
+     
+      
+      if(input$agg_level == "Sampling"){
+          if(input$rank_dens == "Ranking"){
+          p <- rank_plot(catch_per_locality_sampling(),
+                         dataset = input$data_type)
+        } else {
+          p <- dens_plot(catch_per_locality_sampling(),
+                         dataset = input$data_type)
+           }
+        } else {
+        if(input$rank_dens == "Ranking"){
+          p <- rank_plot(catch_per_year_locality(),
+                         dataset = input$data_type)
+        } else {
+          p <- dens_plot(catch_per_year_locality(),
+                         dataset = input$data_type)
+        }
+      }
+      
+      
+      
+      p <- p +
+        theme(panel.background = element_blank())
+        
+      return(p)
       
     })
 

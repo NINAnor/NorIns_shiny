@@ -78,6 +78,11 @@ white-space: normal;
 margin-top: 0px;
 }
 
+#notteskallbox > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+}
+
 
 img {
   display: block;

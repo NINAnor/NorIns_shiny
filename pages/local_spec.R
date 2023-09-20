@@ -360,44 +360,39 @@ locspec_server <- function(id, login_import) {
       
       ##Something like this...
       loc_biomass_q <- paste0("
-       SELECT l.locality,
+           SELECT l.locality,
     yl.year,
     l.habitat_type,
+    l.region_name,
     sum(st.wet_weight) as sum_wet_weight,
-	avg(st.wet_weight / (EXTRACT(epoch FROM (ls.end_date - ls.start_date)/86400)::integer)) as wet_weight_per_day
-   FROM 
+	round(avg(st.wet_weight / (EXTRACT(epoch FROM (ls.end_date - ls.start_date)/86400)::integer))::numeric, 2) as wet_weight_per_day
+   	FROM 
     events.sampling_trap st,
     events.locality_sampling ls,
     events.year_locality yl,
     locations.localities l,
     locations.traps,
     lookup.trap_types tt
-  WHERE st.locality_sampling_id = ls.id AND 
-  ls.year_locality_id = yl.id AND 
-  yl.locality_id = l.id AND 
-  st.trap_id = traps.id AND 
-  traps.trap_model = tt.trap_model
-  AND tt.trap_type = 'Malaise'
-  AND ls.end_date IS NOT NULL
-  AND ls.start_date IS NOT NULL
-  AND st.wet_weight IS NOT NULL
-  GROUP BY l.locality, yl.year, l.habitat_type
-  ORDER BY wet_weight_per_day ASC
-  --LIMIT 100
-  
-                              
-      AND locality IN ('",
-                              paste(ruterInBounds()$locality, collapse = "','"),
-                              "') GROUP BY year, habitat_type, locality) foo,
-      locations.localities l
-      WHERE foo.locality = l.locality
-           
-      
-      " )
+	WHERE st.locality_sampling_id = ls.id AND 
+	ls.year_locality_id = yl.id AND 
+	yl.locality_id = l.id AND 
+	st.trap_id = traps.id AND 
+	traps.trap_model = tt.trap_model
+	AND tt.trap_type = 'Malaise'
+	AND ls.end_date IS NOT NULL
+	AND ls.start_date IS NOT NULL
+	AND st.wet_weight IS NOT NULL
+	AND l.locality IN ('", 
+  paste(ruterInBounds()$locality, collapse = "','"),
+  "')
+	GROUP BY l.locality, yl.year, l.habitat_type, l.region_name
+	ORDER BY wet_weight_per_day 
+
+  " )
       
       
       loc_species_res <- dbGetQuery(con,
-                                    loc_species_q)  %>% 
+                                    loc_biomass_q)  %>% 
         mutate(year = as.factor(year)) 
       
       return(loc_species_res)
@@ -411,11 +406,18 @@ locspec_server <- function(id, login_import) {
 
       if(input$unit_to_plot == "Artsantall"){
         to_plot <- loc_species_data()
-      } else to_plot <- loc_biomass_data()
+        yvar = "tot_spec"
+        ylab =  "Antall arter per lok."
+      } else 
+        {
+          to_plot <- loc_biomass_data()
+          yvar = "wet_weight_per_day"
+          ylab = "Middels. biomasse per dag (g/dag)"
+        }
       
       if(is.null(to_plot) | nrow(to_plot) <1 ) return(NULL)
       
-      p <- ggplot2::ggplot(aes(y = tot_spec, 
+      p <- ggplot2::ggplot(aes(y = get(yvar), 
                                x = year,
                                group = region_name, 
                                col = region_name),
@@ -423,10 +425,10 @@ locspec_server <- function(id, login_import) {
                            ) +
        ggplot2::geom_point(position = position_dodge(width = 0.2)) +
        ggplot2::geom_smooth() +
-        xlab("År") +
-        ylab("Antall arter per lok.") +
-        scale_color_manual(values = derived_pal_reg,
-                            name = "Region")
+       xlab("År") +
+       ylab(ylab) +
+       scale_color_manual(values = derived_pal_reg,
+                          name = "Region")
       
       if(input$hab_split){
         
