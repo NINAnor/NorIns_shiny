@@ -706,22 +706,22 @@ dashboard_server <- function(id, login_import) {
                              ggtitle = "Malaisefelle"
                              ,legend.position ="bottom"
                              ) +
-        scale_fill_discrete(name = "Orden",
-                            breaks = c("Diptera", 
-                                       "Hymenoptera",
-                                       "Lepidoptera", 
-                                       "Hemiptera",
-                                       "Coleoptera",
-                                       "Psocoptera",
-                                       "Trichoptera",
-                                       "Neuroptera")) +
-        guides(fill = guide_legend(nrow = 3)) 
-        # theme(legend.text = element_text(color = "white"),
-        #       legend.title = element_text(color = "white"),
-        #       legend.key = element_rect(fill = "white")) + 
-        # guides(fill = guide_legend(nrow = 3,
-        #                            override.aes= list(alpha = 0, color = "white"))) +
-        # theme(legend.key=element_rect(colour="white"))
+        # scale_fill_discrete(name = "Orden",
+        #                     breaks = c("Diptera", 
+        #                                "Hymenoptera",
+        #                                "Lepidoptera", 
+        #                                "Hemiptera",
+        #                                "Coleoptera",
+        #                                "Psocoptera",
+        #                                "Trichoptera",
+        #                                "Neuroptera")) +
+        # guides(fill = guide_legend(nrow = 3)) 
+        theme(legend.text = element_text(color = "white"),
+              legend.title = element_text(color = "white"),
+              legend.key = element_rect(fill = "white")) +
+        guides(fill = guide_legend(nrow = 3,
+                                   override.aes= list(alpha = 0, color = "white"))) +
+        theme(legend.key=element_rect(colour="white"))
        
       
       plot2 <- taxa_donut_plot("Window",
