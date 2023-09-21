@@ -26,6 +26,7 @@ dashboard_ui <- function(id){
            ),
            
            column(6,
+                  
                   box(width = 12,
                       title = "Etablering og omdrev",
                       height = "400px",
@@ -33,9 +34,18 @@ dashboard_ui <- function(id){
                                  height = "300px")
                       ),
              br(),
-             box(width = 12,
+           shinydashboardPlus::box(id = "taxa_share",
+                                   width = 12,
                  title = "Taksonomisk fordeling",
                  height = "400px",
+                 radioButtons(ns("taxa_plot_type"),
+                              label = "Plot-type",
+                              choiceNames = c("Stabel",
+                                              "Smultring (fam. i ytre ring)"),
+                              choiceValues = c("barplot",
+                                               "donut"),
+                              width = "100px",
+                              inline = TRUE),
                  plotOutput(ns("taxa_share"),
                             height = "300px")),
              ),
@@ -574,7 +584,8 @@ dashboard_server <- function(id, login_import) {
         group_by(id_order,
                  trap_type) %>% 
         summarise(share = n()/nrow(.),
-                  .groups = "drop")
+                  .groups = "drop") %>% 
+        arrange(desc(share))
       
       family_level_data_mf <- loc_traptype_species_list %>% 
         filter(trap_type == "Malaise")  %>% 
@@ -583,7 +594,8 @@ dashboard_server <- function(id, login_import) {
                  id_family,
                  trap_type) %>% 
         summarise(share = n()/nrow(.),
-                  .groups = "drop")
+                  .groups = "drop") %>% 
+        arrange(desc(share))
       
       order_level_data_vf <- loc_traptype_species_list %>% 
         filter(trap_type == "Window") %>% 
@@ -591,7 +603,8 @@ dashboard_server <- function(id, login_import) {
         group_by(id_order,
                  trap_type) %>% 
         summarise(share = n()/nrow(.),
-                  .groups = "drop")
+                  .groups = "drop") %>% 
+        arrange(desc(share))
       
       family_level_data_vf <- loc_traptype_species_list %>% 
         filter(trap_type == "Window")  %>% 
@@ -600,7 +613,8 @@ dashboard_server <- function(id, login_import) {
                  id_family,
                  trap_type) %>% 
         summarise(share = n()/nrow(.),
-                  .groups = "drop")
+                  .groups = "drop") %>% 
+        arrange(desc(share))
       
       list("order_level_data_mf" = order_level_data_mf,
            "family_level_data_mf" = family_level_data_mf,
@@ -610,7 +624,7 @@ dashboard_server <- function(id, login_import) {
     }
     
     
-      my_donut_plot <- function(trap_type = c("Malaise", 
+      taxa_donut_plot <- function(trap_type = c("Malaise", 
                                               "Window"),
                                 legend.position = "bottom",
                                 ggtitle = "none"){
@@ -621,9 +635,11 @@ dashboard_server <- function(id, login_import) {
         
          p <- ggplot() +
              geom_col(aes(x = 2, y = share, fill = id_order), 
-                      data = data_list$order_level_data_mf, color = "black") + 
+                      data = data_list$order_level_data_mf, 
+                      color = "black") + 
              geom_col(aes(x = 3, y = share, fill = id_order), 
-                      data = data_list$family_level_data_mf, color = "black") +
+                      data = data_list$family_level_data_mf, 
+                      color = "black") +
              #geom_text(aes(label = Group, x= 3, y = Pos), data = metadata2, size = 3)+
              xlim(0, 3.5) + labs(x = NULL, y = NULL) + 
              theme(axis.ticks=element_blank(),
@@ -651,22 +667,97 @@ dashboard_server <- function(id, login_import) {
         return(p)
      
       }
+      
+      
+      taxa_barplot <- function(){
+        
+        data_list <- taxonomic_perc()
+        
+        data_comb_order <- data_list$order_level_data_mf %>% 
+          rbind(data_list$order_level_data_vf) %>% 
+          mutate(id_order = factor(id_order, levels = data_list$order_level_data_mf$id_order))
+        
+        data_comb_family <- data_list$family_level_data_mf %>% 
+          rbind(data_list$family_level_data_vf)
+      
+        
+        ggplot() +
+          geom_bar(aes(y = share, 
+                       x = id_order,
+                       group = trap_type,
+                       fill = trap_type),
+                   data = data_comb_order,
+                   stat = "identity",
+                   position = "dodge") +
+          scale_fill_nina(name = "Felletype",
+                          palette = "darkblue-orange") +
+          ylab("Andel arter") + 
+          xlab("Orden") +
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+        
+          
+      }
+      
     
     output$taxa_share <- renderPlot({
-      plot1 <- my_donut_plot("Malaise",
-                             ggtitle = "Malaisefelle",
-                             legend.position ="none")
-      plot2 <- my_donut_plot("Window",
-                             ggtitle = "Vindusfelle",
-                             legend.position ="none")
-    
-    gridExtra::grid.arrange(plot1, 
-                            plot2, 
-                            ncol = 2,
-                            widths = c(unit(10, "cm"), unit(10, "cm"))
+      
+      if(input$taxa_plot_type == "donut"){
+      plot1 <- taxa_donut_plot("Malaise",
+                             ggtitle = "Malaisefelle"
+                             ,legend.position ="bottom"
+                             ) +
+        scale_fill_discrete(name = "Orden",
+                            breaks = c("Diptera", 
+                                       "Hymenoptera",
+                                       "Lepidoptera", 
+                                       "Hemiptera",
+                                       "Coleoptera",
+                                       "Psocoptera",
+                                       "Trichoptera",
+                                       "Neuroptera")) +
+        guides(fill = guide_legend(nrow = 3)) 
+        # theme(legend.text = element_text(color = "white"),
+        #       legend.title = element_text(color = "white"),
+        #       legend.key = element_rect(fill = "white")) + 
+        # guides(fill = guide_legend(nrow = 3,
+        #                            override.aes= list(alpha = 0, color = "white"))) +
+        # theme(legend.key=element_rect(colour="white"))
+       
+      
+      plot2 <- taxa_donut_plot("Window",
+                               ggtitle = "Vindusfelle"
+                               ,legend.position = "bottom"
+                             ) +
+        scale_fill_discrete(name = "Orden",
+                            breaks = c("Diptera", 
+                                       "Hymenoptera",
+                                       "Lepidoptera", 
+                                       "Hemiptera",
+                                       "Coleoptera",
+                                       "Psocoptera",
+                                       "Trichoptera",
+                                       "Neuroptera")) +
+        guides(fill = guide_legend(nrow = 3)) 
+        
+        
+      gridExtra::grid.arrange(plot1, 
+                              plot2, 
+                              ncol = 2,
+                              widths = c(unit(5, "cm"), 
+                                         unit(5, "cm"))
     )
+      
+      }
+      
+      if(input$taxa_plot_type == "barplot"){
+        
+        taxa_barplot()
+      }
+      
     
     })
 
 })
 }
+
+
