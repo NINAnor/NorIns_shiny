@@ -728,15 +728,15 @@ dashboard_server <- function(id, login_import) {
                                ggtitle = "Vindusfelle"
                                ,legend.position = "bottom"
                              ) +
-        scale_fill_discrete(name = "Orden",
-                            breaks = c("Diptera", 
-                                       "Hymenoptera",
-                                       "Lepidoptera", 
-                                       "Hemiptera",
-                                       "Coleoptera",
-                                       "Psocoptera",
-                                       "Trichoptera",
-                                       "Neuroptera")) +
+        scale_fill_nina(name = "Orden",
+                        breaks = c("Diptera", 
+                                   "Hymenoptera",
+                                   "Lepidoptera", 
+                                   "Hemiptera",
+                                   "Coleoptera",
+                                   "Psocoptera",
+                                   "Trichoptera",
+                                   "Neuroptera")) +
         guides(fill = guide_legend(nrow = 3)) 
         
         
