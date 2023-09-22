@@ -2,7 +2,7 @@
 tidsserier_ui <- function(id){
   ns <- NS(id)
   
-  tabPanel(title = "Insekter i tid og rom",
+  tabPanel(title = "Tidsserier",
            box(
              textOutput(ns("tidsserie_text")),
              title = "Starten på en tidsserie",

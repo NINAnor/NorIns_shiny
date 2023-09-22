@@ -28,7 +28,7 @@ dashboard_ui <- function(id){
            column(6,
                   
                   box(width = 12,
-                      title = "Etablering og omdrev",
+                      title = "Etablering og omdrev (10 lok. per region-habitat-år)",
                       height = "400px",
                       plotOutput(ns("project_sum_map"),
                                  height = "300px")
@@ -44,6 +44,7 @@ dashboard_ui <- function(id){
                                               "Smultring (fam. i ytre ring)"),
                               choiceValues = c("barplot",
                                                "donut"),
+                              #selected = "donut",
                               width = "100px",
                               inline = TRUE),
                  plotOutput(ns("taxa_share"),
@@ -57,16 +58,18 @@ dashboard_ui <- function(id){
                       radioButtons(ns("data_type"),
                                    label = "Datatype",
                                    choiceNames = c("Antall arter",
-                                               "Biomasse"),
+                                                   "Biomasse"),
                                    choiceValues = c("species",
-                                              "biomass"),
+                                                    "biomass"),
                                    width = "100px")),
                   div(style = "display:inline-block; padding-left: 20px", 
                   radioButtons(ns("agg_level"),
                                label = "Funn per",
-                               choices = c("Sampling",
-                                           "Sesong"),
-                               width = "100px")),
+                               choiceNames = c("Lokalitet-sampling",
+                                           "Lokalitet-sesong"),
+                               choiceValues = c("Sampling",
+                                                "Sesong"),
+                               width = "150px")),
                   div(style = "display:inline-block; padding-left: 20px", 
                   radioButtons(ns("rank_dens"),
                                label = "Plot-type",
@@ -339,18 +342,17 @@ dashboard_server <- function(id, login_import) {
     }
     
     
-    output$project_sum_map <- renderPlot({
+    output$project_sum_map <- renderCachedPlot(expr = {
+      plot1 <- plot_region_map()
+      plot2 <- plot_project_sum()
       
-      plot1 <- plot_project_sum()
-      plot2 <- plot_region_map()
-      
-      gridExtra::grid.arrange(plot2, 
-                              plot1, 
+      gridExtra::grid.arrange(plot1, 
+                              plot2, 
                               ncol = 2,
-                              widths = c(unit(6, "cm"), unit(10, "cm"))
-      )
-      
-    })
+                              widths = c(unit(6, "cm"), unit(10, "cm")))
+    },
+    cacheKeyExpr = get_year_locality_stats()
+    )
     
     
     catch_per_locality_sampling <- function(){
@@ -699,29 +701,29 @@ dashboard_server <- function(id, login_import) {
       }
       
     
-    output$taxa_share <- renderPlot({
+    output$taxa_share <- renderCachedPlot(expr = {
       
       if(input$taxa_plot_type == "donut"){
       plot1 <- taxa_donut_plot("Malaise",
                              ggtitle = "Malaisefelle"
                              ,legend.position ="bottom"
                              ) +
-        # scale_fill_discrete(name = "Orden",
-        #                     breaks = c("Diptera", 
-        #                                "Hymenoptera",
-        #                                "Lepidoptera", 
-        #                                "Hemiptera",
-        #                                "Coleoptera",
-        #                                "Psocoptera",
-        #                                "Trichoptera",
-        #                                "Neuroptera")) +
-        # guides(fill = guide_legend(nrow = 3)) 
-        theme(legend.text = element_text(color = "white"),
-              legend.title = element_text(color = "white"),
-              legend.key = element_rect(fill = "white")) +
-        guides(fill = guide_legend(nrow = 3,
-                                   override.aes= list(alpha = 0, color = "white"))) +
-        theme(legend.key=element_rect(colour="white"))
+        scale_fill_nina(name = "Orden",
+                        breaks = c("Diptera", 
+                                   "Hymenoptera",
+                                   "Lepidoptera", 
+                                   "Hemiptera",
+                                   "Coleoptera",
+                                   "Psocoptera",
+                                   "Trichoptera",
+                                   "Neuroptera")) +
+         guides(fill = guide_legend(nrow = 3)) 
+        # theme(legend.text = element_text(color = "white"),
+        #       legend.title = element_text(color = "white"),
+        #       legend.key = element_rect(fill = "white")) +
+        # guides(fill = guide_legend(nrow = 3,
+        #                            override.aes= list(alpha = 0, color = "white"))) +
+        # theme(legend.key=element_rect(colour="white"))
        
       
       plot2 <- taxa_donut_plot("Window",
@@ -753,9 +755,9 @@ dashboard_server <- function(id, login_import) {
         
         taxa_barplot()
       }
-      
-    
-    })
+    },
+    cacheKeyExpr = input$taxa_plot_type
+    )
 
 })
 }

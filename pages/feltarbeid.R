@@ -6,7 +6,7 @@ jsCode <- "shinyjs.pageCol = function(params){$('body').css('background', params
 felt_ui <- function(id){
   ns <- NS(id)
 
-  tabPanel(title = "Feltarbeid",
+  tabPanel(title = "Innsamling",
            box(
              textOutput(ns("felletyper_text")),
              # tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
@@ -23,7 +23,7 @@ felt_ui <- function(id){
           br(),
            box(
             uiOutput(ns("felletyper")),
-            title = "Innsamling med malaise- og vindusfeller",
+            title = "Malaise- og vindusfeller",
             solidHeader = TRUE,
             height = "400px"
           )

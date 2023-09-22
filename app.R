@@ -8,7 +8,7 @@ require(shinydashboard)
 source("pages/feltarbeid.R", local = TRUE)
 source("pages/labarbeid.R", local = TRUE)
 source("pages/bioinformatikk.R", local = TRUE)
-source("pages/biodiversitet.R", local = TRUE)
+source("pages/artsmangfold.R", local = TRUE)
 source("pages/tidsserier.R", local = TRUE)
 source("pages/asv_map.R", local = TRUE)
 source("pages/local_spec.R", local = TRUE)
@@ -27,6 +27,8 @@ ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  tags$head(
                    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
                  ),
+                 
+                 dashboard_ui(id = "id_8"),
  
                  felt_ui(id = "id_1"),
                  
@@ -38,11 +40,13 @@ ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  
                  tidsserier_ui(id = "id_5"),
                  
-                 asvmap_ui(id = "id_6"),
-                 
                  locspec_ui(id = "id_7"),
                  
-                 dashboard_ui(id = "id_8")
+                 asvmap_ui(id = "id_6")
+                 
+                 
+                 
+                 
                  
 )
 

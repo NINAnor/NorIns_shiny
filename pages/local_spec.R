@@ -14,7 +14,7 @@ require(sf)
 locspec_ui <- function(id){
   ns <- NS(id)
   
-  tabPanel(title = "Artsantall per lokalitet",
+  tabPanel(title = "Insekter i tid og rom",
            column(6,
              shinydashboardPlus::box(id = "taxabox",
                                      title = "Taksonomisk utvalg",

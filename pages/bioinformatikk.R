@@ -3,7 +3,7 @@
 bioinformatikk_ui <- function(id){
   ns <- NS(id)
   
-tabPanel(title = "Bioinformatikk",
+tabPanel(title = "Databehandling",
          
          box(
            textOutput(ns("flytskjema_text")),
