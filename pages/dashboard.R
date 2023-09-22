@@ -29,7 +29,7 @@ dashboard_ui <- function(id){
                   
                   box(width = 12,
                       title = "Etablering og omdrev (10 lok. per region-habitat-år)",
-                      height = "400px",
+                      height = "380px",
                       plotOutput(ns("project_sum_map"),
                                  height = "300px")
                       )
