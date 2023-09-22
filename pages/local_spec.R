@@ -352,7 +352,8 @@ locspec_server <- function(id, login_import) {
       
       loc_species_res <- dbGetQuery(con,
                                     loc_species_q)  %>% 
-        mutate(year = as.factor(year)) 
+        mutate(year = as.factor(year),
+               habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type)) 
 
       return(loc_species_res)
       
@@ -395,7 +396,8 @@ locspec_server <- function(id, login_import) {
       
       loc_species_res <- dbGetQuery(con,
                                     loc_biomass_q)  %>% 
-        mutate(year = as.factor(year)) 
+        mutate(year = as.factor(year),
+               habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type)) 
       
       return(loc_species_res)
       

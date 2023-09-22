@@ -57,11 +57,9 @@ felt_server <- function(id, login_import) {
       
     })
 
-output$felletyper_text <- renderText("Overvåkingen ble startet på Østlandet i 2020 og utvides sukssesivt over landet. Fra og med 2023 dekker programmet semi-naturlig mark i alle landsdeler bortsett fra Vestlandet, samt skogsmark på Østlandet. På sikt er ambisjonen å dekke hele landet i begge disse økosystemtyper.
-  
-Vi bruker et rullerende skjema der man gjenbesøker fellene etter 5 år. Hvert år besøkes 10 lokaliteter innen hvert økosystem i hvert av de 5 landsdelene. Dermed vil programmet på sikt inkludere 250 lokaliteter per økosystem spredt over hele landet.
+output$felletyper_text <- renderText("Overvåkingen skal representere ulike økosystemer innenfor geografiske regioner. Vi startet med skog og semi-naturlig mark på Østlandet i 2020. Fra og med 2023 dekker programmet semi-naturlig mark i alle landsdeler bortsett fra Vestlandet, samt skog på Østlandet. På sikt er ambisjonen å dekke hele landet i begge disse to økosystemene. Vi bruker et rullerende skjema der man gjenbesøker fellene etter 5 år. Hvert år besøkes 10 lokaliteter innen hvert økosystem i hvert av de 5 landsdelene (se dashboard). Dermed vil programmet på sikt inkludere 250 lokaliteter per økosystem spredt over hele landet. 
 
-Overvåkingen skjer hovedsakelig med malaisefeller, et slags telt der insekter flyger oppover duken og ender opp i en flaske fylt med etanol. På lokalitetene i skog bruker vi også 4 st vindusfeller, der fremst biller som flyger inn i en plastskive dropper ned i en flaske med etanol. Fellene står ute i den hovedsakelige flyveperioden, fra april til og med oktober, og tømmes annenhver uke."  
+Innsamling av insekter skjer hovedsakelig med malaisefeller, et slags telt der insekter flyr oppover en duk og ender opp i en flaske fylt med etanol på det høyeste punktet i teltet. På lokalitetene i skog bruker vi også 4 vindusfeller. Disse fanger store biller som faller ned i en flaske med etanol etter at de har krasjet med et gjennomsiktig plastplate. Fellene står ute i den hovedsakelige flyveperioden, fra april til og med oktober, og tømmes annenhver uke av feltarbeidere som ansvarer for en eller flere lokaliteter"  
 )
 
 

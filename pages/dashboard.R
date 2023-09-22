@@ -25,35 +25,38 @@ dashboard_ui <- function(id){
              })
            ),
            
-           column(6,
+           column(12,
                   
                   box(width = 12,
                       title = "Etablering og omdrev (10 lok. per region-habitat-år)",
                       height = "400px",
                       plotOutput(ns("project_sum_map"),
                                  height = "300px")
-                      ),
+                      )
+           ),
              br(),
+           column(6,
            shinydashboardPlus::box(id = "taxa_share",
                                    width = 12,
-                 title = "Taksonomisk fordeling",
-                 height = "400px",
-                 radioButtons(ns("taxa_plot_type"),
-                              label = "Plot-type",
-                              choiceNames = c("Stabel",
-                                              "Smultring (fam. i ytre ring)"),
-                              choiceValues = c("barplot",
-                                               "donut"),
-                              #selected = "donut",
-                              width = "100px",
-                              inline = TRUE),
-                 plotOutput(ns("taxa_share"),
-                            height = "300px")),
+                                   title = "Taksonomisk fordeling",
+                                   height = "400px",
+                                   radioButtons(ns("taxa_plot_type"),
+                                                label = "Plot-type",
+                                                choiceNames = c("Stabel",
+                                                                "Smultring (fam. i ytre ring)"),
+                                                choiceValues = c("barplot",
+                                                                 "donut"),
+                                                #selected = "donut",
+                                                width = "100px"),
+                                   plotOutput(ns("taxa_share"),
+                                              height = "300px")
+                                   ),
              ),
            column(6,
             shinydashboardPlus::box(id = "notteskallbox",
                                     width = 12,
-                  title = "Fangstmengde",
+                                    height = "400px",
+                                    title = "Fangstmengde",
                   div(style = "display:inline-block; padding-left: 20px", 
                       radioButtons(ns("data_type"),
                                    label = "Datatype",
@@ -77,9 +80,8 @@ dashboard_ui <- function(id){
                                            "Fordeling"),
                                width = "100px")),
                  
-                  plotlyOutput(ns("catch_sum_biomass"),
-                             height = "300px"),
-                  height = "400px"
+                  plotOutput(ns("catch_sum_biomass"),
+                             height = "300px")
                   )
            )
   )
@@ -94,42 +96,38 @@ dashboard_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     
     
-    
-    
-    
-    
-    output$choose_habitattype <- renderUI({
-      
-      req(input$project)
-      con <- login_import$con()
-      
-      habtypes_q <- "
-      SELECT distinct l.habitat_type
-      FROM locations.localities l,
-      events.year_locality yl,
-      lookup.projects
-      WHERE yl.locality_id = l.id
-      AND yl.project_short_name = projects.project_short_name
-      AND projects.project_name = ?id1
-      "
-      
-      habtypes_sql <- sqlInterpolate(con,
-                                     habtypes_q,
-                                     id1 = input$project)
-      
-      habtypes <- dbGetQuery(con,
-                             habtypes_sql) 
-      
-      
-      selectInput(inputId = ns("habitat_type"),
-                  label = "Habitat type",
-                  choices = c("All", habtypes$habitat_type),
-                  selected = "All",
-                  selectize = FALSE,
-                  size = 1
-    )
-      
-    })
+    #   output$choose_habitattype <- renderUI({
+    #   
+    #   req(input$project)
+    #   con <- login_import$con()
+    #   
+    #   habtypes_q <- "
+    #   SELECT distinct l.habitat_type
+    #   FROM locations.localities l,
+    #   events.year_locality yl,
+    #   lookup.projects
+    #   WHERE yl.locality_id = l.id
+    #   AND yl.project_short_name = projects.project_short_name
+    #   AND projects.project_name = ?id1
+    #   "
+    #   
+    #   habtypes_sql <- sqlInterpolate(con,
+    #                                  habtypes_q,
+    #                                  id1 = input$project)
+    #   
+    #   habtypes <- dbGetQuery(con,
+    #                          habtypes_sql) 
+    #   
+    #   
+    #   selectInput(inputId = ns("habitat_type"),
+    #               label = "Habitat type",
+    #               choices = c("All", habtypes$habitat_type),
+    #               selected = "All",
+    #               selectize = FALSE,
+    #               size = 1
+    # )
+    #   
+    # })
     
       
     no_loc <- reactive({
@@ -158,7 +156,7 @@ dashboard_server <- function(id, login_import) {
       
       valueBox(
         value = no_loc[no_loc$"habitat_type" == "Semi-nat",]$no_loc,
-        subtitle = "registrerte lokaliteter i semi-nat",
+        subtitle = "registrerte lokaliteter i semi-naturlig mark",
         color = "yellow",
         width = 2
       )
@@ -229,7 +227,7 @@ dashboard_server <- function(id, login_import) {
                                               )
                          ) %>% 
                   mutate(habitat_type = factor(habitat_type)) %>% 
-                  mutate(year = factor(year, levels = max(year):min(year))) %>% 
+                  mutate(year = factor(year, levels = 2024:min(year))) %>% 
                   group_by(region_name,
                            habitat_type,
                            year,
@@ -539,10 +537,7 @@ dashboard_server <- function(id, login_import) {
       return(p)
     }
     
-    output$catch_sum_biomass <- renderPlotly({
-      
-     
-      
+    output$catch_sum_biomass <- renderCachedPlot(expr = {
       if(input$agg_level == "Sampling"){
           if(input$rank_dens == "Ranking"){
           p <- rank_plot(catch_per_locality_sampling(),
@@ -561,14 +556,14 @@ dashboard_server <- function(id, login_import) {
         }
       }
       
-      
-      
       p <- p +
         theme(panel.background = element_blank())
         
       return(p)
+    },
+    cacheKeyExpr = list(input$agg_level, input$rank_dens, input$data_type)
       
-    })
+    )
 
   
     
