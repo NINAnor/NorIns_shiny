@@ -61,9 +61,8 @@ locspec_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     
     
-    output$loc_spec_text <- renderText("Her vises det totale antallet arter som er observert på hver lokalitet og en lokal polynomisk modell for trendene der det lar seg gjøre. For å kunne sammenligne resultatene vises kun resultater fra malaisefeller. Det går an å filtrere utvalget basert på regioner og habitatstyper, samt gjennom å zoome i kartet. Antallet arter som fanges varierer over tid og mellom plasser, og det vil ta tid for å kunne dra konklusjoner om stabile trender. Resultatene på disse figurer må tolkes med omhu. 
-"
-    )
+    output$loc_spec_text <- renderText("Her kan dere se det totale artsantallet funnet per lokalitet på kart, og som en modell med snitt og variasjon per år nederst. Du bestemmer selv om du vil ha alle regioner og økosystemer. Det er bare data fra malaisefeller som er lagt inn. Det vil ta tid for å kunne dra konklusjoner om stabile trender, både mellom år og mellom steder. Resultatene på disse figurene må derfor tolkes med omhu. Ingen lokaliteter har per i dag blitt undersøkt mer enn en gang, og det vil i ta minst 10 år før alle lokaliteter har blitt undersøkt to ganger."
+)
     
     
     output$choose_project <- renderUI({
@@ -198,7 +197,8 @@ locspec_server <- function(id, login_import) {
     "
       
       dat <- sf::read_sf(con, 
-                         query = trap_sql)
+                         query = trap_sql) %>% 
+        mutate(habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type))
       
       
       ##Add lon lat from geom
@@ -219,12 +219,12 @@ locspec_server <- function(id, login_import) {
       # }
       
    
-      if(!is.null(input$habitat_type)){
-        if(input$habitat_type != "All"){
-          dat <- dat %>% 
-            filter(habitat_type == input$habitat_type)
-        }
-      }
+      # if(!is.null(input$habitat_type)){
+      #   if(input$habitat_type != "All"){
+      #     dat <- dat %>% 
+      #       filter(habitat_type == input$habitat_type)
+      #   }
+      # }
       
       return(dat)
       
@@ -242,6 +242,7 @@ locspec_server <- function(id, login_import) {
                habitat_type,
                region_name,
                .keep_all = T) %>% 
+      mutate(habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type)) %>% 
       collect()  
     
     

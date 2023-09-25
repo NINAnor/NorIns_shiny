@@ -6,14 +6,14 @@ bioinformatikk_ui <- function(id){
 tabPanel(title = "Databehandling",
          
          box(
-           textOutput(ns("flytskjema_text")),
-           title = "Dataprosessering og håndtering",
+           htmlOutput(ns("flytskjema_text")),
+           title = "Bioinformatikk og miljøvariabler",
            solidHeader = TRUE,
            height = "800px"
          ),
          box(
            uiOutput(ns("flytskjema")),
-           title = "DNA-resultat kvalitetssikres og kobles til navn",
+           title = "DNA-resultat kvalitetssikres og kobles til artsnavn",
            solidHeader = TRUE,
            height = "400px"
          ),
@@ -43,11 +43,27 @@ bioinformatikk_server <- function(id, login_import) {
       
     })
     
-    output$flytskjema_text <- renderText("Resultatet fra sekvenseringen fra Oslo universitetssykehus er en lang rekke med DNA-sekvenser. Det vi nå må gjøre er å koble disse sekvensene tilbake til de enkelte prøvene de kom fra, med hjelp av de konstgjorde markørene, og dele in sekvensene i enkelte arter basert på hvor forskjellige de er. \"Artene\" plasseres så inn i et taksonomisk tre, helst ned til artsnavn og blir dermed \"identifisert\". Dette kalles bioinformatikk. For dette arbeid har vi utviklet en egen fremgangsmåte med mange sjekkpunkter underveis for å sikre kvaliteten på arbeidet. Resultatet er en artsliste for hver felleprøve, inkludert relative mengder med DNA for hver unik DNA-sekvens. I disse analysene får vi også registrert genetisk variasjon innad i hver art.
+    output$flytskjema_text <- renderUI({
+    
+ str_1 <- paste("Resultatet fra sekvenseringen fra Oslo universitetssykehus er en lang rekke med DNA-sekvenser. Det vi nå må gjøre er å koble disse sekvensene tilbake til de enkelte prøvene de kom fra, med hjelp av de konstgjorde markørene, og dele in sekvensene i enkelte arter basert på hvor forskjellige de er. \"Artene\" plasseres så inn i et taksonomisk tre, helst ned til artsnavn og blir dermed \"identifisert\". Dette kalles bioinformatikk. For dette arbeid har vi utviklet en egen fremgangsmåte med mange sjekkpunkter underveis for å sikre kvaliteten på arbeidet. Resultatet er en artsliste for hver felleprøve, inkludert relative mengder med DNA for hver unik DNA-sekvens. I disse analysene får vi også registrert genetisk variasjon innad i hver art.
 
-I tillegg til insektene, samler vi også inn værdata – vi har både temperatur-, fuktighets-, og lysloggere på hver lokalitet. Vegetasjonen rundt fellene blir også kartlagt med samme type metodikk som brukes for for arealrepresentativ naturovervåking (ANO). I skogen gjøres i tillegg en forenklet kartlegging av skogtilstand, slik det gjøres på landsskogstakseringen. Til sist samler vi inn informasjon fra offentlige datakilder knyttet til området rundt fellene. Dette kan hjelpe oss med å forklare endringer i insekter over tid, og forskjeller mellom områder som vi finner nå. Alle dataene lagres i en egen database.
-"
- )
+I tillegg til insektene, samler vi også inn værdata – vi har både temperatur-, fuktighets-, og lysloggere på hver lokalitet. Vegetasjonen rundt fellene blir også kartlagt med samme type metodikk som brukes for arealrepresentativ naturovervåking ")
+
+ano_link <- a("(ANO)", 
+              href = "https://www.nina.no/%C3%98kosystemer/Arealrepresentativ-naturoverv%C3%A5king-ANO",
+              target = "_blank")
+
+str_2 <- paste(". I skogen gjøres i tillegg en forenklet kartlegging av skogtilstand, slik det gjøres på ")
+
+landskog_link <- a("landsskogstakseringen", 
+                   href = "https://www.nibio.no/tema/skog/skog-og-miljoinformasjon-fra-landsskogtakseringen/landsskog-takseringen",
+                   target = "_blank")
+
+str_3 <- paste(". Til sist samler vi inn informasjon fra offentlige datakilder knyttet til området rundt fellene. Dette kan hjelpe oss med å forklare endringer i insekter over tid, og forskjeller mellom områder som vi finner nå. Alle dataene lagres i en egen database.")
+
+HTML(paste(str_1, ano_link, str_2, landskog_link, str_3, sep = ""))
+
+})
     
     
     output$data_storage <- renderUI({

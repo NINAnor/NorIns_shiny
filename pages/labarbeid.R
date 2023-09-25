@@ -20,7 +20,7 @@ tabPanel(title = "Labarbeid",
         br(),
         box(
            uiOutput(ns("lab")),
-           title = "Veing og identifisering med metastrekkoding",
+           title = "Håndtering av felleprøver på lab",
            solidHeader = TRUE,
            height = "400px"
         )

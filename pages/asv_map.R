@@ -15,15 +15,15 @@ asvmap_ui <- function(id){
   
   useShinyjs()
   
-  tabPanel(title = "Innenartsvariasjon",
+  tabPanel(title = "Funnsted og innenartsvariasjon",
            column(6,
              box(width = 12,
-                 title = "Vi registrerer innenartsvariasjon",
+                 title = "Genetisk variasjon innen arter",
                  textOutput(ns("asvmap_text")),
                  height = "500px"),
              shinydashboardPlus::box(width = 12,
                                      id = "speciesbox",
-                                     title = "Artsutvalg",
+                                     title = "Artssøk",
                                      fluidRow(
                                        column(6,
                                      uiOutput(ns("choose_conf")),
@@ -68,19 +68,23 @@ asvmap_server <- function(id, login_import) {
     output$choose_conf <- renderUI({
       input$filter_btn
       
-      conf_choices <- c("HIGH", "MODERATE", "LOW", "POOR", "ALL")
+      conf_choices <- list("Høy" = "HIGH",
+                           "Moderat" = "MODERATE", 
+                           "Lav" = "LOW", 
+                           "Dårlig" = "POOR", 
+                           "Alle" = "ALL")
       
       species_filter <- isolate(input$species_filter)
       if(species_filter == "" || is.null(species_filter) || species_filter == "Ingen"  ){
 
       selectInput(inputId = ns("sel_conf"),
-                  label = "Velg konfidensnivå på navn",
+                  label = "Sikkerhet på artsbestemmelse",
                   choices = conf_choices,
                   selected = "")
       } else {
 
         selectInput(inputId = ns("sel_conf"),
-                    label = "Velg konfidensnivå på navn",
+                    label = "Sikkerhet på artsbestemmelse",
                     choices = conf_choices,
                     selected = species_filter_out()$identification_confidence)
 
@@ -481,14 +485,11 @@ ignoreInit = TRUE
       
     })
     
-    output$asvmap_text <- renderText("Kakediagrammene til høyre viser komposisjonen av genetiske varianter der hver farge representerer en gitt genetisk variant. Størrelsen på kakene er skalert etter hvor mange DNA-sekvenser det totalt er blitt funnet av arten i hver lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
+    output$asvmap_text <- renderText("Kartet til høyre viser funnstedet for enkelte arter og kakediagrammene representerer komposisjonen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant. Størrelsen på sirklene er skalert etter hvor mange DNA-sekvenser vi totalt har funnet av arten i en lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
-Bruk menyene nedenfor for å finne frem til en art av interesse. Noter at overvåkingsprogrammet fortsatt har en begrenset geografisk og tidsmessig utbredelse. Kart for arter som er observert bare ved et fåtall individer på et fåtall plasser vil være mer tilfeldige enn arter med mange individer fanget på mange plasser.
-
-Konfidensnivå angir usikkerheten knyttet til den automatiske identifiseringen med DNA. De fleste av funnene er ikke gjennomgått manuelt og det kan være feil i artsnavn innenfor alle konfidensnivåer.
-
-"
-    )
+Nedenfor kan dere søke på enkeltarter. 
+Per i dag har orervåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelse angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt og det kan være feil i artsnavn selv om vi angir sikkerheten som høy."
+)
     
     
   })

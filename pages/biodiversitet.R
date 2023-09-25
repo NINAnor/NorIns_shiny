@@ -12,14 +12,14 @@ biodiv_ui <- function(id){
            ),
              box(
                uiOutput(ns("rankabund")),
-               title = "Tusenvis arter fanges ofte, men de fleste er sjeldne",
+               title = "De fleste arter er sjeldne",
                solidHeader = TRUE,
                height = "400px"
              ),
            br(),
             box(
                uiOutput(ns("specacc")),
-               title = "Mer og mer av insektmangfoldet kartlegges",
+               title = "Kunnskapen om insektmangfoldet øker",
                solidHeader = TRUE,
                height = "400px"
              )
@@ -43,22 +43,25 @@ output$rankabund <- renderUI({
            )
 })
 
-output$rankabund_text <- renderText("Insektsamfunn er ekstremt artsrike. Av de ca. 30 000 kjente artene i Norge fra dyreriket, er nesten 20 000 insekter, og sannsynligvis finnes det flere tusen insektarter i Norge som venter på å oppdages. De fleste artssamfunn domineres av et fåtall arter mens de andre er relativt skjeldne. Dette er spesielt tydelig i innsektovervåkingen, der halen med sjeldne arter er svært lang og mange tusen arter er blitt funnet bare et fåtall ganger. Alt ettersom innsamlingen fortsetter kan man forvente seg at halen til høyre vil fortsette utvides med nye sjeldne arter, og at akkumuleringskurvene fortsetter øke en tid fremover.
+output$rankabund_text <- renderText("Insektsamfunn er ekstremt artsrike. Av de ca. 30 000 kjente dyreartene i Norge, er nesten 20 000 insekter, og sannsynligvis finnes det flere tusen insektarter i Norge som vi ikke har funnet ennå. De fleste arter er faktisk veldig sjeldne – og bare noe få er veldig vanlige. Dette er spesielt tydelig i tallene fra innsektovervåkingen, der halen med sjeldne arter er svært lang(se figur oppe til høyre). Over tid kan vi forvente seg at antall sjeldne arter øker (halen til høyre vil fortsette utvides), og at antall nye arter funnet (fig nede til høyre) fortsetter å øke en god tid fremover. 
 
-Tilfeldige forekomster av mange uvanlige arter innebærer at man ikke kan forvente seg å observere hele insektsamfunn på en enkelt lokalitet. Likevel er det flere tusen av arter som observeres relativt ofte, og sett sammen er registreringen av insektsamfunnen konsistente nok til å undersøke forskjeller mellom naturtyper og overvåke forandringer.
-
-Fortsatt finner vi mye DNA som kan grupperes til distinkte arter, men som vi ennå ikke kan koble til et artsnavn fordi ingen har registrert deres artstilhørighet i offentlige kilder. Dette gjelder fremforalt de uvanlige artene, der spesielt tovinger og veps har mange \"arter\" foreløpig uten navn. For å forbedre denne situasjon fyller prosjektet i samarbeide med NTNU Vitenskapsmuseet årlig på offentlige datakilder med flere hundre tidligere uregistrerte arter.
-"
+Selv om det er mange sjeldne arter, er det flere tusen arter som blir funnet relativt ofte. Dette gjør at vi er i stand til  å undersøke forskjeller mellom naturtyper og overvåke endringer over tid. Hvilke arter vi har funnet kan også endres tilbake i tid. Det er mye DNA som vi ennå ikke kan koble til et artsnavn fordi ingen har registrert nettopp deres DNA i offentlige kilder. Dette gjelder fremfor alt de sjeldne artene, og spesielt tovinger og veps. For å forbedre denne situasjon samarbeider vi med NTNU Vitenskapsmuseet og har sørget for atflere hundre tidligere uregistrerte arter nå er tilgjengelig i DNA-bibliotekene."
 )
 
 
-
+## "Antall arter" på x-akseln. "Antall observasjoner av hver art (1114 mulige)
+## større tall på aksene
+## Mulig å dele opp i fig per år?
 
 output$specacc <- renderUI({
   tags$img(src = "figures/div-est-1.svg", 
            height = "300px"
   )
 })
+
+## "faktiske tall", "ekstrapolerte tall" isteden for engelsk. Men vanskelig i iNEXT plot?
+## Semi-naturlig mark i Østfold etc i legend. 
+## Mulig å dele opp i fig per år?
 
 output$artsniva <- renderUI({
   tags$img(src = "figures/artsniva-1.png", 

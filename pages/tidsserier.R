@@ -5,7 +5,7 @@ tidsserier_ui <- function(id){
   tabPanel(title = "Tidsserier",
            box(
              textOutput(ns("tidsserie_text")),
-             title = "Starten på en tidsserie",
+             title = "Tidsserie",
              solidHeader = TRUE,
              height = "800px"
            ),  
@@ -40,11 +40,12 @@ tidsserier_server <- function(id, login_import) {
     })
     
     
-    output$tidsserie_text <- renderText("Dette prosjekt vil danne en standardisert tidsserie som kan brukes for å undersøke endringer i insektfaunaen over tid. Mengdene insekter varierer ofte kraftig innen en sesong, og mellom år og mellom lokaliteter. Man skal derfor ikke forvente seg å kunne se statistisk sikre forandringer etter bare noen år, da dette ville kreve svært store forandringer for å vise seg. 
+    output$tidsserie_text <- renderText("Målet med dette prosjekt er å få en tidsserie som kan brukes for å undersøke endringer i insektfaunaen over tid. Antall arter og mengde insekter varierer ofte kraftig i løpet av en sesong, mellom år og mellom lokaliteter. Med denne store variasjonen trenger vi en lang tidsserie, eller særlig store endringer, for å kunne si noe sikkert. 
+    
+Overvåkingen gir også verdifull kunnskap om artsforekomster. Vi kan få ny kunnskap om utbredelsen til rødlistete arter, eller arter som ikke tidligere er registrert fra landet. Det er imidlertid viktig og være klar over at  funnene ikke er manuelt verifisert, og at det kan være feil i DNA-bibliotekene. Disse feilene vil imidlertid bli færre over tid.
 
-Overvåkingen kartlegger ikke bare forandringer, men gir også verdifull kunnskap om dagens artsforekomster. For eksempel kan det informere om forekomsten av rødlistete arter, eller arter som ikke tidligere er registrert fra landet. Merk at funnene ikke er manuelt verifisert, men baseres på DNA-treffe, der man er avhengig kvaliteten på referansebasene. 
+Artene danner også egne insektsamfunn, det vil si insekter som forekommer sammen i tid og rom. Forandring av slike artssamfunn er også viktig å kartlegge, selv om enkeltarter ikke nødvendigvis forsvinner.
 
-Artene danner også \"samfunn\" av insekter som fordeler seg regelmessig i tid og rom. Forandring av slike artssamfunn er også verdt å følge med på, selv om enkelte arter ikke nødvendigvis forsvinner.
 "
     )
     
