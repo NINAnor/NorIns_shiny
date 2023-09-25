@@ -72,9 +72,15 @@ HTML(paste(str_1, ano_link, str_2, landskog_link, str_3, sep = ""))
     
     output$data_links <- renderUI({
     
-    dataset <- a("Datasettet på GBIF", href="https://www.gbif.org/dataset/19fe96b0-0cf3-4a2e-90a5-7c1c19ac94ee")
-    norimon <- a("R-pakke med kod brukt i analyser", href="https://www.github.com/NINAnor/Norimon")
-    report_code <- a("Analysekode for rapporter:", href="https://github.com/NINAnor/national_insect_monitoring")
+    dataset <- a("Datasettet på GBIF", 
+                 href="https://www.gbif.org/dataset/19fe96b0-0cf3-4a2e-90a5-7c1c19ac94ee",
+                 target = "_blank")
+    norimon <- a("R-pakke med kod brukt i analyser", 
+                 href="https://www.github.com/NINAnor/Norimon",
+                 target = "_blank")
+    report_code <- a("Analysekode for rapporter:", 
+                     href="https://github.com/NINAnor/national_insect_monitoring",
+                     target = "_blank")
 
     tagList(
       
