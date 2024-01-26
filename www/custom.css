@@ -78,6 +78,11 @@ white-space: nowrap;
 margin-top: 0px;
 }
 
+#hotspotbox > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+}
+
 #taxa_share > .box-body {
 white-space: nowrap;
 margin-top: 0px;

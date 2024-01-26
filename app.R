@@ -9,7 +9,7 @@ source("pages/feltarbeid.R", local = TRUE)
 source("pages/labarbeid.R", local = TRUE)
 source("pages/bioinformatikk.R", local = TRUE)
 source("pages/artsmangfold.R", local = TRUE)
-source("pages/tidsserier.R", local = TRUE)
+source("pages/div_map.R", local = TRUE)
 source("pages/asv_map.R", local = TRUE)
 source("pages/local_spec.R", local = TRUE)
 source("pages/dashboard.R", local = TRUE)
@@ -38,7 +38,7 @@ ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  
                  biodiv_ui(id = "id_4"),
                  
-                 tidsserier_ui(id = "id_5"),
+                 div_map_ui(id = "id_5"),
                  
                  locspec_ui(id = "id_7"),
                  
@@ -62,7 +62,7 @@ server <- function(input, output, session) {
   
   biodiv_server(id = "id_4")
   
-  tidsserier_server(id = "id_5")
+  div_map_server(id = "id_5")
   
   asvmap_server(id = "id_6", login_import = login_export)
   
