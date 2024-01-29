@@ -4,27 +4,28 @@ biodiv_ui <- function(id){
   ns <- NS(id)
   
   tabPanel(title = "Artsmangfold",
-           box(
+           column(6,
+           box(width = 12,
              textOutput(ns("rankabund_text")),
              title = "Overvåking av en hyperdivers organismegruppe",
              solidHeader = TRUE,
              height = "800px"
-           ),
-             box(
+           )),
+           column(6,
+             box(width = 12,
                uiOutput(ns("rankabund")),
                title = "De fleste arter er sjeldne",
                solidHeader = TRUE,
                height = "400px"
              ),
            br(),
-            box(
+            box(width = 12,
                uiOutput(ns("specacc")),
                title = "Kunnskapen om insektmangfoldet øker",
                solidHeader = TRUE,
                height = "400px"
              )
-             
-
+           )
            
   )
   
@@ -37,7 +38,7 @@ biodiv_server <- function(id, login_import) {
     
 
 output$rankabund <- renderUI({
-  tags$img(src = "figures/spec-occ-1.svg", 
+  tags$img(src = "figures/spec-occ-1.png", 
            height = "300px",
            width = "95%"
            )

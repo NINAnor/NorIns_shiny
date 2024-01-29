@@ -4,26 +4,29 @@ labarbeid_ui <- function(id){
   ns <- NS(id)
   
 tabPanel(title = "Labarbeid",
-         box(
+         column(6,
+         box(width = 12,
            textOutput(ns("proc_text")),
            tags$style(type="text/css", "#proc_text {white-space: pre-wrap;}"),
            title = "Prosessering av prøver",
            solidHeader = TRUE,
            height = "800px"
-         ),
-        box(
+         )),
+         column(6,
+        box(width = 12,
            uiOutput(ns("bottle")),
            title = "En malaisefelle samler tusenvis av insekter",
            solidHeader = TRUE,
            height = "400px"
          ),
         br(),
-        box(
+        box(width = 12,
            uiOutput(ns("lab")),
            title = "Håndtering av felleprøver på lab",
            solidHeader = TRUE,
            height = "400px"
         )
+         )
          
 )
 }

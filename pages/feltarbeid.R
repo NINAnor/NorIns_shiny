@@ -7,26 +7,29 @@ felt_ui <- function(id){
   ns <- NS(id)
 
   tabPanel(title = "Innsamling",
-           box(
+           column(6,
+           box(width = 12,
              textOutput(ns("felletyper_text")),
              # tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
              title = "Overvåkingsdesign",
              solidHeader = TRUE,
              height = "800px"
-           ),
-          box(
+           )),
+           column(6,
+          box(width = 12,
             uiOutput(ns("localities")),
             title = "Overvåkingslokaliteter i perioden 2020-2023",
             solidHeader = TRUE,
             height = "400px"
           ),
           br(),
-           box(
+           box(width = 12,
             uiOutput(ns("felletyper")),
             title = "Malaise- og vindusfeller",
             solidHeader = TRUE,
             height = "400px"
           )
+           )
      
   )
 }

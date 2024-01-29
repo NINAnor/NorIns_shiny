@@ -40,7 +40,6 @@ locspec_ui <- function(id){
                height = "400px"
              )),
            column(6,
-           
            box(width = 12,
                title = "Overvåkingslokaliteter",
                leaflet::leafletOutput(ns("loc_map"),
@@ -49,6 +48,7 @@ locspec_ui <- function(id){
                height = "800px"
            )
            )
+
   )
   
 }

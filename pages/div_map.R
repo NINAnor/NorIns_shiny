@@ -28,13 +28,15 @@ div_map_ui <- function(id){
                                    )
                                    
            ),
-           
-           box(title = "Fordeling av diversitet",
+           column(6,
+           box(width = 12,
+               title = "Fordeling av diversitet",
                leaflet::leafletOutput(ns("div_map"),
                                       width = "95%",
                                       height = 600),
                height = "800px"
                
+           )
            )
   )
   
@@ -46,9 +48,11 @@ div_map_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
 
-    output$div_map_text <- renderText("En nasjonal insektovervåking gir ny og verdifull kunnskap om fordelingen av insektmangfoldet og hvor sjeldne arter finns. Vi kan for eksempel få ny kunnskap om utbredelsen til rødlistete arter, eller arter som ikke tidligere er registrert fra landet. Det er imidlertid viktig og være klar over at funnene ikke er manuelt verifisert, og at det kan være feil i DNA-bibliotekene. Disse feilene vil imidlertid bli færre over tid.
+    output$div_map_text <- renderText("En nasjonal insektovervåking gir ny og verdifull kunnskap om fordelingen av insektmangfoldet og hvor sjeldne arter finns. Vi kan for eksempel få ny kunnskap om utbredelsen til rødlistete arter, eller arter som ikke tidligere er registrert fra landet. 
+    
+    Det er imidlertid viktig og være klar over at funnene ikke er manuelt verifisert, og at det kan være feil i DNA-bibliotekene. Disse feilene vil imidlertid bli færre over tid.
 
-Her kan du se utbredelsen av diversitetsmønstre for ulike utvalg av artsgrupper.
+Her kan du se utbredelsen av diversitetsmønstre for ulike utvalg av artsgrupper. 
 "
     )
     
@@ -64,173 +68,14 @@ Her kan du se utbredelsen av diversitetsmønstre for ulike utvalg av artsgrupper
       
     })
 
-    ##Get redlisted dataset, put this in separate script later  
+    ##Get data from cache  
+    redlisted_obs_2021_agg <- sf::read_sf(dsn = "data/redlisted_obs_2021_agg.shp")
     
-    redlisted_obs_2021 <- read_sf(con,
-                                  Id(schema = "views",
-                                     table = "redlisted_obs")) %>% 
-      mutate(kategori = kategori_2021)
+    all_alien_obs_agg <- sf::read_sf(dsn = "data/all_alien_obs_agg.shp")
     
-    redlisted_obs_2021 <- redlisted_obs_2021 %>% 
-      #mutate(expl_fact = gsub("([a-zA-Z]*)( >)(.*)", "\\1", expl_fact)) %>% 
-      separate(expl_fact, 
-               into = c("expl_1",
-                        "expl_2",
-                        "expl_3",
-                        "expl_4",
-                        "expl_5"),
-               sep = ">") %>% 
-      separate(expl_3,
-               into = "expl_3_main",
-               sep = "_") %>%
-      mutate(expl_3_main = ifelse(is.na(expl_3_main), expl_1, expl_3_main)) %>% 
-      mutate(expl_3_main = stringr::str_trim(expl_3_main)) %>% 
-      mutate(expl_3_main = ifelse(expl_3_main == " ", NA, expl_3_main),
-             expl_3_main = ifelse(expl_3_main == "", NA, expl_3_main),
-             expl_3_main = ifelse(expl_3_main == "Ukjent ", NA, expl_3_main),
-             expl_3_main = ifelse(expl_3_main == "Ukjent", NA, expl_3_main)) 
+    poll_obs_agg <- sf::read_sf(dsn = "data/poll_obs_agg.shp")
     
-    redlisted_obs_2021 <- redlisted_obs_2021 %>%
-      group_by(kategori) %>%
-      mutate(no_spec_per_kat = n_distinct(species_latin_fixed)) %>%
-      ungroup() %>%
-      filter(kategori != "DD")
-    
- 
-    redlisted_obs_2021_agg <- redlisted_obs_2021 %>% 
-      group_by(locality,
-               kategori) %>% 
-      summarise(no_spec = n_distinct(species_latin_fixed)) %>% 
-      ungroup() %>% 
-      st_jitter(redlisted_obs_2021_agg, amount = 7000)  %>% 
-      st_transform(4326)
-    
-    ##End get redlisted species
-    
-    ##Get pot alien species
-    
-    fennoskand_obs_q <- "
-      SELECT 
-      obs.species_latin_fixed,
-      yl.year,
-      ls.sampling_name,
-      l.locality,
-      ST_Centroid(l.geom) as geom
-      FROM occurrences.observations obs,
-      lookup.fennoscand_species2 fennoscand,
-      events.identifications,
-      events.year_locality yl,
-      events.locality_sampling ls,
-      locations.localities l,
-      events.sampling_trap st
-      WHERE obs.identification_id = identifications.id
-      AND obs.species_latin_fixed = fennoscand.species_latin_fixed
-      AND identifications.sampling_trap_id = st.id
-      AND st.locality_sampling_id = ls.id
-      AND ls.year_locality_id = yl.id
-      AND yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
-      AND obs.identification_confidence = 'HIGH'
-      "
-    
-    fennoskand_obs <- read_sf(con,
-                              query = fennoskand_obs_q) %>% 
-      mutate(kategori = "Fennoskandisk forek.")
-    
-  
-    pot_alien_obs_q <- "
-      SELECT 
-      obs.species_latin_fixed,
-      yl.year,
-      ls.sampling_name,
-      l.locality,
-      ST_Centroid(l.geom) as geom
-      FROM occurrences.observations obs,
-      lookup.pot_alien_species2 pot_alien,
-      events.identifications,
-      events.year_locality yl,
-      events.locality_sampling ls,
-      locations.localities l,
-      events.sampling_trap st
-      WHERE obs.identification_id = identifications.id
-      AND obs.species_latin_fixed = pot_alien.species_latin_fixed
-      AND identifications.sampling_trap_id = st.id
-      AND st.locality_sampling_id = ls.id
-      AND ls.year_locality_id = yl.id
-      AND yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
-      AND obs.identification_confidence = 'HIGH'
-      "
-    
-    pot_alien_obs <- read_sf(con,
-                             query = pot_alien_obs_q) %>% 
-      mutate(kategori = "Potensielt fremmede arter")
-  
-    
-  
-    alien_obs_q <- "
-      SELECT 
-      obs.species_latin_fixed,
-      yl.year,
-      ls.sampling_name,
-      l.locality,
-      ST_Centroid(l.geom) as geom
-      FROM occurrences.observations obs,
-      lookup.fremmedartslista_2018_artsdatabanken alien,
-      events.identifications,
-      events.year_locality yl,
-      events.locality_sampling ls,
-      locations.localities l,
-      events.sampling_trap st
-      WHERE obs.identification_id = identifications.id
-      AND obs.species_latin_fixed = alien.\"scientificName\"
-      AND identifications.sampling_trap_id = st.id
-      AND st.locality_sampling_id = ls.id
-      AND ls.year_locality_id = yl.id
-      AND yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
-      AND alien.\"riskCategory\" IN ('NK', 'SE', 'HI', 'PH', 'LO')
-      AND obs.identification_confidence = 'HIGH'
-      "  
-    
-    alien_obs <- read_sf(con,
-                         query = alien_obs_q) %>% 
-      mutate(kategori = "På fremmedartslista")
-   
-  
-    all_alien_obs <- fennoskand_obs %>% 
-      rbind(pot_alien_obs)  %>% 
-      rbind(alien_obs)
-    
- 
-    kat_order <- tibble(kategori = c("Fennoskandisk forek.",
-                                      "Potensielt fremmede arter",
-                                      "På fremmedartslista"),
-                        kat_order = 1:3)
-    
-    all_alien_obs_agg <- all_alien_obs %>% 
-      group_by(kategori) %>% 
-      mutate(no_spec_per_kat = n_distinct(species_latin_fixed)) %>% 
-      group_by(locality,
-               kategori,
-               no_spec_per_kat) %>% 
-      summarise(no_spec = n_distinct(species_latin_fixed)) %>% 
-      ungroup() %>% 
-      mutate(kategori_append = factor(paste0(kategori, " (", no_spec_per_kat, " stk.)"))) %>% 
-      left_join(kat_order,
-                by = c("kategori" = "kategori")) %>% 
-      mutate(kategori = factor(kategori, levels = c("Fennoskandisk forek.",
-                                                    "Potensielt fremmede arter",
-                                                    "På fremmedartslista"))
-             )
-    
-    all_alien_obs_agg <- all_alien_obs_agg %>% 
-      st_jitter(all_alien_obs_agg, amount = 7000)  %>% 
-      st_transform(4326)
-   
     ##End get pot alien species
-    
-    
     
     
     norge <- get_map()
@@ -238,8 +83,6 @@ Her kan du se utbredelsen av diversitetsmønstre for ulike utvalg av artsgrupper
     basemap <- leaflet(width = "300px",
                        height = "200px") %>% 
       addTiles(group = "OpenStreetMap")
-    
-    
     
     
     output$div_map <- renderLeaflet({
@@ -259,10 +102,20 @@ Her kan du se utbredelsen av diversitetsmønstre for ulike utvalg av artsgrupper
                               "Potensielt fremmede arter" =  "#008C95", 
                               "På fremmedartslista" = "#E57200")
          } else {
-        NULL
-         }}
+        if(input$chosen_group == "Pollinatorer"){
+          to_plot <- poll_obs_agg
+          leaflet_colors <- c("Bier" = "#93328E",
+                              "Blomsterfluer" =  "#FFB25B",
+                              "Sommerfugler" = "#2DCCD3")
+        } 
+           else
+             NULL 
+           
+         } 
+           }
       
-      pal <- colorFactor(leaflet_colors, domain = names(leaflet_colors))
+      pal <- colorFactor(palette = leaflet_colors,
+                         levels = names(leaflet_colors))
       
       basemap  %>% 
         leaflet::addProviderTiles(providers$Esri.WorldImagery,

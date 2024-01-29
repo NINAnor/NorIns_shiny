@@ -45,9 +45,6 @@ ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  asvmap_ui(id = "id_6")
                  
                  
-                 
-                 
-                 
 )
 
 

@@ -43,12 +43,15 @@ asvmap_ui <- function(id){
                                      ),
                                      height = "400px"
              )),
-           box(title = "Fordeling av genetiske varianter",
+           column(6,
+           box(width = 12,
+               title = "Fordeling av genetiske varianter",
                leaflet::leafletOutput(ns("asv_map"),
                                       width = "95%",
                                       height = 600),
                height = "800px"
                
+           )
            )
            
   )
