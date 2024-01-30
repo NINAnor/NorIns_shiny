@@ -7,7 +7,17 @@ load("data/shinyPass.Rdata")
 connect_to_insect_db(user = my_username,
                      password = my_password)
 
+load("data/recalculate_number.Rdata")
 
+shiny_rules <- tbl(con,
+                   Id(schema = "lookup",
+                      table = "shiny_rules"))
+
+recalculate_status <- shiny_rules %>% 
+                      select(recalculate_number) %>% 
+                      pull()
+
+if(recalculate_number != recalculate_status) {
 
 # prep data for div_map
 
@@ -556,3 +566,84 @@ rlist::list.save(catch_per_year_locality_data,
       file = "data/catch_per_year_locality_data.Rdata")
 
 # end prep data for dashboard
+
+
+# prep data for timeseries graphs
+
+biomass_raw <- get_biomass(agg_level = "locality_sampling",
+                           trap_type = "MF",
+                           subset_region = NULL
+) 
+
+biomass_mf_locality_sampling_time <- biomass_raw %>% 
+  left_join(locality_sampling,
+            by = c("sampling_name" = "sampling_name"),
+            copy = T) %>% 
+  mutate(julian_day = lubridate::yday(end_date),
+         habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type),
+         start_month = lubridate::month(start_date))  %>% 
+  filter(sum_wet_weight > 0)
+
+
+  # loc_species_data <- function() {
+  #   
+  #   loc_species_q <- paste0("
+  #       
+  #       SELECT year, foo.locality, l.region_name, foo.habitat_type, no_spec as tot_spec
+  #       FROM
+  #       (SELECT locality,
+  #       year, 
+  #       habitat_type, 
+  #       count(distinct(loc_spec.species_latin_gbif))::numeric no_spec
+  #       FROM views.loc_traptype_species_list loc_spec
+  #       WHERE trap_type = 'Malaise'
+  #       GROUP BY year, habitat_type, locality) foo,
+  #       locations.localities l
+  #       WHERE foo.locality = l.locality
+  #       " )
+  #   
+  #   
+  #   loc_species_res <- dbGetQuery(con,
+  #                                 loc_species_q)  %>% 
+  #     mutate(year = as.factor(year),
+  #            habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type)) 
+  #   
+  #   return(loc_species_res)
+  #   
+  # }
+  #loc_spec_data <- loc_species_data()
+
+  diversity_raw <- get_observations(agg_level = "locality_sampling",
+                                    #trap_type = "MF",
+                                    subset_region = NULL
+  ) 
+  
+  diversity_locality_sampling_time <- diversity_raw %>% 
+    left_join(locality_sampling,
+              by = c("sampling_name" = "sampling_name"),
+              copy = T) %>% 
+    mutate(julian_day = lubridate::yday(end_date),
+           habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type),
+           start_month = lubridate::month(start_date))  %>% 
+    filter(no_species > 0)
+  
+
+# Write time series data
+
+save(biomass_mf_locality_sampling_time,
+     file = "data/biomass_mf_locality_sampling_time.Rdata")
+
+save(diversity_locality_sampling_time,
+     file = "data/diversity_locality_sampling_time.Rdata")
+
+# end prep data for timeseries graphs
+
+#Update recalculate number
+recalculate_number <- recalculate_status
+
+save(recalculate_number,
+     file = "data/recalculate_number.Rdata")
+} else {
+  
+  return(NULL)
+}

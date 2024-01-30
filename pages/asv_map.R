@@ -46,9 +46,14 @@ asvmap_ui <- function(id){
            column(6,
            box(width = 12,
                title = "Fordeling av genetiske varianter",
+               shinycssloaders::withSpinner({
                leaflet::leafletOutput(ns("asv_map"),
                                       width = "95%",
-                                      height = 600),
+                                      height = 600)
+                 },
+               type = 2,
+               color = "#E57200",
+               color.background = "#004F71"),
                height = "800px"
                
            )

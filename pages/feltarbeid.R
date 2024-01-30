@@ -5,7 +5,7 @@ jsCode <- "shinyjs.pageCol = function(params){$('body').css('background', params
 
 felt_ui <- function(id){
   ns <- NS(id)
-
+  
   tabPanel(title = "Innsamling",
            column(6,
            box(width = 12,

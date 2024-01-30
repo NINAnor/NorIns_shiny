@@ -24,14 +24,19 @@ dashboard_ui <- function(id){
                             width = 12)
              })
            ),
-           
            column(12,
-                  
-                  box(width = 12,
-                      title = "Etablering og omdrev (10 lok. per region-habitat-år)",
-                      height = "380px",
-                      plotOutput(ns("project_sum_map"),
-                                 height = "300px")
+                  shinydashboardPlus::box(width = 12,
+                                          id = "omdrevbox",
+                                          title = "Etablering og omdrev (10 lok. per region-habitat-år)",
+                                          height = "200px",
+                                          shinycssloaders::withSpinner({
+                                          plotOutput(ns("project_sum_map"),
+                                                     height = "270px",
+                                                     width = "1400px")
+                                          },
+                                          type = 2,
+                                          color = "#E57200",
+                                          color.background = "#004F71")
                       )
            ),
              br(),
@@ -48,9 +53,17 @@ dashboard_ui <- function(id){
                                                                  "donut"),
                                                 #selected = "donut",
                                                 width = "100px"),
+                                   shinycssloaders::withSpinner({
                                    plotOutput(ns("taxa_share"),
                                               height = "300px")
+                                   },
+                                   type = 2,
+                                   color = "#E57200",
+                                   color.background = "#004F71"
+                                  )
                                    ),
+           
+           #"#004F71"  "#008C95"  "#E57200"  "#93328E"  "#7A9A01"  "#A2AAAD"  "#2DCCD3"  "#FFB25B
              ),
            column(6,
             shinydashboardPlus::box(id = "notteskallbox",
@@ -79,9 +92,13 @@ dashboard_ui <- function(id){
                                choices = c("Ranking",
                                            "Fordeling"),
                                width = "100px")),
-                 
+                  shinycssloaders::withSpinner({
                   plotOutput(ns("catch_sum_biomass"),
                              height = "300px")
+                  },
+                  type = 2,
+                  color = "#E57200",
+                  color.background = "#004F71")
                   )
            )
   )
@@ -175,6 +192,7 @@ dashboard_server <- function(id, login_import) {
     
     
     plot_project_sum <- function(){
+      #par(mar = rep(0, 4))
       
       raw_data <- year_locality_stats
       
@@ -247,7 +265,8 @@ dashboard_server <- function(id, login_import) {
                                       "<b style='color:#93328E'>Trøndelag</b>",
                                       "<b style='color:#004F71'>Nord-Norge</b>")) +
         theme(panel.background = element_blank(),
-             axis.text.y = ggtext::element_markdown()) 
+             axis.text.y = ggtext::element_markdown(),
+             plot.margin = margin(0, 0, 0, 0, "cm"))
       
       p
       
@@ -256,12 +275,15 @@ dashboard_server <- function(id, login_import) {
     nor <- Norimon::get_map()
     
     plot_region_map <- function(){
+      #par(mar = rep(0, 4))
       
       p <- ggplot(nor) +
            geom_sf(aes(fill = region)) +
            scale_fill_nina(name = "") +
         guides(fill = "none") +
+        theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
         ggthemes::theme_map()
+        
       
       p
       
@@ -272,10 +294,23 @@ dashboard_server <- function(id, login_import) {
       plot1 <- plot_region_map()
       plot2 <- plot_project_sum()
       
-      gridExtra::grid.arrange(plot1, 
-                              plot2, 
-                              ncol = 2,
-                              widths = c(unit(6, "cm"), unit(10, "cm")))
+      # gridExtra::grid.arrange(plot1, 
+      #                         plot2, 
+      #                         ncol = 2,
+      #                         widths = c(unit(6, "cm"), 
+      #                                    unit(10, "cm")),
+      #                         heights = c(unit(6, "cm"),
+      #                                     unit(6, "cm")),
+      #                         padding = 0)
+      
+      cowplot::plot_grid(plot1,
+                         plot2,
+                         ncol = 2,
+                         rel_widths = c(1/5, 4/5)
+                         )
+      
+      
+      
     }
     )
     
@@ -354,18 +389,18 @@ dashboard_server <- function(id, login_import) {
     output$catch_sum_biomass <- renderCachedPlot(expr = {
       if(input$agg_level == "Sampling"){
           if(input$rank_dens == "Ranking"){
-          p <- rank_plot(catch_per_locality_sampling(),
+          p <- rank_plot(catch_per_locality_sampling,
                          dataset = input$data_type)
         } else {
-          p <- dens_plot(catch_per_locality_sampling(),
+          p <- dens_plot(catch_per_locality_sampling,
                          dataset = input$data_type)
            }
         } else {
         if(input$rank_dens == "Ranking"){
-          p <- rank_plot(catch_per_year_locality(),
+          p <- rank_plot(catch_per_year_locality,
                          dataset = input$data_type)
         } else {
-          p <- dens_plot(catch_per_year_locality(),
+          p <- dens_plot(catch_per_year_locality,
                          dataset = input$data_type)
         }
       }

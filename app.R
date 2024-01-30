@@ -5,13 +5,14 @@ require(shinydashboard)
 
 
 # load module functions
+source("prep_data_for_shiny.R", local = TRUE)
 source("pages/feltarbeid.R", local = TRUE)
 source("pages/labarbeid.R", local = TRUE)
 source("pages/bioinformatikk.R", local = TRUE)
 source("pages/artsmangfold.R", local = TRUE)
 source("pages/div_map.R", local = TRUE)
 source("pages/asv_map.R", local = TRUE)
-source("pages/local_spec.R", local = TRUE)
+source("pages/tidstrender.R", local = TRUE)
 source("pages/dashboard.R", local = TRUE)
 
 
@@ -40,7 +41,7 @@ ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  
                  div_map_ui(id = "id_5"),
                  
-                 locspec_ui(id = "id_7"),
+                 tidstrend_ui(id = "id_7"),
                  
                  asvmap_ui(id = "id_6")
                  
@@ -63,7 +64,7 @@ server <- function(input, output, session) {
   
   asvmap_server(id = "id_6", login_import = login_export)
   
-  locspec_server(id = "id_7", login_import = login_export)
+  tidstrend_server(id = "id_7", login_import = login_export)
   
   dashboard_server(id = "id_8", login_import = login_export)
   

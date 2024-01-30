@@ -11,40 +11,63 @@ require(plotly)
 require(NinaR)
 require(sf)
 
-locspec_ui <- function(id){
+tidstrend_ui <- function(id){
   ns <- NS(id)
   
-  tabPanel(title = "Insekter i tid og rom",
+  tabPanel(title = "Tidstrender",
            column(6,
              shinydashboardPlus::box(id = "taxabox",
-                                     title = "Taksonomisk utvalg",
+                                     title = "Utvalg",
                                      textOutput(ns("loc_spec_text")),
                                      uiOutput(ns("choose_project")),
                                      #uiOutput(ns("choose_region")),
+                                     fluidRow(
+                                       column(5,
+                                     checkboxInput(ns("only_summer"),
+                                                   label = "Vis kun data mellom juni-august",
+                                                   value = TRUE)
+                                     ),
+                                     column(5,
                                      checkboxInput(ns("hab_split"),
                                                    label = "Del etter habitat (filtrer på region i figur)",
-                                                   value = TRUE),
+                                                   value = FALSE)
+                                     )
+                                     ),
                                      #uiOutput(ns("choose_habitattype")),
                                      radioButtons(ns("unit_to_plot"),
                                                   label = "Måleenhet",
-                                                  choices = c("Artsantall",
-                                                              "Biomasse")),
+                                                  choices = c("Biomasse",
+                                                              "Artsantall"),
+                                                  selected = "Biomasse",
+                                                  inline = TRUE),
                                      height = "600px",
                                      width = 12
              ),
              br(),
-             box(width = 12,
-                 title = "Tidstrend",
-               plotlyOutput(ns("loc_spec"),
-                        height = "300px"),
+             shinydashboardPlus::box(width = 12,
+                                        id = "locspecbox",
+                                        title = "Tidstrend",
+                                        shinycssloaders::withSpinner({
+                                        plotOutput(ns("loc_spec2"),
+                                                  height = "300px")
+                 },
+               type = 2,
+               color = "#E57200",
+               color.background = "#004F71"),
                height = "400px"
              )),
            column(6,
-           box(width = 12,
+               shinydashboardPlus::box(width = 12,
+                                       id = "loc_map_box",
                title = "Overvåkingslokaliteter",
+               shinycssloaders::withSpinner({
                leaflet::leafletOutput(ns("loc_map"),
                                       width = "95%",
-                                      height = 700),
+                                      height = 700)
+                 },
+               type = 2,
+               color = "#E57200",
+               color.background = "#004F71"),
                height = "800px"
            )
            )
@@ -55,13 +78,13 @@ locspec_ui <- function(id){
 
 
 
-locspec_server <- function(id, login_import) {
+tidstrend_server <- function(id, login_import) {
   ns <- NS(id)
   
   moduleServer(id, function(input, output, session) {
     
     
-    output$loc_spec_text <- renderText("Her kan dere se det totale artsantallet funnet per lokalitet på kart, og som en modell med snitt og variasjon per år nederst. Du bestemmer selv om du vil ha alle regioner og økosystemer. Det er bare data fra malaisefeller som er lagt inn. Det vil ta tid for å kunne dra konklusjoner om stabile trender, både mellom år og mellom steder. Resultatene på disse figurene må derfor tolkes med omhu. Ingen lokaliteter har per i dag blitt undersøkt mer enn en gang, og det vil i ta minst 10 år før alle lokaliteter har blitt undersøkt to ganger."
+    output$loc_spec_text <- renderText("Her kan man se det totale artsantallet funnet per lokalitet på kart, og som en modell med snitt og variasjon per år nederst. Du bestemmer selv om du vil ha alle regioner og økosystemer. Det er bare data fra malaisefeller som er lagt inn. Det vil ta tid for å kunne dra konklusjoner om stabile trender, både mellom år og mellom steder. Resultatene på disse figurene må derfor tolkes med omhu. Ingen lokaliteter har per i dag blitt undersøkt mer enn en gang, og det vil i ta minst 10 år før alle lokaliteter har blitt undersøkt to ganger."
 )
     
     
@@ -91,81 +114,6 @@ locspec_server <- function(id, login_import) {
       
     })
     
-    ## Choose region of available regions in database
-    
-    output$choose_region <- renderUI({
-      req(input$project)
-      con <- login_import$con()
-      
-      localities <- tbl(con,
-                        in_schema("locations", "localities"))
-      
-      regions_q <- "
-      SELECT distinct(l.region_name)
-      FROM events.year_locality yl,
-      locations.localities l,
-      lookup.projects
-      WHERE yl.locality_id = l.id
-      AND yl.project_short_name = projects.project_short_name
-      AND projects.project_name = ?id1
-      ORDER BY region_name
-      
-      "
-      
-      regions_sql <- sqlInterpolate(con,
-                                    regions_q,
-                                    id1 = input$project)
-      
-      regions <- dbGetQuery(con,
-                            regions_sql)
-      
-      
-      selectInput(inputId = ns("region"),
-                  label = "Region",
-                  choices = c("All", regions$region_name),
-                  selected = "All",
-                  selectize = FALSE,
-                  size = 1)
-      
-      
-    })
-    
-    
-    
-    output$choose_habitattype <- renderUI({
-      
-      req(input$project)
-      con <- login_import$con()
-      
-      habtypes_q <- "
-      SELECT distinct l.habitat_type
-      FROM locations.localities l,
-      events.year_locality yl,
-      lookup.projects
-      WHERE yl.locality_id = l.id
-      AND yl.project_short_name = projects.project_short_name
-      AND projects.project_name = ?id1
-      "
-      
-      habtypes_sql <- sqlInterpolate(con,
-                                     habtypes_q,
-                                     id1 = input$project)
-      
-      habtypes <- dbGetQuery(con,
-                             habtypes_sql) 
-      
-      
-      selectInput(inputId = ns("habitat_type"),
-                  label = "Habitat type",
-                  choices = c("All", habtypes$habitat_type),
-                  selected = "All",
-                  selectize = FALSE,
-                  size = 1
-    )
-      
-    })
-    
-      
     
     
     trap_points <- reactive({
@@ -210,22 +158,6 @@ locspec_server <- function(id, login_import) {
         }
       }
       
-      
-      # if(!is.null(input$region)){
-      #   if(input$region != "All"){
-      #     dat <- dat %>% 
-      #       filter(region_name == input$region)
-      #   }
-      # }
-      
-   
-      # if(!is.null(input$habitat_type)){
-      #   if(input$habitat_type != "All"){
-      #     dat <- dat %>% 
-      #       filter(habitat_type == input$habitat_type)
-      #   }
-      # }
-      
       return(dat)
       
     })
@@ -263,8 +195,8 @@ locspec_server <- function(id, login_import) {
 
     output$loc_map <- leaflet::renderLeaflet({
       req(input$project)
-      #req(input$region)
-      #req(input$habitat_type)
+      #req(exists("input$only_summer"))
+      #req(exists("input$hab_split"))
       
       leaflet::leaflet(width = "70%", height = 800) %>%
         
@@ -325,115 +257,131 @@ locspec_server <- function(id, login_import) {
     })
     
     
+    load(file = "data/biomass_mf_locality_sampling_time.Rdata")
+    load(file = "data/diversity_locality_sampling_time.Rdata")
     
-    loc_species_data <- reactive({
+    
+    biomass_mf_locality_sampling_time <- biomass_mf_locality_sampling_time %>%   
+      mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", "Skog")) %>% 
+      mutate(habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog")),
+             region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Nord-Norge")),
+             habitat_type = as.factor(habitat_type)) %>% 
+      mutate(year = as.factor(year)) 
+    
+    diversity_locality_sampling_time <- diversity_locality_sampling_time %>% 
+      mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", "Skog")) %>% 
+      mutate(habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog")),
+             region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Nord-Norge")),
+             habitat_type = as.factor(habitat_type)) %>% 
+      mutate(year = as.factor(year)) 
+    
+    
+    to_plot_biomass <- reactive({
+      temp <- biomass_mf_locality_sampling_time %>% 
+      filter(locality %in% ruterInBounds()$locality)
 
-      loc_species_q <- paste0("
+      if(input$only_summer){
+        temp <- temp %>%
+          filter(start_month >=7,
+                 start_month <=8)
+      }
       
-      SELECT year, foo.locality, l.region_name, foo.habitat_type, no_spec as tot_spec
-      FROM
-      (SELECT locality,
-      year, 
-      habitat_type, 
-      count(distinct(loc_spec.species_latin_gbif))::numeric no_spec
-      FROM views.loc_traptype_species_list loc_spec
-      WHERE trap_type = 'Malaise'
-                              
-      AND locality IN ('",
-      paste(ruterInBounds()$locality, collapse = "','"),
-      #paste(c("Semi-nat_01", "Semi-nat_02"), collapse = "','"),
+      temp <- temp %>% 
+      group_by(year, 
+               region_name,
+               habitat_type) %>% 
+      summarise(mean_biomass = mean(avg_wet_weight / no_trap_days),
+                sd_biomass = sd(avg_wet_weight / no_trap_days),
+                n = n(),
+                se_biomass = sd_biomass / sqrt(n),
+                .groups = "drop") %>% 
+      mutate(year = as.factor(year),
+             region_name = as.factor(region_name),
+             habitat_type = as.factor(habitat_type))
       
-      "') GROUP BY year, habitat_type, locality) foo,
-      locations.localities l
-      WHERE foo.locality = l.locality
-           
-      
-      " )
-     
-      
-      loc_species_res <- dbGetQuery(con,
-                                    loc_species_q)  %>% 
-        mutate(year = as.factor(year),
-               habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type)) 
-
-      return(loc_species_res)
+      return(temp)
       
     })
     
-    
-    loc_biomass_data <- reactive({
-      
-    loc_biomass_q <- paste0("
-    SELECT l.locality,
-    yl.year,
-    l.habitat_type,
-    l.region_name,
-    sum(st.wet_weight) as sum_wet_weight,
-	round(avg(st.wet_weight / (EXTRACT(epoch FROM (ls.end_date - ls.start_date)/86400)::integer))::numeric, 2) as wet_weight_per_day
-   	FROM 
-    events.sampling_trap st,
-    events.locality_sampling ls,
-    events.year_locality yl,
-    locations.localities l,
-    locations.traps,
-    lookup.trap_types tt
-	WHERE st.locality_sampling_id = ls.id AND 
-	ls.year_locality_id = yl.id AND 
-	yl.locality_id = l.id AND 
-	st.trap_id = traps.id AND 
-	traps.trap_model = tt.trap_model
-	AND tt.trap_type = 'Malaise'
-	AND ls.end_date IS NOT NULL
-	AND ls.start_date IS NOT NULL
-	AND st.wet_weight IS NOT NULL
-	AND l.locality IN ('", 
-  paste(ruterInBounds()$locality, collapse = "','"),
-  "')
-	GROUP BY l.locality, yl.year, l.habitat_type, l.region_name
-	ORDER BY wet_weight_per_day 
+    to_plot_species <- reactive({
+        temp <- diversity_locality_sampling_time %>% 
+        filter(locality %in% ruterInBounds()$locality)
 
-  " )
-      
-      
-      loc_species_res <- dbGetQuery(con,
-                                    loc_biomass_q)  %>% 
+        if(input$only_summer){
+          temp <- temp %>%
+            filter(start_month >=7,
+                   start_month <=8)
+        }
+
+        temp <- temp %>% 
+        group_by(year, 
+                 region_name,
+                 habitat_type) %>% 
+        summarise(mean_richness = mean(no_species),
+                  sd_richness = sd(no_species),
+                  n = n(),
+                  se_richness = sd_richness / sqrt(n),
+                  .groups = "drop") %>% 
         mutate(year = as.factor(year),
-               habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type)) 
+               region_name = as.factor(region_name),
+               habitat_type = as.factor(habitat_type))
       
-      return(loc_species_res)
-      
+        return(temp)
     })
     
     
-    output$loc_spec <- renderPlotly({
+    output$loc_spec2 <- renderPlot({
       req(ns("loc_map"))
       req(ns("hab_split"))
-
+      req(ns("only_summer"))
+      
+      dodge = 0.2
+      
       if(input$unit_to_plot == "Artsantall"){
-        to_plot <- loc_species_data()
-        yvar = "tot_spec"
-        ylab =  "Antall arter per lok."
+        to_plot <- to_plot_species()
+        yvar = data_sym("mean_richness")
+        yse = data_sym("se_richness")
+        ylab =  "Middelv. antall arter per lokalitet og år"
+        ciMult <- qt(.975, to_plot$n - 1)
       } else 
-        {
-          to_plot <- loc_biomass_data()
-          yvar = "wet_weight_per_day"
-          ylab = "Middels. biomasse per dag (g/dag)"
-        }
+      {
+        to_plot <- to_plot_biomass()
+        yvar = data_sym("mean_biomass")
+        yse = data_sym("se_biomass")
+        ylab = "Middelv. biomasse per dag (g/dag)"
+        ciMult <- qt(.975, to_plot$n - 1)
+      }
       
-      if(is.null(to_plot) | nrow(to_plot) <1 ) return(NULL)
-      
-      p <- ggplot2::ggplot(aes(y = get(yvar), 
-                               x = year,
-                               group = region_name, 
-                               col = region_name),
-                           data =  to_plot
-                           ) +
-       ggplot2::geom_point(position = position_dodge(width = 0.2)) +
-       ggplot2::geom_smooth() +
-       xlab("År") +
-       ylab(ylab) +
-       scale_color_manual(values = derived_pal_reg,
-                          name = "Region")
+      p <- ggplot(to_plot,
+                  aes(x = year,
+                      y = !!yvar,
+                      group = region_name:habitat_type)) +
+      geom_point(aes(x = year,
+                     y = !!yvar,
+                     color = region_name,
+                     pch = habitat_type),
+                 cex = 3,
+                 position = position_dodge(width = 0.2)) +
+      geom_errorbar(aes(x = year,
+                        ymin = !!yvar - ciMult * !!yse,
+                        ymax = !!yvar + ciMult * !!yse,
+                        color = region_name),
+                    width = .2,
+                    lwd = 1,
+                    position=position_dodge(width = 0.2)
+                    ) +
+      geom_line(aes(x = year,
+                    y = !!yvar,
+                    color = region_name
+      ),
+      position=position_dodge(width = 0.2)
+      ) +
+      scale_color_nina(name = "Region",
+                       palette = "darkblue-orange") +
+      scale_shape_discrete(name = "Habitattype") +
+      ylab(ylab) +
+      xlab("År") +
+      theme(legend.position = "right") 
       
       if(input$hab_split){
         
@@ -442,12 +390,14 @@ locspec_server <- function(id, login_import) {
                      nrow = 1)
       }
       
-      suppressWarnings(suppressMessages(
-        ggplotly(p) %>%
-        style(hovertext = loc_species_data()[, "locality"])
-      ))
+      p
+      # suppressWarnings(suppressMessages(
+      #   ggplotly(p) #%>%
+      #  #   style(hovertext = loc_species_data()[, "locality"])
+      # ))
       
-   
+      
+    
     })
     
   })
