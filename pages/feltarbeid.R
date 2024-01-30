@@ -5,28 +5,31 @@ jsCode <- "shinyjs.pageCol = function(params){$('body').css('background', params
 
 felt_ui <- function(id){
   ns <- NS(id)
-
+  
   tabPanel(title = "Innsamling",
-           box(
+           column(6,
+           box(width = 12,
              textOutput(ns("felletyper_text")),
              # tags$style(type="text/css", "#felletyper_text {white-space: pre-wrap;}"),
              title = "Overvåkingsdesign",
              solidHeader = TRUE,
              height = "800px"
-           ),
-          box(
+           )),
+           column(6,
+          box(width = 12,
             uiOutput(ns("localities")),
             title = "Overvåkingslokaliteter i perioden 2020-2023",
             solidHeader = TRUE,
             height = "400px"
           ),
           br(),
-           box(
+           box(width = 12,
             uiOutput(ns("felletyper")),
             title = "Malaise- og vindusfeller",
             solidHeader = TRUE,
             height = "400px"
           )
+           )
      
   )
 }
@@ -48,7 +51,8 @@ felt_server <- function(id, login_import) {
     
     
     output$felletyper <- renderUI({
-      tags$img(src = "figures/felletyper.jpg", 
+      tags$img(src = "figures/felletyper_medium.jpg", 
+               #src = "figures/felletyper.jpg", 
                height = "300px",
                width = "95%",
                #onclick="enlargeImg()",
@@ -63,16 +67,21 @@ Innsamling av insekter skjer hovedsakelig med malaisefeller, et slags telt der i
 )
 
 
-output$stagger <- renderUI({
-  tags$img(src = "figures/forskj-1.svg", 
-           height = '300px')
-})
+# output$stagger <- renderUI({
+#   tags$img(src = "figures/forskj-1.svg", 
+#            height = '300px')
+# })
 
 
-output$localities <- renderUI({
-  tags$img(src = "figures/lokaler_20202023-1.svg",
-           height = '300px')
-})
+  # output$localities <- renderUI({
+  #   tags$img(src = "figures/lokaler_20202023-1.svg",
+  #            height = '300px')
+  # })
+
+  output$localities <- renderUI({
+    tags$img(src = "figures/fig-lokaler20202023-1.png",
+             height = '300px')
+  })
 
   return(
     list(con = reactive(login_export$con))

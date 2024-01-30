@@ -78,6 +78,27 @@ white-space: nowrap;
 margin-top: 0px;
 }
 
+#hotspotbox > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+}
+
+#loc_map_box > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+}
+
+#locspecbox > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+}
+
+#omdrevbox > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+margin-bottom: 10px;
+}
+
 #taxa_share > .box-body {
 white-space: nowrap;
 margin-top: 0px;

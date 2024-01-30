@@ -4,25 +4,27 @@ bioinformatikk_ui <- function(id){
   ns <- NS(id)
   
 tabPanel(title = "Databehandling",
-         
-         box(
+         column(6,
+         box(width = 12,
            htmlOutput(ns("flytskjema_text")),
            title = "Bioinformatikk og miljøvariabler",
            solidHeader = TRUE,
            height = "800px"
-         ),
-         box(
+         )),
+         column(6,
+         box(width = 12,
            uiOutput(ns("flytskjema")),
            title = "DNA-resultat kvalitetssikres og kobles til artsnavn",
            solidHeader = TRUE,
            height = "400px"
          ),
          br(),
-         box(
+         box(width = 12,
            uiOutput(ns("data_links")),
            title = "Linker til data",
            solidHeader = TRUE,
            height = "400px"
+         )
          )
          
 )
