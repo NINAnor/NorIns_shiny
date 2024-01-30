@@ -19,6 +19,9 @@ recalculate_status <- shiny_rules %>%
 
 if(recalculate_number != recalculate_status) {
 
+  locality_sampling <- dplyr::tbl(con, dbplyr::in_schema("events", "locality_sampling"))
+  
+  
 # prep data for div_map
 
 redlisted_obs_2021 <- read_sf(con,
