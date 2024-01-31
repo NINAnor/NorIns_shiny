@@ -88,7 +88,7 @@ asvmap_server <- function(id, login_import) {
       selectInput(inputId = ns("sel_conf"),
                   label = "Sikkerhet på artsbestemmelse",
                   choices = conf_choices,
-                  selected = "")
+                  selected = "ALL")
       } else {
 
         selectInput(inputId = ns("sel_conf"),

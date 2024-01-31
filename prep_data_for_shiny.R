@@ -1,10 +1,12 @@
-require(Norimon)
+#require(Norimon)
 require(sf)
-require(tidyverse)
+#library(tidyverse)
+library(dplyr)
+library(tidyr)
 require(DBI)
 
 load("data/shinyPass.Rdata")
-connect_to_insect_db(user = my_username,
+Norimon::connect_to_insect_db(user = my_username,
                      password = my_password)
 
 load("data/recalculate_number.Rdata")
