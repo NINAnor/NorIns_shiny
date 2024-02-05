@@ -108,8 +108,9 @@ tidstrend_server <- function(id, login_import) {
       
       selectInput(inputId = ns("project"),
                   label = "Prosjekt",
-                  choices = c("", projects$project_name),
-                  selected = c("Nasjonal insektovervåking"),
+                  choices = c("Nasjonal insektovervåking"),
+                  #choices = c("", projects$project_name),
+                  selected = "Nasjonal insektovervåking",
                   selectize = FALSE)
       
     })
@@ -277,8 +278,8 @@ tidstrend_server <- function(id, login_import) {
     
     
     to_plot_biomass <- reactive({
-      temp <- biomass_mf_locality_sampling_time %>% 
-      filter(locality %in% ruterInBounds()$locality)
+      temp <- biomass_mf_locality_sampling_time #%>% 
+      #filter(locality %in% ruterInBounds()$locality)
 
       if(input$only_summer){
         temp <- temp %>%
@@ -290,8 +291,8 @@ tidstrend_server <- function(id, login_import) {
       group_by(year, 
                region_name,
                habitat_type) %>% 
-      summarise(mean_biomass = mean(avg_wet_weight / no_trap_days),
-                sd_biomass = sd(avg_wet_weight / no_trap_days),
+      summarise(mean_biomass = mean(avg_wet_weight / no_trap_days, na.rm = TRUE),
+                sd_biomass = sd(avg_wet_weight / no_trap_days, na.rm = TRUE),
                 n = n(),
                 se_biomass = sd_biomass / sqrt(n),
                 .groups = "drop") %>% 
@@ -317,8 +318,8 @@ tidstrend_server <- function(id, login_import) {
         group_by(year, 
                  region_name,
                  habitat_type) %>% 
-        summarise(mean_richness = mean(no_species),
-                  sd_richness = sd(no_species),
+        summarise(mean_richness = mean(no_species, na.rm = TRUE),
+                  sd_richness = sd(no_species, na.rm = TRUE),
                   n = n(),
                   se_richness = sd_richness / sqrt(n),
                   .groups = "drop") %>% 

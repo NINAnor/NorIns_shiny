@@ -104,6 +104,11 @@ white-space: nowrap;
 margin-top: 0px;
 }
 
+#asv_leaflet_box > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+}
+
 
 
 #taxabox > .box-body {

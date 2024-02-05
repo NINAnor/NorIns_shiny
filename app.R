@@ -30,14 +30,14 @@ ui <- navbarPage(title = "Norsk insektovervåking - et innblikk",
                  ),
                  
                  felt_ui(id = "id_1"),
-                 
-                 dashboard_ui(id = "id_8"),
- 
+
                  labarbeid_ui(id = "id_2"),
                  
                  bioinformatikk_ui(id = "id_3"),
                  
                  biodiv_ui(id = "id_4"),
+                 
+                 dashboard_ui(id = "id_8"),
                  
                  div_map_ui(id = "id_5"),
                  

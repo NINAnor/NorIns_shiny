@@ -55,9 +55,9 @@ div_map_server <- function(id, login_import) {
 
     output$div_map_text <- renderText("En nasjonal insektovervåking gir ny og verdifull kunnskap om fordelingen av insektmangfoldet og hvor sjeldne arter finns. Vi kan for eksempel få ny kunnskap om utbredelsen til rødlistete arter, eller arter som ikke tidligere er registrert fra landet. 
     
-    Det er imidlertid viktig og være klar over at funnene ikke er manuelt verifisert, og at det kan være feil i DNA-bibliotekene. Disse feilene vil imidlertid bli færre over tid.
+Det er imidlertid viktig og være klar over at funnene ikke er manuelt verifisert, og at det kan være feil i DNA-bibliotekene. Disse feilene vil imidlertid bli færre over tid.
 
-Her kan du se utbredelsen av diversitetsmønstre for ulike utvalg av artsgrupper. 
+Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen på punktene viser det (relative) antallet arter på hver plass for hver gruppe.
 "
     )
     

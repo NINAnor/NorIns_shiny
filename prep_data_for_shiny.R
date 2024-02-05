@@ -575,7 +575,7 @@ rlist::list.save(catch_per_year_locality_data,
 
 # prep data for timeseries graphs
 
-biomass_raw <- get_biomass(agg_level = "locality_sampling",
+biomass_raw <- Norimon::get_biomass(agg_level = "locality_sampling",
                            trap_type = "MF",
                            subset_region = NULL
 ) 
@@ -618,7 +618,7 @@ biomass_mf_locality_sampling_time <- biomass_raw %>%
   # }
   #loc_spec_data <- loc_species_data()
 
-  diversity_raw <- get_observations(agg_level = "locality_sampling",
+  diversity_raw <- Norimon::get_observations(agg_level = "locality_sampling",
                                     #trap_type = "MF",
                                     subset_region = NULL
   ) 

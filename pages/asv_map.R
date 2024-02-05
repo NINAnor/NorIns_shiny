@@ -44,19 +44,20 @@ asvmap_ui <- function(id){
                                      height = "400px"
              )),
            column(6,
-           box(width = 12,
-               title = "Fordeling av genetiske varianter",
-               shinycssloaders::withSpinner({
-               leaflet::leafletOutput(ns("asv_map"),
-                                      width = "95%",
-                                      height = 600)
-                 },
-               type = 2,
-               color = "#E57200",
-               color.background = "#004F71"),
-               height = "800px"
-               
-           )
+                  shinydashboardPlus::box(width = 12,
+                                          id = "asv_leaflet_box", 
+                                          title = "Fordeling av genetiske varianter",
+                                          shinycssloaders::withSpinner({
+                                          leaflet::leafletOutput(ns("asv_map"),
+                                                                  width = "95%",
+                                                                  height = 700)
+                                            },
+                                          type = 2,
+                                          color = "#E57200",
+                                          color.background = "#004F71"),
+                                          height = "800px"
+                                           
+                                       )
            )
            
   )
@@ -88,7 +89,7 @@ asvmap_server <- function(id, login_import) {
       selectInput(inputId = ns("sel_conf"),
                   label = "Sikkerhet på artsbestemmelse",
                   choices = conf_choices,
-                  selected = "ALL")
+                  selected = "HIGH")
       } else {
 
         selectInput(inputId = ns("sel_conf"),
