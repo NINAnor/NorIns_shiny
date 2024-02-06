@@ -145,7 +145,7 @@ Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen p�
                                   fillColor =  ~pal(kategori),
                                   fill = TRUE,
                                   fillOpacity = 100,
-                                  stroke = FALSE) %>% 
+                                  stroke = FALSE,popup = ~paste0(locality, ": ", no_spec)) %>% 
         addLegend(labels = names(leaflet_colors),
                   colors = leaflet_colors,
                   opacity = 1)
