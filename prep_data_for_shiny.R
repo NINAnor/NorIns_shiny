@@ -321,6 +321,36 @@ poll_obs_agg <- poll_obs_agg %>%
          kategori,
          no_spec)
 
+
+tot_richn <- tbl(con,
+                 Id(schema = "views",
+                    table = "no_spec_year_locality")) %>% 
+  collect()
+
+project_year_localities <- sf::read_sf(con,
+                              Id(schema = "views",
+                                 table = "project_year_localities")
+)
+
+tot_richn_loc <- project_year_localities %>% 
+  left_join(tot_richn,
+            by = c("locality" = "locality",
+                   "region_name" = "region_name",
+                   "habitat_type"= "habitat_type",
+                   "year" = "year"))
+
+NorIns_richn_loc <- tot_richn_loc %>% 
+  mutate(geometry = center_geom,
+         no_spec = as.integer(tot_no_spec)) %>% 
+  sf::st_set_geometry("geometry") %>% 
+  st_jitter(poll_obs_agg, amount = 7000)  %>% 
+  st_transform(4326) %>%
+  filter(project_short_name == "NasIns") %>% 
+  select(locality,
+         kategori = habitat_type,
+         no_spec)
+
+
 #Save the data
 
 tryCatch(
@@ -339,6 +369,12 @@ tryCatch(
 write_sf(obj = all_alien_obs_agg,
          dsn = "data/all_alien_obs_agg.shp",
          overwrite = TRUE)
+)
+
+tryCatch(
+  write_sf(obj = NorIns_richn_loc,
+           dsn = "data/NorIns_richn_loc.shp",
+           overwrite = TRUE)
 )
 
 # end prep data for div map

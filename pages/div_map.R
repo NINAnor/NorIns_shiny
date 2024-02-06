@@ -63,7 +63,7 @@ Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen p�
     
     output$choose_group <- renderUI({
       
-      group_choices <- c("Rødlista arter", "Fremmede arter", "Pollinatorer")
+      group_choices <- c("Rødlista arter", "Fremmede arter", "Pollinatorer", "Alle")
       
       selectInput(ns("chosen_group"),
                   label = "Velg gruppe",
@@ -79,6 +79,8 @@ Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen p�
     all_alien_obs_agg <- sf::read_sf(dsn = "data/all_alien_obs_agg.shp")
     
     poll_obs_agg <- sf::read_sf(dsn = "data/poll_obs_agg.shp")
+    
+    NorIns_richn_loc <- sf::read_sf(dsn = "data/NorIns_richn_loc.shp")
     
     ##End get pot alien species
     
@@ -112,12 +114,18 @@ Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen p�
           leaflet_colors <- c("Bier" = "#93328E",
                               "Blomsterfluer" =  "#FFB25B",
                               "Sommerfugler" = "#2DCCD3")
-        } 
+        } else {
+          if(input$chosen_group == "Alle"){
+          to_plot <- NorIns_richn_loc
+          leaflet_colors <- c("Semi-nat" = "#E57200",
+                              "Forest" = "#7A9A01")
+          
+        }
            else
              NULL 
            
          } 
-           }
+           }}
       
       pal <- colorFactor(palette = leaflet_colors,
                          levels = names(leaflet_colors))
