@@ -62,7 +62,7 @@ redlisted_obs_2021_agg <- redlisted_obs_2021 %>%
            kategori) %>% 
   summarise(no_spec = n_distinct(species_latin_fixed)) %>% 
   ungroup() %>% 
-  st_jitter(redlisted_obs_2021_agg, amount = 7000)  %>% 
+  st_jitter(redlisted_obs_2021_agg, amount = 5000)  %>% 
   st_transform(4326)
 
 ##End get redlisted species
@@ -185,7 +185,7 @@ all_alien_obs_agg <- all_alien_obs %>%
   )
 
 all_alien_obs_agg <- all_alien_obs_agg %>% 
-  st_jitter(all_alien_obs_agg, amount = 7000)  %>% 
+  st_jitter(all_alien_obs_agg, amount = 5000)  %>% 
   st_transform(4326) %>%
   select(locality,
          kategori,
@@ -315,7 +315,7 @@ poll_obs_agg <- poll_obs %>%
   )
 
 poll_obs_agg <- poll_obs_agg %>% 
-  st_jitter(poll_obs_agg, amount = 7000)  %>% 
+  st_jitter(poll_obs_agg, amount = 5000)  %>% 
   st_transform(4326) %>%
   select(locality,
          kategori,
@@ -343,7 +343,7 @@ NorIns_richn_loc <- tot_richn_loc %>%
   mutate(geometry = center_geom,
          no_spec = as.integer(tot_no_spec)) %>% 
   sf::st_set_geometry("geometry") %>% 
-  st_jitter(poll_obs_agg, amount = 7000)  %>% 
+  st_jitter(poll_obs_agg, amount = 5000)  %>% 
   st_transform(4326) %>%
   filter(project_short_name == "NasIns") %>% 
   select(locality,

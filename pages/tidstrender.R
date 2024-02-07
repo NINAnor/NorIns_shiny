@@ -278,8 +278,8 @@ tidstrend_server <- function(id, login_import) {
     
     
     to_plot_biomass <- reactive({
-      temp <- biomass_mf_locality_sampling_time #%>% 
-      #filter(locality %in% ruterInBounds()$locality)
+      temp <- biomass_mf_locality_sampling_time %>% 
+      filter(locality %in% ruterInBounds()$locality)
 
       if(input$only_summer){
         temp <- temp %>%

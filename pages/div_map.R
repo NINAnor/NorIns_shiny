@@ -57,7 +57,7 @@ div_map_server <- function(id, login_import) {
     
 Det er imidlertid viktig og være klar over at funnene ikke er manuelt verifisert, og at det kan være feil i DNA-bibliotekene. Disse feilene vil imidlertid bli færre over tid.
 
-Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen på punktene viser det (relative) antallet arter på hver plass for hver gruppe.
+Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen på punktene viser det (relative) antallet arter på hver plass for hver gruppe. For at punktene ikke skal overlappe er de spredt ut fra fangstlokalitetet med 5 km. Klikke på punktene for å få se artsantallet innen hver gruppe på en lokalitet.
 "
     )
     
@@ -139,7 +139,7 @@ Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen p�
                                   , options = layersControlOptions(collapsed = FALSE)) %>% 
         leaflet::hideGroup(c("Topo", "Ortophoto"))  %>% 
       
-        leaflet::addCircleMarkers(radius = datawizard::rescale(to_plot$no_spec, to = c(2, 10)),
+        leaflet::addCircleMarkers(radius = datawizard::rescale(to_plot$no_spec, to = c(2, 12)),
                                   color = ~pal(kategori),
                                   data = to_plot,
                                   fillColor =  ~pal(kategori),
