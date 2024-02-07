@@ -32,7 +32,7 @@ dashboard_ui <- function(id){
                                           shinycssloaders::withSpinner({
                                           plotOutput(ns("project_sum_map"),
                                                      height = "270px",
-                                                     width = "1400px")
+                                                     width = "1000px")
                                           },
                                           type = 2,
                                           color = "#E57200",
