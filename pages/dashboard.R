@@ -138,7 +138,7 @@ dashboard_server <- function(id, login_import) {
       
       valueBox(
         value = no_loc[no_loc$"habitat_type" == "Semi-nat",]$no_loc,
-        subtitle = "registrerte lokaliteter i semi-naturlig mark",
+        subtitle = "lokaliteter nå i semi-naturlig mark",
         color = "yellow",
         width = 2
       )
@@ -150,7 +150,7 @@ dashboard_server <- function(id, login_import) {
       
       valueBox(
         value = no_loc[no_loc$"habitat_type" == "Forest",]$no_loc,
-        subtitle = "registrerte lokaliteter i skog",
+        subtitle = "lokaliteter nå i skog",
         color = "aqua"
       )
     })
