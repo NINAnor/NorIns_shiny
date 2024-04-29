@@ -63,7 +63,7 @@ tidstrend_ui <- function(id){
                shinycssloaders::withSpinner({
                leaflet::leafletOutput(ns("loc_map"),
                                       width = "95%",
-                                      height = 700)
+                                      height = 800)
                  },
                type = 2,
                color = "#E57200",

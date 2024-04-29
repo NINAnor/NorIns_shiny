@@ -29,12 +29,13 @@ div_map_ui <- function(id){
                                    
            ),
            column(6,
-           box(width = 12,
+               shinydashboardPlus::box(width = 12,
+                                       id = "div_map_box",
                title = "Fordeling av diversitet",
                shinycssloaders::withSpinner({
                leaflet::leafletOutput(ns("div_map"),
                                       width = "95%",
-                                      height = 600)
+                                      height = 800)
                  },
                type = 2,
                color = "#E57200",

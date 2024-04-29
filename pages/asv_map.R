@@ -50,7 +50,7 @@ asvmap_ui <- function(id){
                                           shinycssloaders::withSpinner({
                                           leaflet::leafletOutput(ns("asv_map"),
                                                                   width = "95%",
-                                                                  height = 600)
+                                                                  height = 800)
                                             },
                                           type = 2,
                                           color = "#E57200",
