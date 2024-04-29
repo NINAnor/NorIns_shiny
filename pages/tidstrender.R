@@ -260,8 +260,9 @@ tidstrend_server <- function(id, login_import) {
     
     load(file = "data/biomass_mf_locality_sampling_time.Rdata")
     load(file = "data/diversity_locality_sampling_time.Rdata")
+    #load(file = "data/diversity_locality_sampling_time_id_high.Rdata")
     
-    
+  
     biomass_mf_locality_sampling_time <- biomass_mf_locality_sampling_time %>%   
       mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", "Skog")) %>% 
       mutate(habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog")),
@@ -275,6 +276,13 @@ tidstrend_server <- function(id, login_import) {
              region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Nord-Norge")),
              habitat_type = as.factor(habitat_type)) %>% 
       mutate(year = as.factor(year)) 
+    
+    # diversity_locality_sampling_time_id_high <- diversity_locality_sampling_time_id_high %>%
+    #   mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", "Skog")) %>%
+    #   mutate(habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog")),
+    #          region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Nord-Norge")),
+    #          habitat_type = as.factor(habitat_type)) %>%
+    #   mutate(year = as.factor(year))
     
     
     to_plot_biomass <- reactive({
@@ -322,6 +330,7 @@ tidstrend_server <- function(id, login_import) {
                   sd_richness = sd(no_species, na.rm = TRUE),
                   n = n(),
                   se_richness = sd_richness / sqrt(n),
+                  sum_richness = sum(no_species, na.rm = TRUE),
                   .groups = "drop") %>% 
         mutate(year = as.factor(year),
                region_name = as.factor(region_name),
