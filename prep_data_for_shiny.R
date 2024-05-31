@@ -616,6 +616,13 @@ biomass_raw <- Norimon::get_biomass(agg_level = "locality_sampling",
                            subset_region = NULL
 ) 
 
+biomass_raw_TidVar <- Norimon::get_biomass(agg_level = "locality_sampling",
+                                           trap_type = "MF",
+                                           subset_region = NULL,
+                                           dataset = "TidVar")
+biomass_raw <- biomass_raw %>%
+  rbind(biomass_raw_TidVar)
+
 biomass_mf_locality_sampling_time <- biomass_raw %>% 
   left_join(locality_sampling,
             by = c("sampling_name" = "sampling_name"),
@@ -655,10 +662,19 @@ biomass_mf_locality_sampling_time <- biomass_raw %>%
   #loc_spec_data <- loc_species_data()
 
   diversity_raw <- Norimon::get_observations(agg_level = "locality_sampling",
-                                    #trap_type = "MF",
+                                    trap_type = "MF",
                                     subset_region = NULL
   ) 
   
+  # diversity_raw_TidVar <- Norimon::get_observations(agg_level = "locality_sampling",
+  #                                            trap_type = "MF",
+  #                                            subset_region = NULL,
+  #                                            dataset = "TidVar"
+  # ) 
+  # 
+  # diversity_raw <- diversity_raw %>% 
+  #   rbind(diversity_raw_TidVar)
+
   diversity_locality_sampling_time <- diversity_raw %>% 
     left_join(locality_sampling,
               by = c("sampling_name" = "sampling_name"),
@@ -669,30 +685,40 @@ biomass_mf_locality_sampling_time <- biomass_raw %>%
     filter(no_species > 0)
   
   
-  diversity_raw_high <- get_observations(agg_level = "locality_sampling",
-                                             #trap_type = "MF",
-                                             subset_region = NULL,
-                                             id_conf = "HIGH"
-  ) 
-  
-  
-  diversity_locality_sampling_time <- diversity_raw %>% 
-    left_join(locality_sampling,
-              by = c("sampling_name" = "sampling_name"),
-              copy = T) %>% 
-    mutate(julian_day = lubridate::yday(end_date),
-           habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type),
-           start_month = lubridate::month(start_date))  %>% 
-    filter(no_species > 0)
-  
-  diversity_locality_sampling_time_id_high <- diversity_raw_high %>% 
-    left_join(locality_sampling,
-              by = c("sampling_name" = "sampling_name"),
-              copy = T) %>% 
-    mutate(julian_day = lubridate::yday(end_date),
-           habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type),
-           start_month = lubridate::month(start_date))  %>% 
-    filter(no_species > 0)
+  # diversity_raw_high <- get_observations(agg_level = "locality_sampling",
+  #                                        trap_type = "MF",
+  #                                        subset_region = NULL,
+  #                                        id_conf = "HIGH"
+  # )
+  # 
+  # diversity_raw_high_TidVar <- get_observations(agg_level = "locality_sampling",
+  #                                              trap_type = "MF",
+  #                                              subset_region = NULL,
+  #                                              id_conf = "HIGH",
+  #                                              dataset = "TidVar"
+  # ) 
+  # 
+  # diversity_raw_high <- diversity_raw_high %>% 
+  #   rbind(diversity_raw_high_TidVar)
+  # 
+  # 
+  # diversity_locality_sampling_time <- diversity_raw %>% 
+  #   left_join(locality_sampling,
+  #             by = c("sampling_name" = "sampling_name"),
+  #             copy = T) %>% 
+  #   mutate(julian_day = lubridate::yday(end_date),
+  #          habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type),
+  #          start_month = lubridate::month(start_date))  %>% 
+  #   filter(no_species > 0)
+  # 
+  # diversity_locality_sampling_time_id_high <- diversity_raw_high %>% 
+  #   left_join(locality_sampling,
+  #             by = c("sampling_name" = "sampling_name"),
+  #             copy = T) %>% 
+  #   mutate(julian_day = lubridate::yday(end_date),
+  #          habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type),
+  #          start_month = lubridate::month(start_date))  %>% 
+  #   filter(no_species > 0)
   
   
 
@@ -704,8 +730,8 @@ save(biomass_mf_locality_sampling_time,
 save(diversity_locality_sampling_time,
      file = "data/diversity_locality_sampling_time.Rdata")
 
-save(diversity_locality_sampling_time_id_high,
-     file = "data/diversity_locality_sampling_time_id_high.Rdata")
+#save(diversity_locality_sampling_time_id_high,
+#     file = "data/diversity_locality_sampling_time_id_high.Rdata")
 
 # end prep data for timeseries graphs
 

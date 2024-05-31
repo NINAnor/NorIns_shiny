@@ -496,8 +496,8 @@ ignoreInit = TRUE
     
     output$asvmap_text <- renderText("Kartet til høyre viser funnstedet for enkelte arter og kakediagrammene representerer komposisjonen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant. Størrelsen på sirklene er skalert etter hvor mange DNA-sekvenser vi totalt har funnet av arten i en lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
-Nedenfor kan dere søke på enkeltarter. 
-Per i dag har orervåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelse angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt og det kan være feil i artsnavn selv om vi angir sikkerheten som høy."
+Nedenfor kan man søke på enkeltarter. 
+Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelse angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt og det kan være feil i artsnavn selv om vi angir sikkerheten som høy."
 )
     
     

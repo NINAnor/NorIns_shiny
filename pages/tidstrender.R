@@ -84,7 +84,7 @@ tidstrend_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     
     
-    output$loc_spec_text <- renderText("Her kan man se det totale artsantallet funnet per lokalitet på kart, og som en modell med snitt og variasjon per år nederst. Du bestemmer selv om du vil ha alle regioner og økosystemer. Det er bare data fra malaisefeller som er lagt inn. Det vil ta tid for å kunne dra konklusjoner om stabile trender, både mellom år og mellom steder. Resultatene på disse figurene må derfor tolkes med omhu. Ingen lokaliteter har per i dag blitt undersøkt mer enn en gang, og det vil i ta minst 10 år før alle lokaliteter har blitt undersøkt to ganger."
+    output$loc_spec_text <- renderText("Her kan man se tidstrender for den totale mengden insekter eller det totale antallet insektarter som programmet har oppmålt. Zoom i kartet for å filtrere på geografisk region. Mengden insekter vises som gjennomsnittlig biomasse per felle og dag, og artsantallet vises som gjennomsnittligt artsantall per lokalitet og år. For å få en lik innsamlingsinnsats for alle habitater er kun data fra malaisefeller lagt inn. Den totale fangstperioden varierer noe mellom år, derfor bør man i første hånd sammenligne data kun for juni-august, der vi har er en sammenlignbar innsamlingsinnsats. I 2020 brukte vi en eldre sekvenseringsmaskin, og derfor er artsantallet lavere for dette året. Det vil ta tid for å kunne dra konklusjoner om stabile trender, både mellom år og mellom steder. Resultatene på disse figurene må derfor tolkes med omhu. Enn så lenge har ikke noen lokalitet blitt undersøkt mer enn en gang, og det vil i ta minst 10 år før alle lokaliteter har blitt undersøkt to ganger."
 )
     
     
@@ -264,8 +264,8 @@ tidstrend_server <- function(id, login_import) {
     
   
     biomass_mf_locality_sampling_time <- biomass_mf_locality_sampling_time %>%   
-      mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", "Skog")) %>% 
-      mutate(habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog")),
+      mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", habitat_type)) %>% 
+      mutate(habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog", "Tid_aut", "Tid_man")),
              region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Nord-Norge")),
              habitat_type = as.factor(habitat_type)) %>% 
       mutate(year = as.factor(year)) 
