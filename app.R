@@ -1,5 +1,6 @@
 require(shiny)
 require(shinydashboard)
+require(shiny.i18n)
 # require(sf)
 
 
@@ -15,6 +16,9 @@ source("pages/asv_map.R", local = TRUE)
 source("pages/tidstrender.R", local = TRUE)
 source("pages/dashboard.R", local = TRUE)
 
+# File with translations
+i18n <- Translator$new(translation_csvs_path = "./data/")
+i18n$set_translation_language("no") # here you select the default translation to display
 
 
 # To make the app find the figures folder (and expose it to the web)
@@ -23,12 +27,25 @@ addResourcePath(prefix = "figures", directoryPath = "figures")
 
 # Set up master ui function, fetching module ui-functions and defining ids
 ui <- navbarPage(
-  title = "Norsk insektovervåking - et innblikk",
+  title = i18n$t("Norsk insektovervåking - et inblikk"),
   footer = NULL,
-  header = NULL,
+  header =  {shiny.i18n::usei18n(i18n)
+    style = "float: right;"
+    selectInput('selected_language',
+                i18n$t("Velg språk"),
+                choices = i18n$get_languages(),
+                selected = i18n$get_key_translation())
+  },
   tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
-  ),
+    tags$link(rel = "stylesheet", type = "text/css", href = "custom.css"),
+    ),
+  # tags$div(
+  #     style = "float: right;",
+  #   selectInput('selected_language',
+  #               i18n$t("Velg språk"),
+  #               choices = i18n$get_languages(),
+  #               selected = i18n$get_key_translation())
+  # ),
   felt_ui(id = "id_1"),
   labarbeid_ui(id = "id_2"),
   bioinformatikk_ui(id = "id_3"),
@@ -42,6 +59,13 @@ ui <- navbarPage(
 
 # Set up master server function, fetching module server-functions and defining ids. Database connection is made once, and shared though modules
 server <- function(input, output, session) {
+  observeEvent(input$selected_language, {
+    # This print is just for demonstration
+    print(paste("Language change!", input$selected_language))
+    # Here is where we update language in session
+    shiny.i18n::update_lang(input$selected_language)
+  })
+  
   login_export <- felt_server(id = "id_1")
 
   labarbeid_server(id = "id_2")
@@ -57,6 +81,8 @@ server <- function(input, output, session) {
   tidstrend_server(id = "id_7", login_import = login_export)
 
   dashboard_server(id = "id_8", login_import = login_export)
+  
+
 }
 
 
