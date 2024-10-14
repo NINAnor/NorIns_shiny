@@ -7,8 +7,8 @@ felt_ui <- function(id) {
   ns <- NS(id)
     
   tabPanel(
-    title = i18n$t("Innsamling"),
-    column(
+    title = textOutput(ns("panel_title")),
+     column(
       6,
       box(
         width = 12,
@@ -37,8 +37,7 @@ felt_ui <- function(id) {
         height = "400px"
       )
     )
-  )
-  
+    )
 }
 
 
@@ -73,6 +72,7 @@ felt_server <- function(id, login_import) {
 # 
 # Innsamling av insekter skjer hovedsakelig med malaisefeller, et slags telt der insekter flyr oppover en duk og ender opp i en flaske fylt med etanol på det høyeste punktet i teltet. På lokalitetene i skog bruker vi også 4 vindusfeller. Disse fanger store biller som faller ned i en flaske med etanol etter at de har krasjet med et gjennomsiktig plastplate. Fellene står ute i den hovedsakelige flygeperioden, fra april til og med oktober, og tømmes annenhver uke av feltarbeidere som ansvarer for en eller flere lokaliteter.")
 
+    output$panel_title <- renderText(i18n$t("Feltarbeid"))
     
     output$felletyper_text <- renderText(i18n$t("Et histogram"))
     

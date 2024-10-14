@@ -2,14 +2,14 @@ labarbeid_ui <- function(id) {
   ns <- NS(id)
 
   tabPanel(
-    title = "Labarbeid",
+    title = textOutput(ns("panel_title")),
     column(
       6,
       box(
         width = 12,
         textOutput(ns("proc_text")),
         # tags$style(type="text/css", "#proc_text {white-space: pre-wrap;}"),
-        title = "Prosessering av prøver",
+        title = textOutput(ns("processing_title")),
         solidHeader = TRUE,
         height = "800px"
       )
@@ -54,8 +54,12 @@ Deretter tilsetter vi en \"lyserings-væske\" som trekker ut DNA fra insektene. 
 
 Genetik-labbet på NINA i Trondheim isolerer en del av det mitokondrielle DNAet fra alle prøveflasker, tilsetter så en konstgjort markør som viser hvilken flaske DNAet kommer fra, og blander så alt sammen i et prøverør. Dette prøverør sendes så til Oslo universitetssykehus der det sekvenseres, det vil si at det blir registrert hvilke DNA-sekvenser man har i prøvet(ene).
 ")
+    
+    output$panel_title <- renderText(i18n$t("Labarbeid"))
 
-
+    output$processing_title <- renderText(i18n$t("Prosessering av prøver"))
+    
+    
     output$syrphidae <- renderUI({
       tags$img(
         src = "figures/syrphidae_sortering.jpg",
