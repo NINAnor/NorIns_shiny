@@ -114,21 +114,19 @@ tidstrend_server <- function(id, login_import) {
         select(project_name) %>%
         distinct() %>%
         filter(project_name %in% c(
-          "Nasjonal insektovervåking",
+          "Norsk insektovervåking",
           "Tidlig varsling av fremmede arter",
           "Overvåking av insekter i hule eiker"
         )) %>%
         collect() %>%
         arrange()
 
-
-
       selectInput(
         inputId = ns("project"),
         label = "Prosjekt",
-        choices = c("Nasjonal insektovervåking"),
+        choices = c("Norsk insektovervåking"),
         # choices = c("", projects$project_name),
-        selected = "Nasjonal insektovervåking",
+        selected = "Norsk insektovervåking",
         selectize = FALSE
       )
     })
@@ -299,7 +297,7 @@ tidstrend_server <- function(id, login_import) {
       mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", habitat_type)) %>%
       mutate(
         habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog", "Tid_aut", "Tid_man")),
-        region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Nord-Norge")),
+        region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Vestlandet", "Nord-Norge")),
         habitat_type = as.factor(habitat_type)
       ) %>%
       mutate(year = as.factor(year))
@@ -308,7 +306,7 @@ tidstrend_server <- function(id, login_import) {
       mutate(habitat_no = ifelse(habitat_type == "Semi-nat", "Gressmark", "Skog")) %>%
       mutate(
         habitat_no = factor(habitat_no, levels = c("Gressmark", "Skog")),
-        region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Nord-Norge")),
+        region_name = factor(region_name, levels = c("Østlandet", "Trøndelag", "Sørlandet", "Vestlandet", "Nord-Norge")),
         habitat_type = as.factor(habitat_type)
       ) %>%
       mutate(year = as.factor(year))

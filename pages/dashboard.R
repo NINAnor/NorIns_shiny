@@ -161,7 +161,7 @@ dashboard_server <- function(id, login_import) {
       FROM events.year_locality yl,
       locations.localities l
       WHERE yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
+      AND yl.project_short_name = 'NorIns'
       GROUP BY l.habitat_type
       "
 
@@ -209,7 +209,7 @@ dashboard_server <- function(id, login_import) {
       events.sampling_trap st
       WHERE yl.id = ls.year_locality_id
       AND ls.id = st.locality_sampling_id
-      AND yl.project_short_name = 'NasIns'
+      AND yl.project_short_name = 'NorIns'
       AND ls.end_date IS NOT NULL
       "
 

@@ -106,7 +106,7 @@ if (recalculate_number != recalculate_status) {
       AND st.locality_sampling_id = ls.id
       AND ls.year_locality_id = yl.id
       AND yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
+      AND yl.project_short_name = 'NorIns'
       AND obs.identification_confidence = 'HIGH'
       "
 
@@ -136,7 +136,7 @@ if (recalculate_number != recalculate_status) {
       AND st.locality_sampling_id = ls.id
       AND ls.year_locality_id = yl.id
       AND yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
+      AND yl.project_short_name = 'NorIns'
       AND obs.identification_confidence = 'HIGH'
       "
 
@@ -167,7 +167,7 @@ if (recalculate_number != recalculate_status) {
       AND st.locality_sampling_id = ls.id
       AND ls.year_locality_id = yl.id
       AND yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
+      AND yl.project_short_name = 'NorIns'
       AND alien.\"riskCategory\" IN ('NK', 'SE', 'HI', 'PH', 'LO')
       AND obs.identification_confidence = 'HIGH'
       "
@@ -319,7 +319,7 @@ if (recalculate_number != recalculate_status) {
       AND st.locality_sampling_id = ls.id
       AND ls.year_locality_id = yl.id
       AND yl.locality_id = l.id
-      AND yl.project_short_name = 'NasIns'
+      AND yl.project_short_name = 'NorIns'
       AND obs.identification_confidence = 'HIGH'
       "
 
@@ -384,7 +384,8 @@ if (recalculate_number != recalculate_status) {
         "locality" = "locality",
         "region_name" = "region_name",
         "habitat_type" = "habitat_type",
-        "year" = "year"
+        "year" = "year",
+        "project_short_name" = "project_short_name"
       )
     )
 
@@ -396,7 +397,7 @@ if (recalculate_number != recalculate_status) {
     sf::st_set_geometry("geometry") %>%
     st_jitter(poll_obs_agg, amount = 5000) %>%
     st_transform(4326) %>%
-    filter(project_short_name == "NasIns") %>%
+    filter(project_short_name == "NorIns") %>%
     select(locality,
       kategori = habitat_type,
       no_spec
@@ -453,7 +454,7 @@ if (recalculate_number != recalculate_status) {
       mutate(habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type))
 
     proj_sum <- project_year_localities %>%
-      filter(project_short_name == "NasIns") %>%
+      filter(project_short_name == "NorIns") %>%
       collect() %>%
       mutate(region_name = factor(region_name,
         levels = c(
@@ -587,7 +588,7 @@ if (recalculate_number != recalculate_status) {
     	yl.locality_id = l.id AND
     	st.trap_id = traps.id AND
     	traps.trap_model = tt.trap_model
-    	AND yl.project_short_name = 'NasIns'
+    	AND yl.project_short_name = 'NorIns'
     	AND ls.end_date IS NOT NULL
     	AND ls.start_date IS NOT NULL
     	AND st.wet_weight IS NOT NULL
@@ -648,7 +649,7 @@ if (recalculate_number != recalculate_status) {
     	yl.locality_id = l.id AND
     	st.trap_id = traps.id AND
     	traps.trap_model = tt.trap_model
-    	AND yl.project_short_name = 'NasIns'
+    	AND yl.project_short_name = 'NorIns'
     	AND ls.end_date IS NOT NULL
     	AND ls.start_date IS NOT NULL
     	AND st.wet_weight IS NOT NULL
