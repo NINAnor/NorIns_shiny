@@ -110,21 +110,22 @@ tidstrend_server <- function(id, login_import) {
         in_schema("lookup", "projects")
       )
 
-      projects <- projects_tab %>%
-        select(project_name) %>%
-        distinct() %>%
-        filter(project_name %in% c(
-          "Norsk insektovervåking",
-          "Tidlig varsling av fremmede arter",
-          "Overvåking av insekter i hule eiker"
-        )) %>%
-        collect() %>%
-        arrange()
+      # projects <- projects_tab %>%
+      #   select(project_name,
+      #          project_short_name) %>%
+      #   distinct() %>%
+      #   filter(project_name %in% c(
+      #     "Norsk insektovervåking",
+      #     "Tidlig varsling av fremmede arter"
+      #   )) %>%
+      #   collect() %>%
+      #   arrange()
 
       selectInput(
         inputId = ns("project"),
         label = "Prosjekt",
-        choices = c("Norsk insektovervåking"),
+        choices = c("Norsk insektovervåking" = "NorIns",
+                    "Tidlig varsling av fremmede arter" = "TidVar"),
         # choices = c("", projects$project_name),
         selected = "Norsk insektovervåking",
         selectize = FALSE

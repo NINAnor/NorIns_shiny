@@ -18,10 +18,12 @@ asvmap_ui <- function(id) {
     title = "Funnsted og innenartsvariasjon",
     column(
       6,
-      box(
+      shinydashboardPlus::box(
+        id = "taxabox",
         width = 12,
         title = "Genetisk variasjon innen arter",
         textOutput(ns("asvmap_text")),
+        uiOutput(ns("choose_project")),
         height = "500px"
       ),
       shinydashboardPlus::box(
@@ -38,12 +40,12 @@ asvmap_ui <- function(id) {
           column(
             6,
             uiOutput(ns("choose_spec")),
-            selectizeInput(
-              inputId = ns("species_filter"),
-              label = "Fritekst",
-              choices = NULL,
-              selected = NULL
-            ),
+             selectizeInput(
+               inputId = ns("species_filter"),
+               label = "Fritekst",
+               choices = NULL,
+               selected = NULL
+             ),
             actionButton(ns("filter_btn"),
               label = "Fritekssøk"
             ),
@@ -86,6 +88,29 @@ asvmap_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     values <- reactiveValues(a = 1)
 
+    
+    output$choose_project <- renderUI({
+      con <- login_import$con()
+
+      selectInput(
+        inputId = ns("project"),
+        label = "Prosjekt",
+        choices = c("Norsk insektovervåking" = "NorIns",
+                    "Tidlig varsling av fremmede arter" = "TidVar"),
+        # choices = c("", projects$project_name),
+        selected = "Norsk insektovervåking",
+        selectize = FALSE
+      )
+    })
+    
+    
+    loc_species_list <- tbl(
+      con, ## Needs to be loaded into environment, here done by <<- earlier
+      Id(
+        schema = "views",
+        table = "loc_species_list"
+      )
+    )
 
     output$choose_conf <- renderUI({
       input$filter_btn
@@ -118,17 +143,20 @@ asvmap_server <- function(id, login_import) {
 
 
     output$choose_order <- renderUI({
+      req(input$project)
       input$filter_btn
       # Assign to higher environment, to not require again
       con <<- login_import$con()
 
+      if (input$sel_conf != "ALL") {
       order_choices_q <- "
-
         SELECT sl.id_order, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
         FROM
         (SELECT distinct id_order as id_order
         from views.species_list
-        WHERE id_order IS NOT NULL) sl LEFT JOIN
+        WHERE id_order IS NOT NULL
+        AND identification_confidence = ?id1
+        AND project_short_name = ?id2) sl LEFT JOIN
 
         (SELECT orden,
          populaernavn_bokmaal
@@ -145,13 +173,48 @@ asvmap_server <- function(id, login_import) {
 
       order_choices_san <- sqlInterpolate(
         con,
-        order_choices_q
+        order_choices_q,
+        id1 = input$sel_conf,
+        id2 = input$project
       )
 
       order_choices_raw <- dbGetQuery(
         con,
         order_choices_san
       )
+      } else {
+        order_choices_q <- "
+        SELECT sl.id_order, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
+        FROM
+        (SELECT distinct id_order as id_order
+        from views.species_list
+        WHERE id_order IS NOT NULL
+        AND project_short_name = ?id2) sl LEFT JOIN
+
+        (SELECT orden,
+         populaernavn_bokmaal
+         FROM
+        lookup.artsnavnebasen
+        WHERE underorden IS NULL
+        AND overfamilie IS NULL
+        AND familie IS NULL
+        ) names
+        ON sl.id_order = names.orden
+        ORDER BY id_order
+      "
+        
+        order_choices_san <- sqlInterpolate(
+          con,
+          order_choices_q,
+          id2 = input$project
+        )
+        
+        order_choices_raw <- dbGetQuery(
+          con,
+          order_choices_san
+        )
+        
+      }
 
       order_choices_list <- as.list(order_choices_raw$id_order)
 
@@ -185,13 +248,17 @@ asvmap_server <- function(id, login_import) {
 
       req(input$sel_order)
 
+      if (input$sel_conf != "ALL") {
+        
       family_choices_q <- "
                 SELECT sl.id_family, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
                 FROM
                 (SELECT distinct id_family as id_family
                 from views.species_list
                 WHERE id_family IS NOT NULL
-        		    AND id_order = ?id1) sl LEFT JOIN
+        		    AND id_order = ?id1
+        		    AND identification_confidence = ?id2
+        		    AND project_short_name = ?id3) sl LEFT JOIN
 
                 (SELECT familie,
                  populaernavn_bokmaal
@@ -210,14 +277,54 @@ asvmap_server <- function(id, login_import) {
 
       family_choice_san <- sqlInterpolate(con,
         family_choices_q,
-        id1 = input$sel_order
+        id1 = input$sel_order,
+        id2 = input$sel_conf,
+        id3 = input$project
       )
 
       family_choices_raw <- dbGetQuery(
         con,
         family_choice_san
       )
+      } else {
+       
+        family_choices_q <- "
+                SELECT sl.id_family, INITCAP(COALESCE(names.populaernavn_bokmaal, '')) bokmal
+                FROM
+                (SELECT distinct id_family as id_family
+                from views.species_list
+                WHERE id_family IS NOT NULL
+        		    AND id_order = ?id1
+        		    AND project_short_name = ?id2) sl LEFT JOIN
 
+                (SELECT familie,
+                 populaernavn_bokmaal
+                 FROM
+                lookup.artsnavnebasen
+                WHERE familie IS NOT NULL
+        		    AND underfamilie IS NULL
+                AND tribus IS NULL
+        		    AND undertribus IS NULL
+                AND slekt IS NULL
+        		    AND orden = ?id1
+                ) names
+                ON sl.id_family = names.familie
+                ORDER BY id_family
+      "
+        
+        family_choice_san <- sqlInterpolate(con,
+                                            family_choices_q,
+                                            id1 = input$sel_order,
+                                            id2 = input$project
+        )
+        
+        family_choices_raw <- dbGetQuery(
+          con,
+          family_choice_san
+        ) 
+        
+      }
+      
       family_choices_list <- as.list(family_choices_raw$id_family)
 
       if (length(family_choices_list) > 0) {
@@ -267,7 +374,8 @@ asvmap_server <- function(id, login_import) {
       	 AND id_species IS NOT NULL
       	 AND id_order = ?id1
          AND id_family = ?id2
-         AND identification_confidence = ?id3) sl LEFT JOIN
+         AND identification_confidence = ?id3
+         AND project_short_name = ?id4) sl LEFT JOIN
 
         (SELECT *
          FROM
@@ -286,7 +394,8 @@ asvmap_server <- function(id, login_import) {
           species_choices_q,
           id1 = input$sel_order,
           id2 = input$sel_fam,
-          id3 = input$sel_conf
+          id3 = input$sel_conf,
+          id4 = input$project
         )
 
         species_choices_raw <- dbGetQuery(
@@ -305,7 +414,8 @@ asvmap_server <- function(id, login_import) {
          WHERE id_genus IS NOT NULL
       	 AND id_species IS NOT NULL
       	 AND id_order = ?id1
-         AND id_family = ?id2) sl LEFT JOIN
+         AND id_family = ?id2
+         AND project_short_name = ?id3) sl LEFT JOIN
 
         (SELECT *
          FROM
@@ -323,7 +433,8 @@ asvmap_server <- function(id, login_import) {
         species_choice_san <- sqlInterpolate(con,
           species_choices_q,
           id1 = input$sel_order,
-          id2 = input$sel_fam
+          id2 = input$sel_fam,
+          id3 = input$project
         )
 
         species_choices_raw <- dbGetQuery(
@@ -362,49 +473,72 @@ asvmap_server <- function(id, login_import) {
     basemap <- leaflet(
       width = "300px",
       height = "200px"
-    ) %>%
+    ) |>
       addTiles(group = "OpenStreetMap")
 
 
 
 
 
-    species_choices <- function() {
-      loc_species_list <- tbl(
-        con, ## Needs to be loaded into environment, here done by <<- earlier
-        Id(
-          schema = "views",
-          table = "loc_species_list"
-        )
-      )
+    # species_choices <- function() {
+    #   loc_species_list <- tbl({}
+    #     con, ## Needs to be loaded into environment, here done by <<- earlier
+    #     Id(
+    #       schema = "views",
+    #       table = "loc_species_list"
+    #     )
+    #   )
+    # 
+    # 
+    #   species_choices <- loc_species_list  |> 
+    #     filter(project_short_name == !!selected_project()) |> 
+    #     select(species_latin_gbif)  |> 
+    #     distinct() |> 
+    #     arrange(species_latin_gbif) |>
+    #     pull()
+    # 
+    #   return(species_choices)
+    # }
 
 
-      species_choices <- loc_species_list %>%
-        select(species_latin_gbif) %>%
-        distinct() %>%
-        arrange(species_latin_gbif) %>%
-        pull()
+  observeEvent(input$project,
+               {
+  
+                 species_choices <- loc_species_list  |> 
+                   filter(project_short_name == input$project) |> 
+                   select(species_latin_gbif)  |> 
+                   distinct() |> 
+                   arrange(species_latin_gbif) |>
+                   pull()
+                 
+                 updateSelectizeInput(
+                   inputId = "species_filter",
+                   choices = c("Ingen", species_choices),
+                   selected = "Ingen",
+                   server = TRUE,
+                   options = list(maxOptions = 10)
+                 )
+               },
+               ignoreNULL = TRUE,
+               ignoreInit = FALSE
+    
+  )
 
-      return(species_choices)
-    }
-
-
-
-
-    updateSelectizeInput(
-      inputId = "species_filter",
-      choices = c("Ingen", species_choices()),
-      selected = "Ingen",
-      server = TRUE,
-      options = list(maxOptions = 10)
-    )
 
 
     observeEvent(input$filter_clear_btn,
       {
+        
+        species_choices <- loc_species_list  |> 
+          filter(project_short_name == input$project) |> 
+          select(species_latin_gbif)  |> 
+          distinct() |> 
+          arrange(species_latin_gbif) |>
+          pull()
+        
         updateSelectizeInput(
           inputId = "species_filter",
-          choices = c("Ingen", species_choices()),
+          choices = c("Ingen", species_choices),
           selected = "Ingen",
           server = TRUE,
           options = list(maxOptions = 10)
@@ -415,6 +549,7 @@ asvmap_server <- function(id, login_import) {
     )
 
     species_filter_out <- reactive({
+      req(input$project)
       if (input$species_filter != "Ingen") {
         con <- login_import$con()
 
@@ -422,11 +557,13 @@ asvmap_server <- function(id, login_import) {
         SELECT *
         FROM views.species_list
         WHERE species_latin_gbif = ?id1
+        AND project_short_name = ?id2
         "
 
         taxa_reverse_sql <- sqlInterpolate(con,
           taxa_reverse_q,
-          id1 = input$species_filter
+          id1 = input$species_filter,
+          id2 = input$project
         )
 
         taxa_reverse_res <- dbGetQuery(
@@ -441,6 +578,18 @@ asvmap_server <- function(id, login_import) {
     })
 
 
+    
+    selected_project <- reactive({
+      if (is.na(input$project)) {
+        return(NULL)
+      } else {
+        project <- input$project
+ 
+        return(project)
+      }
+    })
+    
+    
     selected_species <- reactive({
       if (is.na(input$asv_species)) {
         return(NULL)
@@ -455,6 +604,8 @@ asvmap_server <- function(id, login_import) {
         return(species)
       }
     })
+    
+    
     # species = "NULL"
     asv_to_leaflet <- function() {
       con <- login_import$con()
@@ -467,21 +618,25 @@ asvmap_server <- function(id, login_import) {
         )
       )
 
-      sel_asv <- asv_perc_reads %>%
-        filter(species_latin_gbif == !!selected_species()) %>%
-        collect() %>%
-        #  filter(!!input$species_select_asv %in% (species_latin_gbif)) %>%
+      sel_asv <- asv_perc_reads |>
+        filter(species_latin_gbif == !!selected_species(),
+               project_short_name == !!selected_project()) |>
+        group_by(locality,
+                 lat, 
+                 lon,
+                 sequence_id) |> 
+        summarize(perc_reads = mean(perc_reads, na.rm = TRUE),
+                  sum_reads = sum(sum_reads, na.rm = TRUE),
+                  .groups = "drop") |> 
+        collect() |>
         mutate(
           asv = as_factor(sequence_id),
           perc_reads = round(perc_reads * 100, 2)
-        ) %>%
+        ) |>
         arrange(sequence_id)
 
 
-      to_plot <- sel_asv %>%
-        # mutate(lat = st_coordinates(geometry)[,2],
-        #        lon = st_coordinates(geometry)[,1]) %>%
-        # st_drop_geometry() %>%
+      to_plot <- sel_asv |>
         select(
           locality,
           lat,
@@ -489,7 +644,7 @@ asvmap_server <- function(id, login_import) {
           sequence_id,
           perc_reads,
           sum_reads
-        ) %>%
+        ) |>
         pivot_wider(
           names_from = "sequence_id",
           values_from = "perc_reads",
@@ -509,19 +664,20 @@ asvmap_server <- function(id, login_import) {
       # req(input$species_filter)
 
       to_plot <- asv_to_leaflet()
+      if(nrow(to_plot) == 0) return(NULL)
 
-      basemap %>%
+      basemap |>
         leaflet::addProviderTiles(providers$Esri.WorldImagery,
           group = "Ortophoto"
-        ) %>%
+        ) |>
         leaflet::addProviderTiles(providers$OpenTopoMap,
           group = "Topo"
-        ) %>%
+        ) |>
         leaflet::addLayersControl(
           overlayGroups = c("OpenStreetMap", "Topo", "Ortophoto"),
           options = layersControlOptions(collapsed = FALSE)
-        ) %>%
-        leaflet::hideGroup(c("Topo", "Ortophoto")) %>%
+        ) |>
+        leaflet::hideGroup(c("Topo", "Ortophoto")) |>
         addMinicharts(to_plot$lon,
           to_plot$lat,
           type = "pie",
