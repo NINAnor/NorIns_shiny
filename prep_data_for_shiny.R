@@ -28,7 +28,6 @@ recalculate_status <- shiny_rules %>%
 if (recalculate_number != recalculate_status) {
   locality_sampling <- dplyr::tbl(con, dbplyr::in_schema("events", "locality_sampling"))
 
-
   # prep data for div_map
 
   redlisted_obs_2021 <- read_sf(
@@ -774,17 +773,19 @@ if (recalculate_number != recalculate_status) {
   diversity_raw <- Norimon::get_observations(
     agg_level = "locality_sampling",
     trap_type = "MF",
-    subset_region = NULL
+    subset_region = NULL,
+    dataset = "NorIns"
+  )
+  
+  diversity_raw_TidVar <- Norimon::get_observations(
+    agg_level = "locality_sampling",
+    trap_type = "MF",
+    subset_region = NULL,
+    dataset = "TidVar"
   )
 
-  # diversity_raw_TidVar <- Norimon::get_observations(agg_level = "locality_sampling",
-  #                                            trap_type = "MF",
-  #                                            subset_region = NULL,
-  #                                            dataset = "TidVar"
-  # )
-  #
-  # diversity_raw <- diversity_raw %>%
-  #   rbind(diversity_raw_TidVar)
+  diversity_raw <- diversity_raw %>%
+    rbind(diversity_raw_TidVar)
 
   diversity_locality_sampling_time <- diversity_raw %>%
     left_join(locality_sampling,

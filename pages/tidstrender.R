@@ -110,21 +110,22 @@ tidstrend_server <- function(id, login_import) {
         in_schema("lookup", "projects")
       )
 
-      projects <- projects_tab %>%
-        select(project_name) %>%
-        distinct() %>%
-        filter(project_name %in% c(
-          "Norsk insektovervåking",
-          "Tidlig varsling av fremmede arter",
-          "Overvåking av insekter i hule eiker"
-        )) %>%
-        collect() %>%
-        arrange()
+      # projects <- projects_tab %>%
+      #   select(project_name,
+      #          project_short_name) %>%
+      #   distinct() %>%
+      #   filter(project_name %in% c(
+      #     "Norsk insektovervåking",
+      #     "Tidlig varsling av fremmede arter"
+      #   )) %>%
+      #   collect() %>%
+      #   arrange()
 
       selectInput(
         inputId = ns("project"),
         label = "Prosjekt",
-        choices = c("Norsk insektovervåking"),
+        choices = c("Norsk insektovervåking" = "NorIns",
+                    "Tidlig varsling av fremmede arter" = "TidVar"),
         # choices = c("", projects$project_name),
         selected = "Norsk insektovervåking",
         selectize = FALSE
@@ -137,7 +138,7 @@ tidstrend_server <- function(id, login_import) {
       # con <- login_import$con()
 
       trap_sql <- "
-        SELECT projects.project_name,
+        SELECT yl.project_short_name,
         trap.trap_name,
         trap.locality,
         trap.year,
@@ -152,11 +153,11 @@ tidstrend_server <- function(id, login_import) {
         st_transform(loc.geom, 4326) as rute_geom
         FROM locations.traps trap,
         locations.localities loc,
-        events.year_locality yl,
-        lookup.projects
+        events.year_locality yl --,
+        --lookup.projects
         WHERE trap.locality = loc.locality
         AND yl.locality_id = loc.id
-        AND yl.project_short_name = projects.project_short_name
+        --AND yl.project_short_name = projects.project_short_name
 
     "
 
@@ -171,7 +172,7 @@ tidstrend_server <- function(id, login_import) {
       if (!is.null(input$project)) {
         if (input$project != "") {
           dat <- dat %>%
-            filter(project_name == input$project)
+            filter(project_short_name == input$project)
         }
       }
 

@@ -48,11 +48,16 @@ felt_server <- function(id, login_import) {
 
     load("data/shinyPass.Rdata")
 
-    connect_to_insect_db(
-      user = my_username,
-      password = my_password
-    )
-
+    # connect_to_insect_db(
+    #   user = my_username,
+    #   password = my_password
+    # )
+    con <- pool::dbPool(RPostgres::Postgres(),
+                          host = "t2lippgsql02.nina.no",
+                          dbname = "insect_monitoring",
+                          user = my_username,
+                          password = my_password)
+    
     login_export$con <- con
 
 
