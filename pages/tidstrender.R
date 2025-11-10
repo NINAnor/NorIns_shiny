@@ -140,7 +140,7 @@ tidstrend_server <- function(id, login_import) {
       trap_sql <- "
         SELECT yl.project_short_name,
         trap.trap_name,
-        trap.locality,
+        loc.locality,
         trap.year,
         trap_short_name,
         trap_model,
@@ -155,7 +155,7 @@ tidstrend_server <- function(id, login_import) {
         locations.localities loc,
         events.year_locality yl --,
         --lookup.projects
-        WHERE trap.locality = loc.locality
+        WHERE trap.locality_id = loc.id
         AND yl.locality_id = loc.id
         --AND yl.project_short_name = projects.project_short_name
 
