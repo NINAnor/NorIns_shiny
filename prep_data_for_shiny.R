@@ -442,7 +442,7 @@ if (recalculate_number != recalculate_status) {
 
   # prep data for dashboard
 
-  get_year_locality_stats <- function() {
+  get_year_locality_stats <- function(last_year = 2024) {
     project_year_localities <- tbl(
       con,
       Id(
@@ -465,7 +465,7 @@ if (recalculate_number != recalculate_status) {
         )
       )) %>%
       mutate(habitat_type = factor(habitat_type)) %>%
-      mutate(year = factor(year, levels = 2024:min(year))) %>%
+      mutate(year = factor(year, levels = last_year:min(year))) %>%
       group_by(region_name,
         habitat_type,
         year,
@@ -475,7 +475,6 @@ if (recalculate_number != recalculate_status) {
         visits = as.integer(n()),
         .groups = "drop"
       ) %>%
-      # mutate(year = as.numeric(as.character(year))) %>%
       mutate(habitat_type = as.character(habitat_type)) %>%
       arrange(
         region_name,
@@ -487,7 +486,7 @@ if (recalculate_number != recalculate_status) {
     return(proj_sum)
   }
 
-  year_locality_stats <- get_year_locality_stats()
+  year_locality_stats <- get_year_locality_stats(last_year = 2025)
 
   taxonomic_perc <- function() {
     loc_traptype_species_list <- tbl(
