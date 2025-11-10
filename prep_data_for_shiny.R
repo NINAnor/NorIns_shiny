@@ -857,6 +857,4 @@ if (recalculate_number != recalculate_status) {
   save(recalculate_number,
     file = "data/recalculate_number.Rdata"
   )
-} else {
-  return(NULL)
-}
+} 
