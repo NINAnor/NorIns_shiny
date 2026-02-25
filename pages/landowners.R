@@ -176,8 +176,21 @@ landowners_server <- function(id, login_import) {
     
     output$download_pdf <- downloadHandler(
       filename = function() {
-        # It's better to use a clean name
-        paste0("Rapport_", input$chosen_loc, ".pdf")
+        # 1. Get the data from your reactive
+        df <- loc_data() |> sf::st_drop_geometry()
+        
+        # 2. Find the row where locality_id matches the input
+        chosen_name <- df |> 
+          filter(locality_id == input$chosen_loc) |> 
+          pull(locality) |> 
+          head(1)
+        
+        # 3. Handle potential empty results and create the filename
+        if(length(chosen_name) == 0) chosen_name <- "rapport"
+        
+        # Replace spaces or special chars to be safe for file systems
+        clean_name <- gsub("[^[:alnum:]]", "_", chosen_name)
+        paste0(clean_name, ".pdf")
       },
       content = function(file) {
         # Use req() to stop execution if no location is selected
