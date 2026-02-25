@@ -53,7 +53,7 @@ felt_server <- function(id, login_import) {
     #   password = my_password
     # )
     con <- pool::dbPool(RPostgres::Postgres(),
-                          host = "t2lippgsql02.nina.no",
+                          host = "t2lippgsql03.nina.no",
                           dbname = "insect_monitoring",
                           user = my_username,
                           password = my_password)

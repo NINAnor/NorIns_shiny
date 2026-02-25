@@ -15,7 +15,7 @@ asvmap_ui <- function(id) {
   useShinyjs()
 
   tabPanel(
-    title = "Funnsted og innenartsvariasjon",
+    title = "Innenartsvariasjon",
     column(
       6,
       shinydashboardPlus::box(

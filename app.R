@@ -14,6 +14,7 @@ source("pages/div_map.R", local = TRUE)
 source("pages/asv_map.R", local = TRUE)
 source("pages/tidstrender.R", local = TRUE)
 source("pages/dashboard.R", local = TRUE)
+source("pages/landowners.R", local = TRUE)
 
 
 
@@ -36,7 +37,8 @@ ui <- navbarPage(
   dashboard_ui(id = "id_8"),
   div_map_ui(id = "id_5"),
   tidstrend_ui(id = "id_7"),
-  asvmap_ui(id = "id_6")
+  asvmap_ui(id = "id_6"),
+  landowners_ui(id = "id_9")
 )
 
 
@@ -57,6 +59,8 @@ server <- function(input, output, session) {
   tidstrend_server(id = "id_7", login_import = login_export)
 
   dashboard_server(id = "id_8", login_import = login_export)
+  
+  landowners_server(id = "id_9", login_import = login_export)
 }
 
 
