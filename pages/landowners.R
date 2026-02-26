@@ -83,8 +83,9 @@ landowners_server <- function(id, login_import) {
     landowners.landowner_reports lr
     WHERE yl.locality_id = l.id
     AND lr.locality_id = yl.locality_id
+    ORDER BY split_part(l.locality, '_', 1), split_part(l.locality, '_', 2)::numeric
     "
-    out <- sf::st_read(con,
+    out <- sf::st_read(login_import$con,
                       query = loc_q)
     return(out)
   }   
@@ -108,8 +109,8 @@ landowners_server <- function(id, login_import) {
 
       selectInput(ns("chosen_loc"),
         label = "Velg lokalitet",
-        choices = loc_choices,
-        # selected = "",
+        choices = c("Velg lokalitet..." = "", loc_choices),
+        selected = "",
         selectize = TRUE
       )
     })
@@ -125,35 +126,27 @@ landowners_server <- function(id, login_import) {
 
 
     output$landowner_map <- renderLeaflet({
-      #req(input$chosen_group)
-      # req(input$species_filter)
-
       to_plot <- loc_data()
       
-      my_icon <- icons(
-        iconUrl = "./figures/trap_icon.png",
-        iconWidth = 32,
-        iconHeight = 32
-      )
-
       basemap %>%
-        leaflet::addProviderTiles(providers$Esri.WorldImagery,
-          group = "Ortophoto"
-        ) %>%
-        leaflet::addProviderTiles(providers$OpenTopoMap,
-          group = "Topo"
-        ) %>%
+        leaflet::addProviderTiles(providers$Esri.WorldImagery, group = "Ortophoto") %>%
+        leaflet::addProviderTiles(providers$OpenTopoMap, group = "Topo") %>%
         leaflet::addLayersControl(
           overlayGroups = c("OpenStreetMap", "Topo", "Ortophoto"),
           options = layersControlOptions(collapsed = FALSE)
         ) %>%
         leaflet::hideGroup(c("Topo", "Ortophoto")) %>%
-        leaflet::addMarkers(
+        # Set the initial view to show all of Norway
+        # (Approximate bounds for the Norwegian mainland)
+        leaflet::fitBounds(lng1 = 4.0, lat1 = 57.5, lng2 = 31.5, lat2 = 71.5) %>% 
+        leaflet::addCircleMarkers(
           data = to_plot,
-          popup = ~ paste0(locality),
-          icon = my_icon
+          layerId = ~locality_id,
+          popup = ~paste0(locality),
+          radius = 4,        # Slightly larger for visibility on a national map
+          color = "#E57200",
+          fillOpacity = 0.8
         )
-      
     })
     
     
@@ -165,7 +158,7 @@ landowners_server <- function(id, login_import) {
                 ORDER BY report_year DESC
                 LIMIT 1"
       
-      res <- dbGetQuery(con, query, params = list(locality_id))
+      res <- dbGetQuery(login_import$con, query, params = list(locality_id))
       
       if (nrow(res) == 0) return(NULL)
       
@@ -198,7 +191,7 @@ landowners_server <- function(id, login_import) {
         
         # 1. Manually checkout a connection from the pool to be safe
         # This often solves the "Checked-out object deleted" error in streams
-        #conn <- pool::poolCheckout(con)
+        #conn <- pool::poolCheckout(login_import$con)
         
         # Ensure it gets returned even if the code fails
         #on.exit(pool::poolReturn(conn))
@@ -210,7 +203,7 @@ landowners_server <- function(id, login_import) {
               ORDER BY report_year DESC
               LIMIT 1"
         
-        res <- dbGetQuery(con, query, params = list(input$chosen_loc))
+        res <- dbGetQuery(login_import$con, query, params = list(input$chosen_loc))
         
         if (nrow(res) == 0) {
           showNotification("Ingen rapport funnet for denne lokaliteten.", type = "error")
@@ -223,6 +216,46 @@ landowners_server <- function(id, login_import) {
       contentType = "application/pdf"
     )
     
+    
+    # 1. Initialize the flag (Inside moduleServer)
+    is_map_click <- reactiveVal(FALSE)
+    
+    # 2. Update the flag when the map is clicked
+    observeEvent(input$landowner_map_marker_click, {
+      # Set the flag to TRUE because we are about to trigger a change
+      is_map_click(TRUE) 
+      
+      updateSelectInput(session, "chosen_loc", 
+                        selected = input$landowner_map_marker_click$id)
+    })
+    
+    # 3. The Zoom Observer (The "Gatekeeper")
+    observeEvent(input$chosen_loc, {
+      req(input$chosen_loc)
+      req(loc_data())
+      
+      # ONLY zoom if this change was NOT triggered by a map click
+      if (!is_map_click()) {
+        
+        selected_point <- loc_data() %>% 
+          filter(locality_id == input$chosen_loc)
+        
+        if (nrow(selected_point) > 0) {
+          coords <- sf::st_coordinates(selected_point)
+          
+          leafletProxy("landowner_map", session) %>%
+            flyTo(
+              lng = as.numeric(coords[1, 1]), 
+              lat = as.numeric(coords[1, 2]), 
+              zoom = 12
+            )
+        }
+      }
+      
+      # ALWAYS reset the flag to FALSE at the end of the observer
+      # so that the next manual dropdown change WILL trigger a zoom.
+      is_map_click(FALSE)
+    }, ignoreInit = TRUE)
     
   })
 }

@@ -44,22 +44,7 @@ felt_ui <- function(id) {
 felt_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
-    login_export <- reactiveValues()
-
-    load("data/shinyPass.Rdata")
-
-    # connect_to_insect_db(
-    #   user = my_username,
-    #   password = my_password
-    # )
-    con <- pool::dbPool(RPostgres::Postgres(),
-                          host = "t2lippgsql03.nina.no",
-                          dbname = "insect_monitoring",
-                          user = my_username,
-                          password = my_password)
-    
-    login_export$con <- con
-
+    #login_export <- reactiveValues()
 
     output$felletyper <- renderUI({
       tags$img(
@@ -95,8 +80,5 @@ Innsamling av insekter skjer hovedsakelig med malaisefeller, et slags telt der i
       )
     })
 
-    return(
-      list(con = reactive(login_export$con))
-    )
   })
 }

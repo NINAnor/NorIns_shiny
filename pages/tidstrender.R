@@ -103,10 +103,10 @@ tidstrend_server <- function(id, login_import) {
 
 
     output$choose_project <- renderUI({
-      con <- login_import$con()
+      #con <- login_import$con()
 
       projects_tab <- tbl(
-        con,
+        login_import$con,
         in_schema("lookup", "projects")
       )
 
@@ -161,7 +161,7 @@ tidstrend_server <- function(id, login_import) {
 
     "
 
-      dat <- sf::read_sf(con,
+      dat <- sf::read_sf(login_import$con,
         query = trap_sql
       ) %>%
         mutate(habitat_type = ifelse(habitat_type == "Forest", "Skog", habitat_type))

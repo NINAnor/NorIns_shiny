@@ -6,15 +6,16 @@ library(tidyr)
 require(DBI)
 
 load("data/shinyPass.Rdata")
-Norimon::connect_to_insect_db(
-  user = my_username,
-  password = my_password
-)
+prep_con <- pool::dbPool(RPostgres::Postgres(),
+                          host = "t2lippgsql03.nina.no",
+                          dbname = "insect_monitoring",
+                          user = my_username,
+                          password = my_password)
 
 load("data/recalculate_number.Rdata")
 
 shiny_rules <- tbl(
-  con,
+  prep_con,
   Id(
     schema = "lookup",
     table = "shiny_rules"
@@ -26,12 +27,12 @@ recalculate_status <- shiny_rules %>%
   pull()
 
 if (recalculate_number != recalculate_status) {
-  locality_sampling <- dplyr::tbl(con, dbplyr::in_schema("events", "locality_sampling"))
+  locality_sampling <- dplyr::tbl(prep_con, dbplyr::in_schema("events", "locality_sampling"))
 
   # prep data for div_map
 
   redlisted_obs_2021 <- read_sf(
-    con,
+    prep_con,
     Id(
       schema = "views",
       table = "redlisted_obs"
@@ -109,7 +110,7 @@ if (recalculate_number != recalculate_status) {
       AND obs.identification_confidence = 'HIGH'
       "
 
-  fennoskand_obs <- read_sf(con,
+  fennoskand_obs <- read_sf(prep_con,
     query = fennoskand_obs_q
   ) %>%
     mutate(kategori = "Fennoskandisk forek.")
@@ -139,7 +140,7 @@ if (recalculate_number != recalculate_status) {
       AND obs.identification_confidence = 'HIGH'
       "
 
-  pot_alien_obs <- read_sf(con,
+  pot_alien_obs <- read_sf(prep_con,
     query = pot_alien_obs_q
   ) %>%
     mutate(kategori = "Potensielt fremmede arter")
@@ -171,7 +172,7 @@ if (recalculate_number != recalculate_status) {
       AND obs.identification_confidence = 'HIGH'
       "
 
-  alien_obs <- read_sf(con,
+  alien_obs <- read_sf(prep_con,
     query = alien_obs_q
   ) %>%
     mutate(kategori = "På fremmedartslista")
@@ -322,7 +323,7 @@ if (recalculate_number != recalculate_status) {
       AND obs.identification_confidence = 'HIGH'
       "
 
-  poll_obs <- read_sf(con,
+  poll_obs <- read_sf(prep_con,
     query = poll_obs_q
   ) %>%
     left_join(pollinators,
@@ -361,7 +362,7 @@ if (recalculate_number != recalculate_status) {
 
 
   tot_richn <- tbl(
-    con,
+    prep_con,
     Id(
       schema = "views",
       table = "no_spec_year_locality"
@@ -370,7 +371,7 @@ if (recalculate_number != recalculate_status) {
     collect()
 
   project_year_localities <- sf::read_sf(
-    con,
+    prep_con,
     Id(
       schema = "views",
       table = "project_year_localities"
@@ -444,7 +445,7 @@ if (recalculate_number != recalculate_status) {
 
   get_year_locality_stats <- function(last_year = 2024) {
     project_year_localities <- tbl(
-      con,
+      prep_con,
       Id(
         schema = "views",
         table = "project_year_localities"
@@ -490,7 +491,7 @@ if (recalculate_number != recalculate_status) {
 
   taxonomic_perc <- function() {
     loc_traptype_species_list <- tbl(
-      con,
+      prep_con,
       Id(
         schema = "views",
         table = "loc_traptype_species_list"
@@ -594,7 +595,7 @@ if (recalculate_number != recalculate_status) {
       "
 
     biomass_per_ls <- dbGetQuery(
-      con,
+      prep_con,
       biomass_per_ls_q
     ) %>%
       filter(value > 0)
@@ -606,7 +607,7 @@ if (recalculate_number != recalculate_status) {
       "
 
     tot_spec_per_ls <- dbGetQuery(
-      con,
+      prep_con,
       tot_spec_per_ls_q
     ) %>%
       arrange(desc(tot_no_spec)) %>%
@@ -656,7 +657,7 @@ if (recalculate_number != recalculate_status) {
       "
 
     biomass_per_yl <- dbGetQuery(
-      con,
+      prep_con,
       biomass_per_yl_q
     )
 
@@ -668,7 +669,7 @@ if (recalculate_number != recalculate_status) {
       "
 
     tot_spec_per_yl <- dbGetQuery(
-      con,
+      prep_con,
       tot_spec_per_yl_q
     ) %>%
       arrange(desc(tot_no_spec)) %>%
@@ -857,4 +858,8 @@ if (recalculate_number != recalculate_status) {
   save(recalculate_number,
     file = "data/recalculate_number.Rdata"
   )
+  
+  
 } 
+
+pool::poolClose(prep_con)
