@@ -5,6 +5,29 @@ library(dplyr)
 library(tidyr)
 require(DBI)
 
+#define new functions that handles the connection better.
+
+
+get_map <- function (region_subset = NULL,
+                     con = con) 
+{
+  norway_terr <- sf::read_sf(con, layer = DBI::Id(schema = "backgrounds", 
+                                                  table = "norway_terrestrial")) %>% select(fylke = navn)
+  region_def <- tibble(region = c("Trøndelag", "Østlandet", 
+                                  "Østlandet", "Østlandet", "Østlandet", "Sørlandet", 
+                                  "Sørlandet", "Vestlandet", "Vestlandet", "Nord-Norge", 
+                                  "Nord-Norge"), fylke = c("Trøndelag", "Innlandet", "Oslo", 
+                                                           "Vestfold og Telemark", "Viken", "Rogaland", "Agder", 
+                                                           "Vestland", "Møre og Romsdal", "Troms og Finnmark", 
+                                                           "Nordland"))
+  norway_terr <- norway_terr %>% left_join(region_def, by = c(fylke = "fylke"))
+  if (!is.null(region_subset)) {
+    norway_terr <- norway_terr %>% filter(region %in% region_subset)
+  }
+  return(norway_terr)
+}
+
+
 load("data/shinyPass.Rdata")
 prep_con <- pool::dbPool(RPostgres::Postgres(),
                           host = "t2lippgsql03.nina.no",
@@ -862,4 +885,4 @@ if (recalculate_number != recalculate_status) {
   
 } 
 
-pool::poolClose(prep_con)
+#pool::poolClose(prep_con)

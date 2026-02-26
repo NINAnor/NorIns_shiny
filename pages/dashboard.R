@@ -341,7 +341,7 @@ dashboard_server <- function(id, login_import) {
       p
     }
 
-    nor <- Norimon::get_map()
+    nor <- get_map(con = login_import$con)
 
     plot_region_map <- function() {
       # par(mar = rep(0, 4))

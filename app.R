@@ -27,9 +27,9 @@ conn_pool <- pool::dbPool(RPostgres::Postgres(),
                     password = my_password)
 
 
-onStop(function() {
-   pool::poolClose(conn_pool)
-})
+#onStop(function() {
+#   pool::poolClose(conn_pool)
+#})
 
 login_export <- list(
   con = conn_pool

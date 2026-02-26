@@ -91,7 +91,7 @@ Her kan du se diversitetsmønstre for noen utvalg av artsgrupper. Størrelsen p�
     ## End get pot alien species
 
 
-    norge <- get_map()
+    norge <- get_map(con = login_import$con)
 
     basemap <- leaflet(
       width = "300px",

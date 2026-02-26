@@ -27,14 +27,16 @@ landowners_ui <- function(id) {
         width = 12,
         id = "hotspotbox",
         title = "Lokalitetsvalg",
-        fluidRow(column(
-          6,
-          uiOutput(ns("choose_loc"))
-        ),
-        column(
-          6,
-          downloadButton(ns("download_pdf"), "Last ned funnsrapport")
-        )),
+        fluidRow(style = "display: flex; align-items: flex-end;",
+                 column(6,
+                        uiOutput(ns("choose_loc"))
+                        ),
+                 column(6,
+                        style = "margin-bottom: 15px;",
+                        downloadButton(ns("download_pdf"), 
+                                       "Last ned funnsrapport")
+                        )
+                 ),
         height = "400px"
       )
     ),
@@ -66,8 +68,11 @@ landowners_ui <- function(id) {
 landowners_server <- function(id, login_import) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
-    output$landowner_text <- renderText("Vi har satt sammen en kort rapport over hovedfunnene for hver lokalitet. Her kan grunneiere og andre interesserte lese mer om de seneste funnene fra hver plass vi har besøkt så langt.
-    Rapportene er så langt bare tilgjengelige for lokalitetene i  Norsk insektovervåking.")
+    output$landowner_text <- renderText("Vi har satt sammen en kort rapport i PDF-format over hovedfunnene for hver lokalitet. Her kan grunneiere og andre interesserte lese mer om de seneste funnene fra de plasser vi har besøkt så langt.
+    
+Vi bruker standardiserte navn på lokalitetene. Soome deg frem til rett plass på kartet og klikk på et punkt for å velge lokalitet, eller bruk rullelisten nedenfor hvis du vet navnet på lokaliteten du søker.
+    
+Rapportene er så langt bare tilgjengelige for lokalitetene i  Norsk insektovervåking.")
 
   get_loc_choices <- function(){
     #con <- login_import$con()
@@ -116,7 +121,7 @@ landowners_server <- function(id, login_import) {
     })
 
 
-    norge <- get_map()
+    norge <- get_map(con = login_import$con)
 
     basemap <- leaflet(
       width = "300px",
