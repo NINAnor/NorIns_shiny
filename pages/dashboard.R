@@ -166,7 +166,7 @@ dashboard_server <- function(id, login_import) {
       "
 
     no_loc <- dbGetQuery(
-      con,
+      login_import$con,
       no_loc_q
     )
 
@@ -214,7 +214,7 @@ dashboard_server <- function(id, login_import) {
       "
 
     no_sampl <- dbGetQuery(
-      con,
+      login_import$con,
       no_sampl_q
     )
     # return(no_sampl)
@@ -341,7 +341,7 @@ dashboard_server <- function(id, login_import) {
       p
     }
 
-    nor <- Norimon::get_map()
+    nor <- get_map(con = login_import$con)
 
     plot_region_map <- function() {
       # par(mar = rep(0, 4))

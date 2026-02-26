@@ -15,7 +15,7 @@ asvmap_ui <- function(id) {
   useShinyjs()
 
   tabPanel(
-    title = "Funnsted og innenartsvariasjon",
+    title = "Innenartsvariasjon",
     column(
       6,
       shinydashboardPlus::box(
@@ -90,7 +90,7 @@ asvmap_server <- function(id, login_import) {
 
     
     output$choose_project <- renderUI({
-      con <- login_import$con()
+      #con <- login_import$con()
 
       selectInput(
         inputId = ns("project"),
@@ -105,7 +105,7 @@ asvmap_server <- function(id, login_import) {
     
     
     loc_species_list <- tbl(
-      con, ## Needs to be loaded into environment, here done by <<- earlier
+      login_import$con, 
       Id(
         schema = "views",
         table = "loc_species_list"
@@ -146,7 +146,7 @@ asvmap_server <- function(id, login_import) {
       req(input$project)
       input$filter_btn
       # Assign to higher environment, to not require again
-      con <<- login_import$con()
+      #con <<- login_import$con
 
       if (input$sel_conf != "ALL") {
       order_choices_q <- "
@@ -172,14 +172,14 @@ asvmap_server <- function(id, login_import) {
       "
 
       order_choices_san <- sqlInterpolate(
-        con,
+        login_import$con,
         order_choices_q,
         id1 = input$sel_conf,
         id2 = input$project
       )
 
       order_choices_raw <- dbGetQuery(
-        con,
+        login_import$con,
         order_choices_san
       )
       } else {
@@ -204,13 +204,13 @@ asvmap_server <- function(id, login_import) {
       "
         
         order_choices_san <- sqlInterpolate(
-          con,
+          login_import$con,
           order_choices_q,
           id2 = input$project
         )
         
         order_choices_raw <- dbGetQuery(
-          con,
+          login_import$con,
           order_choices_san
         )
         
@@ -244,7 +244,7 @@ asvmap_server <- function(id, login_import) {
 
     output$choose_fam <- renderUI({
       input$filter_btn
-      con <- login_import$con()
+      #con <- login_import$con()
 
       req(input$sel_order)
 
@@ -275,7 +275,7 @@ asvmap_server <- function(id, login_import) {
                 ORDER BY id_family
       "
 
-      family_choice_san <- sqlInterpolate(con,
+      family_choice_san <- sqlInterpolate(login_import$con,
         family_choices_q,
         id1 = input$sel_order,
         id2 = input$sel_conf,
@@ -283,7 +283,7 @@ asvmap_server <- function(id, login_import) {
       )
 
       family_choices_raw <- dbGetQuery(
-        con,
+        login_import$con,
         family_choice_san
       )
       } else {
@@ -312,14 +312,14 @@ asvmap_server <- function(id, login_import) {
                 ORDER BY id_family
       "
         
-        family_choice_san <- sqlInterpolate(con,
+        family_choice_san <- sqlInterpolate(login_import$con,
                                             family_choices_q,
                                             id1 = input$sel_order,
                                             id2 = input$project
         )
         
         family_choices_raw <- dbGetQuery(
-          con,
+          login_import$con,
           family_choice_san
         ) 
         
@@ -358,7 +358,7 @@ asvmap_server <- function(id, login_import) {
       req(input$sel_conf)
 
       input$filter_btn
-      con <- login_import$con()
+      #con <- login_import$con()
 
 
       if (input$sel_conf != "ALL") {
@@ -390,7 +390,7 @@ asvmap_server <- function(id, login_import) {
         ORDER BY species_latin_gbif
         "
 
-        species_choice_san <- sqlInterpolate(con,
+        species_choice_san <- sqlInterpolate(login_import$con,
           species_choices_q,
           id1 = input$sel_order,
           id2 = input$sel_fam,
@@ -399,7 +399,7 @@ asvmap_server <- function(id, login_import) {
         )
 
         species_choices_raw <- dbGetQuery(
-          con,
+          login_import$con,
           species_choice_san
         )
       } else {
@@ -430,7 +430,7 @@ asvmap_server <- function(id, login_import) {
         ORDER BY species_latin_gbif
         "
 
-        species_choice_san <- sqlInterpolate(con,
+        species_choice_san <- sqlInterpolate(login_import$con,
           species_choices_q,
           id1 = input$sel_order,
           id2 = input$sel_fam,
@@ -438,7 +438,7 @@ asvmap_server <- function(id, login_import) {
         )
 
         species_choices_raw <- dbGetQuery(
-          con,
+          login_import$con,
           species_choice_san
         )
       }
@@ -551,7 +551,7 @@ asvmap_server <- function(id, login_import) {
     species_filter_out <- reactive({
       req(input$project)
       if (input$species_filter != "Ingen") {
-        con <- login_import$con()
+        #con <- login_import$con()
 
         taxa_reverse_q <- "
         SELECT *
@@ -560,14 +560,14 @@ asvmap_server <- function(id, login_import) {
         AND project_short_name = ?id2
         "
 
-        taxa_reverse_sql <- sqlInterpolate(con,
+        taxa_reverse_sql <- sqlInterpolate(login_import$con,
           taxa_reverse_q,
           id1 = input$species_filter,
           id2 = input$project
         )
 
         taxa_reverse_res <- dbGetQuery(
-          con,
+          login_import$con,
           taxa_reverse_sql
         )
       } else {
@@ -608,10 +608,10 @@ asvmap_server <- function(id, login_import) {
     
     # species = "NULL"
     asv_to_leaflet <- function() {
-      con <- login_import$con()
+      #con <- login_import$con()
 
       asv_perc_reads <- tbl(
-        con,
+        login_import$con,
         Id(
           schema = "views",
           table = "asv_perc_reads"
