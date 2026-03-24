@@ -50,7 +50,8 @@ RUN install2.r --error \
     shinydashboardPlus \
     sf \
     shinycssloaders \
-    rlist
+    rlist \
+    datawizard
     
 
 # Install GitHub packages using remotes::install_github
