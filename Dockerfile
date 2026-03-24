@@ -40,8 +40,13 @@ RUN install2.r --error \
     plotly \
     shinythemes \
     shinyjs \
-    shinyWidgets \ 
-    pool 	
+    shinyWidgets \
+    pool \
+    forcats \
+    shinydashboard \
+    leaflet.minicharts \
+    shinyvalidate \
+    
 
 # Install GitHub packages using remotes::install_github
 # Do this as separate steps or with specific checks if dependencies are complex
