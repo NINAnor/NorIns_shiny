@@ -47,7 +47,8 @@ RUN install2.r --error \
     leaflet.minicharts \
     shinyvalidate \
     shinydashboardPlus \
-    sf
+    sf \
+    shinycssloaders
     
 
 # Install GitHub packages using remotes::install_github
