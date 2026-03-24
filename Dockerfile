@@ -45,7 +45,7 @@ RUN install2.r --error \
     forcats \
     shinydashboard \
     leaflet.minicharts \
-    shinyvalidate \
+    shinyvalidate 
     
 
 # Install GitHub packages using remotes::install_github
