@@ -1,0 +1,14 @@
+{
+  "cultural_date_format": "%d-%m-%Y",
+  "languages": ["no", "en"],
+  "translation": [
+    {"no": "Norsk insektovervåking", "en": "Norwegian insect monitoring"},
+    {"no": "Et histogram", "en": "Histogram of x"},
+    {"no": "Velg språk", "en": "Choose language"},
+    {"no": "Innsamling", "en": "Collection"},
+    {"no": "Overvåkingsdesign", "en": "Survey design"},
+    {"no": "Feltarbeid", "en": "Field work"},
+    {"no": "Labarbeid", "en": "Lab work"},
+    {"no": "Prosessering av prøver", "en": "Sample processing"}
+    ]
+}

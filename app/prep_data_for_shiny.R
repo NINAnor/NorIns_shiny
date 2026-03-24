@@ -28,14 +28,15 @@ get_map <- function (region_subset = NULL,
 }
 
 
-load("data/shinyPass.Rdata")
-prep_con <- pool::dbPool(RPostgres::Postgres(),
-                          host = "t2lippgsql03.nina.no",
-                          dbname = "insect_monitoring",
-                          user = my_username,
-                          password = my_password)
 
-load("data/recalculate_number.Rdata")
+prep_con <- pool::dbPool(RPostgres::Postgres(),
+                          dbname = Sys.getenv("DB_NAME"),
+                          host =Sys.getenv("DB_HOST"),
+                          user = Sys.getenv("DB_USER"),
+                          password = Sys.getenv("DB_PASSWORD"))
+
+
+load("./data/recalculate_number.Rdata")
 
 shiny_rules <- tbl(
   prep_con,
@@ -863,11 +864,11 @@ if (recalculate_number != recalculate_status) {
   # Write time series data
 
   save(biomass_mf_locality_sampling_time,
-    file = "data/biomass_mf_locality_sampling_time.Rdata"
+    file = "./data/biomass_mf_locality_sampling_time.Rdata"
   )
 
   save(diversity_locality_sampling_time,
-    file = "data/diversity_locality_sampling_time.Rdata"
+    file = "./data/diversity_locality_sampling_time.Rdata"
   )
 
   # save(diversity_locality_sampling_time_id_high,
@@ -879,7 +880,7 @@ if (recalculate_number != recalculate_status) {
   recalculate_number <- recalculate_status
 
   save(recalculate_number,
-    file = "data/recalculate_number.Rdata"
+    file = "./data/recalculate_number.Rdata"
   )
   
   

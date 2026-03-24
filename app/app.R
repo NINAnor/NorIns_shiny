@@ -2,34 +2,37 @@ require(shiny)
 require(shinydashboard)
 
 # load module functions
-source("prep_data_for_shiny.R", local = TRUE)
-source("pages/feltarbeid.R", local = TRUE)
-source("pages/labarbeid.R", local = TRUE)
-source("pages/bioinformatikk.R", local = TRUE)
-source("pages/artsmangfold.R", local = TRUE)
-source("pages/div_map.R", local = TRUE)
-source("pages/asv_map.R", local = TRUE)
-source("pages/tidstrender.R", local = TRUE)
-source("pages/dashboard.R", local = TRUE)
-source("pages/landowners.R", local = TRUE)
+source("./prep_data_for_shiny.R", local = TRUE)
+source("./pages/feltarbeid.R", local = TRUE)
+source("./pages/labarbeid.R", local = TRUE)
+source("./pages/bioinformatikk.R", local = TRUE)
+source("./pages/artsmangfold.R", local = TRUE)
+source("./pages/div_map.R", local = TRUE)
+source("./pages/asv_map.R", local = TRUE)
+source("./pages/tidstrender.R", local = TRUE)
+source("./pages/dashboard.R", local = TRUE)
+source("./pages/landowners.R", local = TRUE)
 
 
 
 # To make the app find the figures folder (and expose it to the web)
-addResourcePath(prefix = "figures", directoryPath = "figures")
+addResourcePath(prefix = "figures", directoryPath = "./figures")
 
-load("data/shinyPass.Rdata")
+
 
 conn_pool <- pool::dbPool(RPostgres::Postgres(),
-                    host = "t2lippgsql03.nina.no",
-                    dbname = "insect_monitoring",
-                    user = my_username,
-                    password = my_password)
+                          dbname = Sys.getenv("DB_NAME"),
+                          host =Sys.getenv("DB_HOST"),
+                          user = Sys.getenv("DB_USER"),
+                          password = Sys.getenv("DB_PASSWORD"))
 
 
-#onStop(function() {
-#   pool::poolClose(conn_pool)
-#})
+
+#Close the connection on app stop
+onStop(function() {
+  pool::poolClose(conn_pool)
+  #del_qr_img()
+})
 
 login_export <- list(
   con = conn_pool

@@ -1,0 +1,17 @@
+services:
+  shiny-dockerized:
+    image: ghcr.io/ninanor/norins_shiny:${IMAGE_TAG:-test}
+    ports:
+      - 3838:3838
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        delay: 60s
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432} # Use default 5432 if DB_PORT is not set
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD} # <--- Your secret, specified here as a placeholder
+      DB_NAME: ${DB_NAME}
