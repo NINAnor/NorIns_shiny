@@ -33,7 +33,7 @@ dashboard_ui <- function(id) {
       12,
       shinydashboardPlus::box(
         width = 12,
-        id = "omdrevbox",
+        id = ns("omdrevbox"),
         title = "Etablering og omdrev (10 lok. per region-habitat-år)",
         height = "200px",
         shinycssloaders::withSpinner(
@@ -53,7 +53,7 @@ dashboard_ui <- function(id) {
     column(
       6,
       shinydashboardPlus::box(
-        id = "taxa_share",
+        id = ns("taxa_share_box"),
         width = 12,
         title = "Taksonomisk fordeling",
         height = "400px",
@@ -72,7 +72,7 @@ dashboard_ui <- function(id) {
         ),
         shinycssloaders::withSpinner(
           {
-            plotOutput(ns("taxa_share"),
+            plotOutput(ns("taxa_share_plot"),
               height = "300px"
             )
           },
@@ -82,12 +82,11 @@ dashboard_ui <- function(id) {
         )
       ),
 
-      # "#004F71"  "#008C95"  "#E57200"  "#93328E"  "#7A9A01"  "#A2AAAD"  "#2DCCD3"  "#FFB25B
     ),
     column(
       6,
       shinydashboardPlus::box(
-        id = "notteskallbox",
+        id = ns("notteskallbox"),
         width = 12,
         height = "400px",
         title = "Fangstmengde",
@@ -165,10 +164,11 @@ dashboard_server <- function(id, login_import) {
       GROUP BY l.habitat_type
       "
 
-    no_loc <- dbGetQuery(
+    no_loc <- reactive({dbGetQuery(
       login_import$con,
       no_loc_q
     )
+    })
 
     # return(no_loc)
 
@@ -178,8 +178,10 @@ dashboard_server <- function(id, login_import) {
     output$no_loc_semi <- renderValueBox({
       # no_loc <- no_loc()
 
+      res <- no_loc()
+      
       valueBox(
-        value = no_loc[no_loc$"habitat_type" == "Semi-nat", ]$no_loc,
+        value = res[res$"habitat_type" == "Semi-nat", ]$no_loc,
         subtitle = "lokaliteter nå i semi-naturlig mark",
         color = "yellow",
         width = 2
@@ -582,7 +584,7 @@ dashboard_server <- function(id, login_import) {
     }
 
 
-    output$taxa_share <- renderCachedPlot(
+    output$taxa_share_plot <- renderCachedPlot(
       expr = {
         if (input$taxa_plot_type == "donut") {
           plot1 <- taxa_donut_plot("Malaise",
