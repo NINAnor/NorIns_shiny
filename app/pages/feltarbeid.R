@@ -24,7 +24,7 @@ felt_ui <- function(id) {
       box(
         width = 12,
         uiOutput(ns("localities")),
-        title = "Overvåkingslokaliteter i perioden 2020-2023",
+        title = "Overvåkingslokaliteter i perioden 2020-2025",
         solidHeader = TRUE,
         height = "400px"
       ),
@@ -75,7 +75,7 @@ Innsamling av insekter skjer hovedsakelig med malaisefeller, et slags telt der i
 
     output$localities <- renderUI({
       tags$img(
-        src = "figures/fig-lokaler20202023-1.png",
+        src = "figures/fig-lokaler20202025-1.svg",
         height = "300px"
       )
     })
