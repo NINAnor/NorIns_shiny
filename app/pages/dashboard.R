@@ -4,11 +4,12 @@ require(dplyr)
 require(forcats)
 require(tidyr)
 require(shinydashboard)
+require(shinyWidgets)
 
 
 dashboard_ui <- function(id) {
   ns <- NS(id)
-  
+
   tabPanel(
     title = "Dashboard",
     fluidRow(
@@ -33,8 +34,8 @@ dashboard_ui <- function(id) {
         shinycssloaders::withSpinner(
           {
             plotOutput(ns("project_sum_map"),
-                       height = "270px",
-                       width = "1000px"
+              height = "270px",
+              width = "1000px"
             )
           },
           type = 2,
@@ -52,22 +53,22 @@ dashboard_ui <- function(id) {
         title = "Taksonomisk fordeling",
         height = "400px",
         radioButtons(ns("taxa_plot_type"),
-                     label = "Plot-type",
-                     choiceNames = c(
-                       "Stabel",
-                       "Smultring (fam. i ytre ring)"
-                     ),
-                     choiceValues = c(
-                       "barplot",
-                       "donut"
-                     ),
-                     inline = TRUE,   # Bypasses vertical CSS spacing updates
-                     width = "100%"   # Lets the text spread out horizontally
+          label = "Plot-type",
+          choiceNames = c(
+            "Stabel",
+            "Smultring (fam. i ytre ring)"
+          ),
+          choiceValues = c(
+            "barplot",
+            "donut"
+          ),
+          inline = TRUE
+          ##, width = "100%"   # Lets the text spread out horizontally
         ),
         shinycssloaders::withSpinner(
           {
             plotOutput(ns("taxa_share_plot"),
-                       height = "300px"
+              height = "300px"
             )
           },
           type = 2,
@@ -87,36 +88,36 @@ dashboard_ui <- function(id) {
         div(
           style = "display:inline-block; padding-left: 10px; vertical-align: top;",
           radioButtons(ns("data_type"),
-                       label = "Datatype",
-                       choiceNames = c("Antall arter", "Biomasse"),
-                       choiceValues = c("species", "biomass"),
-                       inline = TRUE,
-                       width = "220px" 
+            label = "Datatype",
+            choiceNames = c("Antall arter", "Biomasse"),
+            choiceValues = c("species", "biomass"),
+            inline = TRUE,
+            width = "220px" 
           )
         ),
         div(
           style = "display:inline-block; padding-left: 10px; vertical-align: top;",
           radioButtons(ns("agg_level"),
-                       label = "Funn per",
-                       choiceNames = c("Lokalitet-sampling", "Lokalitet-sesong"),
-                       choiceValues = c("Sampling", "Sesong"),
-                       inline = TRUE,
-                       width = "300px"
+            label = "Funn per",
+            choiceNames = c("Lokalitet-sampling", "Lokalitet-sesong"),
+            choiceValues = c("Sampling", "Sesong"),
+            inline = TRUE,
+            width = "300px"
           )
         ),
         div(
           style = "display:inline-block; padding-left: 10px; vertical-align: top;",
           radioButtons(ns("rank_dens"),
-                       label = "Plot-type",
-                       choices = c("Ranking", "Fordeling"),
-                       inline = TRUE,
-                       width = "160px"
+            label = "Plot-type",
+            choices = c("Ranking", "Fordeling"),
+            inline = TRUE,
+            width = "160px"
           )
         ),
         shinycssloaders::withSpinner(
           {
             plotOutput(ns("catch_sum_biomass"),
-                       height = "300px"
+              height = "300px"
             )
           },
           type = 2,
@@ -211,7 +212,7 @@ dashboard_server <- function(id, login_import) {
 
 
     year_locality_stats <- readr::read_rds("data/year_locality_stats.Rdata")
-    nor <- Norimon::get_map()
+    nor <- get_map(con = login_import$con)
     
     
     output$project_sum_map <- renderPlot(expr = {

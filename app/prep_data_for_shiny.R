@@ -36,7 +36,8 @@ prep_con <- pool::dbPool(RPostgres::Postgres(),
                           password = Sys.getenv("DB_PASSWORD"))
 
 
-load("./data/recalculate_number.Rdata")
+recalculate_number <-  readr::read_file("./data/recalc_number.txt") |> 
+  as.numeric()
 
 shiny_rules <- tbl(
   prep_con,
@@ -879,11 +880,11 @@ if (recalculate_number != recalculate_status) {
   # Update recalculate number
   recalculate_number <- recalculate_status
 
-  save(recalculate_number,
-    file = "./data/recalculate_number.Rdata"
-  )
+  readr::write_file(as.character(recalculate_number), 
+                    "./data/recalc_number.txt",
+                    append = FALSE)
   
   
 } 
 
-#pool::poolClose(prep_con)
+pool::poolClose(prep_con)
