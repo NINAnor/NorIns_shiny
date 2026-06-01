@@ -29,7 +29,7 @@ get_map <- function (region_subset = NULL,
 
 
 
-prep_con <- pool::dbPool(RPostgres::Postgres(),
+con <- pool::dbPool(RPostgres::Postgres(),
                           dbname = Sys.getenv("DB_NAME"),
                           host =Sys.getenv("DB_HOST"),
                           user = Sys.getenv("DB_USER"),
@@ -887,4 +887,4 @@ if (recalculate_number != recalculate_status) {
   
 } 
 
-pool::poolClose(prep_con)
+pool::poolClose(con)
