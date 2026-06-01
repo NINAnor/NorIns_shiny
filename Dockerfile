@@ -51,7 +51,8 @@ RUN install2.r --error \
     sf \
     shinycssloaders \
     rlist \
-    datawizard
+    datawizard \
+    readr
     
 
 # Install GitHub packages using remotes::install_github

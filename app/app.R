@@ -2,7 +2,7 @@ require(shiny)
 require(shinydashboard)
 
 # load module functions
-#source("./prep_data_for_shiny.R", local = TRUE)
+source("./prep_data_for_shiny.R", local = TRUE)
 source("./pages/feltarbeid.R", local = TRUE)
 source("./pages/labarbeid.R", local = TRUE)
 source("./pages/bioinformatikk.R", local = TRUE)
