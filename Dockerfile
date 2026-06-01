@@ -13,6 +13,11 @@ RUN apt-get update && apt-get install -y \
     libgeos-dev \
     libproj-dev \
     libpq-dev \
+    libssl-dev \
+    libxml2-dev \
+    libcurl4-openssl-dev \
+    make \
+    zlib1g-dev \
     # Clean up apt caches to keep the image small
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
@@ -46,7 +51,6 @@ RUN install2.r --error --repo https://packagemanager.posit.co/cran/2025-06-15 \
     shinydashboard \
     leaflet.minicharts \
     shinyvalidate \
-    shinydashboard \
     shinydashboardPlus \
     sf \
     shinycssloaders \
