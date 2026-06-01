@@ -18,6 +18,8 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     make \
     zlib1g-dev \
+    cmake \
+    libabsl-dev \
     # Clean up apt caches to keep the image small
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
@@ -34,6 +36,9 @@ RUN install2.r --error --repo https://packagemanager.posit.co/cran/2025-06-15 \
     DBI \
     RPostgres \
     remotes \
+    httr \
+    vroom \
+    terra \
     dplyr \
     ggplot2 \
     ggthemes \
@@ -52,6 +57,7 @@ RUN install2.r --error --repo https://packagemanager.posit.co/cran/2025-06-15 \
     leaflet.minicharts \
     shinyvalidate \
     shinydashboardPlus \
+    raster \
     sf \
     shinycssloaders \
     rlist \
