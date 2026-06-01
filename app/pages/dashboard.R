@@ -7,6 +7,26 @@ require(shinydashboard)
 require(shinyWidgets)
 
 
+get_map <- function (region_subset = NULL,
+                     con = con) 
+{
+  norway_terr <- sf::read_sf(con, layer = DBI::Id(schema = "backgrounds", 
+                                                  table = "norway_terrestrial")) %>% select(fylke = navn)
+  region_def <- tibble(region = c("Trøndelag", "Østlandet", 
+                                  "Østlandet", "Østlandet", "Østlandet", "Sørlandet", 
+                                  "Sørlandet", "Vestlandet", "Vestlandet", "Nord-Norge", 
+                                  "Nord-Norge"), fylke = c("Trøndelag", "Innlandet", "Oslo", 
+                                                           "Vestfold og Telemark", "Viken", "Rogaland", "Agder", 
+                                                           "Vestland", "Møre og Romsdal", "Troms og Finnmark", 
+                                                           "Nordland"))
+  norway_terr <- norway_terr %>% left_join(region_def, by = c(fylke = "fylke"))
+  if (!is.null(region_subset)) {
+    norway_terr <- norway_terr %>% filter(region %in% region_subset)
+  }
+  return(norway_terr)
+}
+
+
 dashboard_ui <- function(id) {
   ns <- NS(id)
 
@@ -62,8 +82,7 @@ dashboard_ui <- function(id) {
             "barplot",
             "donut"
           ),
-          inline = TRUE
-          ##, width = "100%"   # Lets the text spread out horizontally
+          width = "100%"   # Lets the text spread out horizontally
         ),
         shinycssloaders::withSpinner(
           {
@@ -86,13 +105,15 @@ dashboard_ui <- function(id) {
         title = "Fangstmengde",
         # Expanded wrapper widths to prevent side-by-side text clashing
         div(
-          style = "display:inline-block; padding-left: 10px; vertical-align: top;",
+          style = "display:inline-block; padding-left: 20px",
           radioButtons(ns("data_type"),
             label = "Datatype",
-            choiceNames = c("Antall arter", "Biomasse"),
-            choiceValues = c("species", "biomass"),
+            choiceNames = c("Antall arter", 
+                            "Biomasse"),
+            choiceValues = c("species", 
+                             "biomass"),
             inline = TRUE,
-            width = "220px" 
+            width = "100px" 
           )
         ),
         div(

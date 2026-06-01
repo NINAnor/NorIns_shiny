@@ -24,7 +24,7 @@ RUN mkdir -p /srv/shiny-server/ && \
 # Install R dependencies (e.g., packages required by your app)
 # Using install2.r from littler is generally more robust for Dockerfiles
 # It handles dependencies automatically and is designed for non-interactive installs.
-RUN install2.r --error \
+RUN install2.r --error --repo https://packagemanager.posit.co/cran/2025-06-15 \
     shiny \
     DBI \
     RPostgres \
