@@ -41,7 +41,7 @@ labarbeid_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     output$bottle <- renderUI({
       tags$img(
-        src = "figures/IMG_8093.jpg",
+        src = "figures/IMG_6597.jpeg",
         height = "300px"
       )
     })
