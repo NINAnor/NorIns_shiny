@@ -20,13 +20,20 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     cmake \
     libabsl-dev \
-    # Clean up apt caches to keep the image small
+    # FIXES FOR TERRA & RASTER SOURCE COMPILATION:
+    libsqlite3-dev \
+    libpng-dev \
+    libjpeg-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 # Create and set permissions for the Shiny app directory
 # This should ideally be done before copying app files, and permissions are crucial.
 RUN mkdir -p /srv/shiny-server/ && \
     chown -R shiny:shiny /srv/shiny-server/ 
+
+# Force the compiler to use C++17 standard flags during package builds
+ENV MAKEFLAGS="-j4"
+RUN mkdir -p ~/.R && echo "CXX17FLAGS=-O3 -fPIC" >> ~/.R/Makevars    
 
 # Install R dependencies (e.g., packages required by your app)
 # Using install2.r from littler is generally more robust for Dockerfiles
@@ -38,9 +45,9 @@ RUN install2.r --error --repo https://packagemanager.posit.co/cran/2025-06-15 \
     remotes \
     httr \
     vroom \
+    raster \
     terra \
     dplyr \
-    ggplot2 \
     ggthemes \
     units \
     qrcode \
@@ -54,15 +61,16 @@ RUN install2.r --error --repo https://packagemanager.posit.co/cran/2025-06-15 \
     pool \
     forcats \
     shinydashboard \
+    leaflet \
     leaflet.minicharts \
     shinyvalidate \
     shinydashboardPlus \
-    raster \
     sf \
     shinycssloaders \
     rlist \
     datawizard \
-    readr
+    readr \
+    ggplot2 \
     
 
 # Install GitHub packages using remotes::install_github
