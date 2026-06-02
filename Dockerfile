@@ -1,20 +1,21 @@
-# 1. Use the geospatial R base—pre-baked with terra, raster, sf, and leaflet binaries
+# Use the pre-baked geospatial image to avoid terra/sf compilation errors
 FROM rocker/geospatial:4.4.0
 
 # Set a working directory for build operations
 WORKDIR /build
 
-# Install system-level database libraries needed for RPostgres/DBI
+# 1. FIX: Explicitly create the 'shiny' group and user, then configure the directory
+RUN groupadd -r shiny && useradd -r -g shiny shiny && \
+    mkdir -p /srv/shiny-server/ && \
+    chown -R shiny:shiny /srv/shiny-server/
+
+# System updates and database libraries
 RUN apt-get update && apt-get install -y \
     htop \
     libpq-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
-# Create and set permissions for the Shiny app directory
-RUN mkdir -p /srv/shiny-server/ && \
-    chown -R shiny:shiny /srv/shiny-server/ 
-
-# 2. Install your non-spatial remaining packages via stable install2.r
+# 2. Install remaining non-spatial R dependencies
 RUN install2.r --error \
     DBI \
     RPostgres \
@@ -34,7 +35,7 @@ RUN install2.r --error \
     rlist \
     datawizard
 
-# 3. FIX: Pin ONLY the UI engines to pre-overhaul versions to pack buttons closer together
+# 3. Pin UI engines to older versions to bring the radioButtons close together
 RUN R -e "remotes::install_version('shiny', version = '1.8.0', repos = 'https://cloud.r-project.org', upgrade = 'never')" && \
     R -e "remotes::install_version('bslib', version = '0.6.1', repos = 'https://cloud.r-project.org', upgrade = 'never')"
 
@@ -43,17 +44,13 @@ RUN R -e "remotes::install_github('NINAnor/Norimon')" && \
     R -e "remotes::install_github('NINAnor/NinaR')" && \
     rm -rf /tmp/R_libs_* /var/lib/R/library/renv /var/tmp/R_session_*
 
-# Set working directory and copy app
+# Set working directory for the Shiny app
 WORKDIR /srv/shiny-server/
+
+# This step will now execute smoothly without permissions errors
 COPY --chown=shiny:shiny app/ ./
 
-# Remove default sample configurations safely
-RUN rm -rf /srv/shiny-server/sample-apps \
-           /srv/shiny-server/index.html \
-           /srv/shiny-server/[0-9]* \
-           /srv/shiny-server/.* || true
-
-# Switch execution context to the shiny service user
+# Switch execution security context to your new shiny service user
 USER shiny
 EXPOSE 3838
 
