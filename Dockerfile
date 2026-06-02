@@ -70,7 +70,7 @@ RUN install2.r --error --repo https://packagemanager.posit.co/cran/2025-06-15 \
     rlist \
     datawizard \
     readr \
-    ggplot2 \
+    ggplot2
     
 
 # Install GitHub packages using remotes::install_github
