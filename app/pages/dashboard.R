@@ -82,7 +82,8 @@ dashboard_ui <- function(id) {
             "barplot",
             "donut"
           ),
-          width = "100%"   # Lets the text spread out horizontally
+          selected = "barplot",
+          inline = TRUE
         ),
         shinycssloaders::withSpinner(
           {
@@ -99,40 +100,49 @@ dashboard_ui <- function(id) {
     column(
       6,
       shinydashboardPlus::box(
-        id = ns("notteskallbox"),
+        id = "notteskallbox",
         width = 12,
         height = "400px",
         title = "Fangstmengde",
-        # Expanded wrapper widths to prevent side-by-side text clashing
         div(
           style = "display:inline-block; padding-left: 20px",
           radioButtons(ns("data_type"),
-            label = "Datatype",
-            choiceNames = c("Antall arter", 
-                            "Biomasse"),
-            choiceValues = c("species", 
-                             "biomass"),
-            inline = TRUE,
-            width = "100px" 
+                       label = "Datatype",
+                       choiceNames = c(
+                         "Antall arter",
+                         "Biomasse"
+                       ),
+                       choiceValues = c(
+                         "species",
+                         "biomass"
+                       ),
+                       width = "100px"
           )
         ),
         div(
-          style = "display:inline-block; padding-left: 10px; vertical-align: top;",
+          style = "display:inline-block; padding-left: 20px",
           radioButtons(ns("agg_level"),
-            label = "Funn per",
-            choiceNames = c("Lokalitet-sampling", "Lokalitet-sesong"),
-            choiceValues = c("Sampling", "Sesong"),
-            inline = TRUE,
-            width = "300px"
+                       label = "Funn per",
+                       choiceNames = c(
+                         "Lokalitet-sampling",
+                         "Lokalitet-sesong"
+                       ),
+                       choiceValues = c(
+                         "Sampling",
+                         "Sesong"
+                       ),
+                       width = "150px"
           )
         ),
         div(
-          style = "display:inline-block; padding-left: 10px; vertical-align: top;",
+          style = "display:inline-block; padding-left: 20px",
           radioButtons(ns("rank_dens"),
-            label = "Plot-type",
-            choices = c("Ranking", "Fordeling"),
-            inline = TRUE,
-            width = "160px"
+                       label = "Plot-type",
+                       choices = c(
+                         "Ranking",
+                         "Fordeling"
+                       ),
+                       width = "100px"
           )
         ),
         shinycssloaders::withSpinner(
