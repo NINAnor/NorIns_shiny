@@ -4,6 +4,27 @@ require(dplyr)
 require(forcats)
 require(tidyr)
 require(shinydashboard)
+require(shinyWidgets)
+
+
+get_map <- function (region_subset = NULL,
+                     con = con) 
+{
+  norway_terr <- sf::read_sf(con, layer = DBI::Id(schema = "backgrounds", 
+                                                  table = "norway_terrestrial")) %>% select(fylke = navn)
+  region_def <- tibble(region = c("Trøndelag", "Østlandet", 
+                                  "Østlandet", "Østlandet", "Østlandet", "Sørlandet", 
+                                  "Sørlandet", "Vestlandet", "Vestlandet", "Nord-Norge", 
+                                  "Nord-Norge"), fylke = c("Trøndelag", "Innlandet", "Oslo", 
+                                                           "Vestfold og Telemark", "Viken", "Rogaland", "Agder", 
+                                                           "Vestland", "Møre og Romsdal", "Troms og Finnmark", 
+                                                           "Nordland"))
+  norway_terr <- norway_terr %>% left_join(region_def, by = c(fylke = "fylke"))
+  if (!is.null(region_subset)) {
+    norway_terr <- norway_terr %>% filter(region %in% region_subset)
+  }
+  return(norway_terr)
+}
 
 
 dashboard_ui <- function(id) {
@@ -14,26 +35,20 @@ dashboard_ui <- function(id) {
     fluidRow(
       column(1),
       column(3, {
-        valueBoxOutput(ns("no_loc_semi"),
-          width = 12
-        )
+        valueBoxOutput(ns("no_loc_semi"), width = 12)
       }),
       column(3, {
-        valueBoxOutput(ns("no_loc_forest"),
-          width = 12
-        )
+        valueBoxOutput(ns("no_loc_forest"), width = 12)
       }),
       column(3, {
-        valueBoxOutput(ns("no_sampl"),
-          width = 12
-        )
+        valueBoxOutput(ns("no_sampl"), width = 12)
       })
     ),
     column(
       12,
       shinydashboardPlus::box(
         width = 12,
-        id = "omdrevbox",
+        id = ns("omdrevbox"),
         title = "Etablering og omdrev (10 lok. per region-habitat-år)",
         height = "200px",
         shinycssloaders::withSpinner(
@@ -53,7 +68,7 @@ dashboard_ui <- function(id) {
     column(
       6,
       shinydashboardPlus::box(
-        id = "taxa_share",
+        id = ns("taxa_share_box"),
         width = 12,
         title = "Taksonomisk fordeling",
         height = "400px",
@@ -67,12 +82,12 @@ dashboard_ui <- function(id) {
             "barplot",
             "donut"
           ),
-          # selected = "donut",
-          width = "100px"
+          selected = "barplot",
+          inline = TRUE
         ),
         shinycssloaders::withSpinner(
           {
-            plotOutput(ns("taxa_share"),
+            plotOutput(ns("taxa_share_plot"),
               height = "300px"
             )
           },
@@ -81,8 +96,6 @@ dashboard_ui <- function(id) {
           color.background = "#004F71"
         )
       ),
-
-      # "#004F71"  "#008C95"  "#E57200"  "#93328E"  "#7A9A01"  "#A2AAAD"  "#2DCCD3"  "#FFB25B
     ),
     column(
       6,
@@ -94,42 +107,42 @@ dashboard_ui <- function(id) {
         div(
           style = "display:inline-block; padding-left: 20px",
           radioButtons(ns("data_type"),
-            label = "Datatype",
-            choiceNames = c(
-              "Antall arter",
-              "Biomasse"
-            ),
-            choiceValues = c(
-              "species",
-              "biomass"
-            ),
-            width = "100px"
+                       label = "Datatype",
+                       choiceNames = c(
+                         "Antall arter",
+                         "Biomasse"
+                       ),
+                       choiceValues = c(
+                         "species",
+                         "biomass"
+                       ),
+                       width = "100px"
           )
         ),
         div(
           style = "display:inline-block; padding-left: 20px",
           radioButtons(ns("agg_level"),
-            label = "Funn per",
-            choiceNames = c(
-              "Lokalitet-sampling",
-              "Lokalitet-sesong"
-            ),
-            choiceValues = c(
-              "Sampling",
-              "Sesong"
-            ),
-            width = "150px"
+                       label = "Funn per",
+                       choiceNames = c(
+                         "Lokalitet-sampling",
+                         "Lokalitet-sesong"
+                       ),
+                       choiceValues = c(
+                         "Sampling",
+                         "Sesong"
+                       ),
+                       width = "150px"
           )
         ),
         div(
           style = "display:inline-block; padding-left: 20px",
           radioButtons(ns("rank_dens"),
-            label = "Plot-type",
-            choices = c(
-              "Ranking",
-              "Fordeling"
-            ),
-            width = "100px"
+                       label = "Plot-type",
+                       choices = c(
+                         "Ranking",
+                         "Fordeling"
+                       ),
+                       width = "100px"
           )
         ),
         shinycssloaders::withSpinner(
@@ -148,7 +161,6 @@ dashboard_ui <- function(id) {
 }
 
 
-
 dashboard_server <- function(id, login_import) {
   ns <- NS(id)
 
@@ -165,10 +177,11 @@ dashboard_server <- function(id, login_import) {
       GROUP BY l.habitat_type
       "
 
-    no_loc <- dbGetQuery(
+    no_loc <- reactive({dbGetQuery(
       login_import$con,
       no_loc_q
     )
+    })
 
     # return(no_loc)
 
@@ -176,10 +189,10 @@ dashboard_server <- function(id, login_import) {
 
 
     output$no_loc_semi <- renderValueBox({
-      # no_loc <- no_loc()
-
+      res <- no_loc()
+      
       valueBox(
-        value = no_loc[no_loc$"habitat_type" == "Semi-nat", ]$no_loc,
+        value = res[res$"habitat_type" == "Semi-nat", ]$no_loc,
         subtitle = "lokaliteter nå i semi-naturlig mark",
         color = "yellow",
         width = 2
@@ -188,7 +201,7 @@ dashboard_server <- function(id, login_import) {
 
 
     output$no_loc_forest <- renderValueBox({
-      # no_loc <- no_loc()
+       no_loc <- no_loc()
 
       valueBox(
         value = no_loc[no_loc$"habitat_type" == "Forest", ]$no_loc,
@@ -217,13 +230,10 @@ dashboard_server <- function(id, login_import) {
       login_import$con,
       no_sampl_q
     )
-    # return(no_sampl)
-    # })
+
 
 
     output$no_sampl <- renderValueBox({
-      # no_sampl <- no_sampl()
-
       valueBox(
         value = no_sampl$no_sampl,
         subtitle = "innsamlete felleprøver",
@@ -233,143 +243,13 @@ dashboard_server <- function(id, login_import) {
 
 
     year_locality_stats <- readr::read_rds("data/year_locality_stats.Rdata")
-
-
-    plot_project_sum <- function() {
-      # par(mar = rep(0, 4))
-
-      raw_data <- year_locality_stats
-
-      fill_cols <- c(
-        "Semi-nat" = "#E57200",
-        "Skog" = "#7A9A01",
-        "Ikke besøkt" = "white"
-      )
-
-      reg_cols <- tibble(
-        region_name = c(
-          "Sørlandet",
-          "Østlandet",
-          "Vestlandet",
-          "Trøndelag",
-          "Nord-Norge"
-        ),
-        color = c(
-          "#E57200",
-          "#008C95",
-          "#7A9A01",
-          "#93328E",
-          "#004F71"
-        )
-      )
-
-      plot_data <- raw_data %>%
-        group_by(region_name, year) %>%
-        mutate(custom_y = cur_group_id()) %>%
-        mutate(year = as.integer(as.character(year))) %>%
-        mutate(
-          custom_x = ifelse(habitat_type == "Semi-nat",
-            as.integer(as.character(year)) - 0.2,
-            as.integer(as.character(year)) + 0.2
-          ),
-          visited = ifelse(visits > 0, "Ja", "Nei")
-        )
-
-
-      yline_pos <- tibble(hline = seq(0,
-        length(levels(plot_data$region_name)) * n_distinct(plot_data$year),
-        by = n_distinct(plot_data$year)
-      ) + 0.5)
-
-
-      ytext_pos <- tibble(ytext = seq(0,
-        (length(levels(plot_data$region_name)) - 1) * n_distinct(plot_data$year),
-        by = n_distinct(plot_data$year)
-      ) + (n_distinct(plot_data$year) + 1) / 2)
-
-      p <- ggplot(
-        plot_data,
-        aes(
-          x = custom_x,
-          y = custom_y
-        )
-      ) +
-        geom_hline(aes(yintercept = hline),
-          lty = 3,
-          data = yline_pos
-        ) +
-        geom_tile(
-          aes(
-            fill = visited,
-            color = habitat_type
-          ),
-          width = .3,
-          height = .9,
-          lwd = 1
-        ) +
-        scale_fill_manual(
-          name = "Registrert",
-          values = c("black", "white")
-        ) +
-        scale_color_manual(
-          name = "Habitattype",
-          values = fill_cols,
-          aesthetics = "colour"
-        ) +
-        ylab("") +
-        # xlab("År") +
-        scale_x_continuous(
-          name = "År",
-          breaks = unique(plot_data$year)
-        ) +
-        scale_y_continuous(
-          breaks = ytext_pos$ytext,
-          labels = c(
-            "<b style='color:#E57200'>Sørlandet</b>",
-            "<b style='color:#008C95'>Østlandet</b>",
-            "<b style='color:#7A9A01'>Vestlandet</b>",
-            "<b style='color:#93328E'>Trøndelag</b>",
-            "<b style='color:#004F71'>Nord-Norge</b>"
-          )
-        ) +
-        theme(
-          panel.background = element_blank(),
-          axis.text.y = ggtext::element_markdown(),
-          plot.margin = margin(0, 0, 0, 0, "cm")
-        )
-
-      p
-    }
-
     nor <- get_map(con = login_import$con)
-
-    plot_region_map <- function() {
-      # par(mar = rep(0, 4))
-
-      p <- ggplot(nor) +
-        geom_sf(aes(fill = region)) +
-        scale_fill_nina(name = "") +
-        guides(fill = "none") +
-        theme(plot.margin = margin(0, 0, 0, 0, "cm")) +
-        ggthemes::theme_map()
-
-
-      p
-    }
-
-
+    
+    
     output$project_sum_map <- renderPlot(expr = {
-      plot1 <- plot_region_map()
-      plot2 <- plot_project_sum()
+      plot1 <- Norimon::plot_country_map(nor)
+      plot2 <- Norimon::plot_year_region_stats(year_locality_stats)
 
-      # gridExtra::grid.arrange(plot1,
-      #                         plot2,
-      #                         ncol = 2,
-      #                         widths = c(unit(6, "cm"),
-      #                                    unit(10, "cm")),
-      #                         heights = c(unit(6, "cm"),
-      #                                     unit(6, "cm")),
-      #                         padding = 0)
 
       cowplot::plot_grid(plot1,
         plot2,
@@ -582,7 +462,7 @@ dashboard_server <- function(id, login_import) {
     }
 
 
-    output$taxa_share <- renderCachedPlot(
+    output$taxa_share_plot <- renderCachedPlot(
       expr = {
         if (input$taxa_plot_type == "donut") {
           plot1 <- taxa_donut_plot("Malaise",

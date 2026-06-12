@@ -2,7 +2,7 @@ require(shiny)
 require(shinydashboard)
 
 # load module functions
-source("./prep_data_for_shiny.R", local = TRUE)
+#source("./prep_data_for_shiny.R", local = TRUE)
 source("./pages/feltarbeid.R", local = TRUE)
 source("./pages/labarbeid.R", local = TRUE)
 source("./pages/bioinformatikk.R", local = TRUE)
@@ -12,7 +12,6 @@ source("./pages/asv_map.R", local = TRUE)
 source("./pages/tidstrender.R", local = TRUE)
 source("./pages/dashboard.R", local = TRUE)
 source("./pages/landowners.R", local = TRUE)
-
 
 
 # To make the app find the figures folder (and expose it to the web)
