@@ -28,13 +28,16 @@ get_map <- function (region_subset = NULL,
 }
 
 
-
 con <- pool::dbPool(RPostgres::Postgres(),
                           dbname = Sys.getenv("DB_NAME"),
                           host =Sys.getenv("DB_HOST"),
                           user = Sys.getenv("DB_USER"),
                           password = Sys.getenv("DB_PASSWORD"))
 
+
+# Norimon functions (e.g. get_biomass, get_observations) rely on NinaR::checkCon()
+# which expects a variable named 'con' of class PqConnection in the global environment.
+assign("con", prep_con, envir = .GlobalEnv)
 
 recalculate_number <-  readr::read_file("./data/recalc_number.txt") |> 
   as.numeric()
@@ -75,12 +78,11 @@ if (recalculate_number != recalculate_status) {
         "expl_4",
         "expl_5"
       ),
-      sep = ">"
+      sep = ">",
+      extra = "merge",
+      fill = "right"
     ) %>%
-    separate(expl_3,
-      into = "expl_3_main",
-      sep = "_"
-    ) %>%
+    mutate(expl_3_main = sub("_.*$", "", expl_3)) %>%
     mutate(expl_3_main = ifelse(is.na(expl_3_main), expl_1, expl_3_main)) %>%
     mutate(expl_3_main = stringr::str_trim(expl_3_main)) %>%
     mutate(
@@ -102,8 +104,10 @@ if (recalculate_number != recalculate_status) {
       locality,
       kategori
     ) %>%
-    summarise(no_spec = n_distinct(species_latin_fixed)) %>%
-    ungroup() %>%
+    summarise(
+      no_spec = n_distinct(species_latin_fixed),
+      .groups = "drop"
+    ) %>%
     st_jitter(redlisted_obs_2021_agg, amount = 5000) %>%
     st_transform(4326)
 
@@ -221,8 +225,10 @@ if (recalculate_number != recalculate_status) {
       kategori,
       no_spec_per_kat
     ) %>%
-    summarise(no_spec = n_distinct(species_latin_fixed)) %>%
-    ungroup() %>%
+    summarise(
+      no_spec = n_distinct(species_latin_fixed),
+      .groups = "drop"
+    ) %>%
     mutate(kategori_append = factor(paste0(kategori, " (", no_spec_per_kat, " stk.)"))) %>%
     # left_join(kat_order,
     #           by = c("kategori" = "kategori")) %>%
@@ -365,8 +371,10 @@ if (recalculate_number != recalculate_status) {
       kategori,
       no_spec_per_kat
     ) %>%
-    summarise(no_spec = n_distinct(species_latin_fixed)) %>%
-    ungroup() %>%
+    summarise(
+      no_spec = n_distinct(species_latin_fixed),
+      .groups = "drop"
+    ) %>%
     # mutate(kategori_append = factor(paste0(kategori, " (", no_spec_per_kat, " stk.)"))) %>%
     # left_join(kat_order,
     #           by = c("kategori" = "kategori")) %>%
@@ -888,3 +896,5 @@ if (recalculate_number != recalculate_status) {
 } 
 
 pool::poolClose(con)
+
+

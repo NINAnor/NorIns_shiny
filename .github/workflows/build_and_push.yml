@@ -69,7 +69,7 @@ jobs:
           fi
 
           if [[ "$TARGET_BRANCH" == "production" ]]; then
-            echo "TAG=latest" >> $GITHUB_OUTPUT
+            echo "TAG=production" >> $GITHUB_OUTPUT
           else
             echo "TAG=test" >> $GITHUB_OUTPUT
           fi
