@@ -12,7 +12,7 @@ DB_USER=""
 DB_PASSWORD=""
 
 #To limit the pulls to the production branch
-IMAGE_TAG=latest
+IMAGE_TAG=production
 ```
 
 To run:
