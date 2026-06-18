@@ -68,10 +68,12 @@ dashboard_ui <- function(id) {
     column(
       6,
       shinydashboardPlus::box(
-        id = ns("taxa_share_box"),
+        id = ns("taxasharebox"),
         width = 12,
-        title = "Taksonomisk fordeling",
         height = "400px",
+        title = "Taksonomisk fordeling",
+        div(
+        style = "display:inline-block; padding-left: 20px",
         radioButtons(ns("taxa_plot_type"),
           label = "Plot-type",
           choiceNames = c(
@@ -82,8 +84,8 @@ dashboard_ui <- function(id) {
             "barplot",
             "donut"
           ),
-          selected = "barplot",
           inline = TRUE
+        )
         ),
         shinycssloaders::withSpinner(
           {
@@ -100,7 +102,7 @@ dashboard_ui <- function(id) {
     column(
       6,
       shinydashboardPlus::box(
-        id = "notteskallbox",
+        id = ns("notteskallbox"),
         width = 12,
         height = "400px",
         title = "Fangstmengde",
