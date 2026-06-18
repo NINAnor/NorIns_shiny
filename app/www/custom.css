@@ -61,15 +61,15 @@
 }
 
 .box-body {
-/*  white-space: pre-wrap;
+  white-space: pre-wrap;
   margin-left: 10px;
   margin-top: -40px;
-  margin-bottom: 0px; */
+  margin-bottom: 0px;
   font-family: "Open Sans", Helvetica, Arial;
   font-weight: normal;
   font-size: 16px;
-  /*padding-top: 0px;
-  padding-bottom: 0px;*/
+  padding-top: 0px;
+  padding-bottom: 0px; 
 }
 
 
@@ -121,7 +121,9 @@ white-space: normal;
 margin-top: 0px;
 }
 
-#notteskallbox > .box-body {
+
+[id$="taxasharebox"] > .box-body,
+[id$="notteskallbox"] > .box-body {
 white-space: nowrap;
 margin-top: 0px;
 }
