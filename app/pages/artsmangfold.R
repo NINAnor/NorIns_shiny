@@ -40,9 +40,8 @@ biodiv_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     output$rankabund <- renderUI({
       tags$img(
-        src = "figures/spec-occ-1.svg",
-        height = "300px",
-        width = "95%"
+        src = "figures/fig-spec-occ-1.svg",
+        height = "300px"
       )
     })
 
@@ -58,7 +57,7 @@ Fortsatt finner vi mye DNA som kan grupperes til distinkte arter, men som vi enn
 
     output$specacc <- renderUI({
       tags$img(
-        src = "figures/div-est-1.svg",
+        src = "figures/fig-div-est-1.svg",
         height = "300px"
       )
     })

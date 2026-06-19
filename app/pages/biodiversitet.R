@@ -40,7 +40,7 @@ biodiv_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     output$rankabund <- renderUI({
       tags$img(
-        src = "figures/spec-occ-1.png",
+        src = "figures/fig-spec-occ-1.svg",
         height = "300px",
         width = "95%"
       )
@@ -57,7 +57,7 @@ Selv om det er mange sjeldne arter, er det flere tusen arter som blir funnet rel
 
     output$specacc <- renderUI({
       tags$img(
-        src = "figures/div-est-1.svg",
+        src = "figures/fig-div-est-1.svg",
         height = "300px"
       )
     })
