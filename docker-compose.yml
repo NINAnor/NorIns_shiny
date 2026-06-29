@@ -11,7 +11,7 @@ services:
         delay: 60s
     environment:
       DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT:-5432} # Use default 5432 if DB_PORT is not set
+      DB_PORT: ${DB_PORT:-5432} 
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD} # <--- Your secret, specified here as a placeholder
+      DB_PASSWORD: ${DB_PASSWORD} 
       DB_NAME: ${DB_NAME}
