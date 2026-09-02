@@ -627,13 +627,6 @@ asvmap_server <- function(id, login_import) {
       sel_asv <- asv_perc_min_ind |>
         filter(species_latin_gbif == !!selected_species(),
                project_short_name == !!selected_project()) |>
-        # group_by(locality,
-        #          lat, 
-        #          lon,
-        #          sequence_id) |> 
-        # summarize(perc_reads = mean(perc_reads, na.rm = TRUE),
-        #           sum_reads = sum(sum_reads, na.rm = TRUE),
-        #           .groups = "drop") |> 
         collect() |>
         mutate(
           asv = as_factor(sequence_id)
@@ -652,6 +645,7 @@ asvmap_server <- function(id, login_import) {
           perc_min_no_ind,
           max_possible_no_ind
         ) |>
+        distinct() |> # This is a workaround for multiple records in genetics.asv_sequences for the same sequence_id. Should only be one species_latin_fixed per sequence_id!
         pivot_wider(
           names_from = "sequence_id",
           values_from = "perc_min_no_ind",
@@ -662,8 +656,10 @@ asvmap_server <- function(id, login_import) {
       return(to_plot)
     }
 
+
     
-    ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("yellow")))   
+    ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("green"),  ninaColors("yellow")),
+                          bias = 5)   
     
     custom_colors <- sel_asv |> 
       select(sequence_id,
