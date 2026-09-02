@@ -610,28 +610,33 @@ asvmap_server <- function(id, login_import) {
     asv_to_leaflet <- function() {
       #con <- login_import$con()
 
-      asv_perc_reads <- tbl(
+      # asv_perc_reads <- tbl(
+      #   login_import$con,
+      #   Id(
+      #     schema = "views",
+      #     table = "asv_perc_reads"
+      #   )
+      # )
+      
+      asv_perc_min_ind <- tbl(
         login_import$con,
-        Id(
-          schema = "views",
-          table = "asv_perc_reads"
-        )
+        Id(schema = "views",
+           table = "asv_perc_min_ind")
       )
 
-      sel_asv <- asv_perc_reads |>
+      sel_asv <- asv_perc_min_ind |>
         filter(species_latin_gbif == !!selected_species(),
                project_short_name == !!selected_project()) |>
-        group_by(locality,
-                 lat, 
-                 lon,
-                 sequence_id) |> 
-        summarize(perc_reads = mean(perc_reads, na.rm = TRUE),
-                  sum_reads = sum(sum_reads, na.rm = TRUE),
-                  .groups = "drop") |> 
+        # group_by(locality,
+        #          lat, 
+        #          lon,
+        #          sequence_id) |> 
+        # summarize(perc_reads = mean(perc_reads, na.rm = TRUE),
+        #           sum_reads = sum(sum_reads, na.rm = TRUE),
+        #           .groups = "drop") |> 
         collect() |>
         mutate(
-          asv = as_factor(sequence_id),
-          perc_reads = round(perc_reads * 100, 2)
+          asv = as_factor(sequence_id)
         ) |>
         arrange(sequence_id)
 
@@ -642,12 +647,14 @@ asvmap_server <- function(id, login_import) {
           lat,
           lon,
           sequence_id,
-          perc_reads,
-          sum_reads
+          min_no_ind,
+          sum_min_no_ind,
+          perc_min_no_ind,
+          max_possible_no_ind
         ) |>
         pivot_wider(
           names_from = "sequence_id",
-          values_from = "perc_reads",
+          values_from = "perc_min_no_ind",
           names_prefix = "seq_",
           values_fill = 0
         )
@@ -655,10 +662,18 @@ asvmap_server <- function(id, login_import) {
       return(to_plot)
     }
 
-
-
-
-
+    
+    ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("yellow")))   
+    
+    custom_colors <- sel_asv |> 
+      select(sequence_id,
+             color_val) |> 
+      distinct() |> 
+      mutate(custom_col = rgb(ramp_fun(color_val), maxColorValue = 255)) |> 
+      select(custom_col) |> 
+      pull()
+      
+    
     output$asv_map <- renderLeaflet({
       req(input$asv_species)
       # req(input$species_filter)
@@ -682,9 +697,10 @@ asvmap_server <- function(id, login_import) {
           to_plot$lat,
           type = "pie",
           chartdata = to_plot[, which(grepl("seq_", names(to_plot)))],
-          width = log(to_plot$sum_reads) * 3,
+          width = log(to_plot$sum_min_no_ind) * 10,
           legend = FALSE,
-          popup = list(noPopup = TRUE)
+          popup = list(noPopup = TRUE),
+          colorPalette = custom_colors
           # popupOptions = list(autoPan = FALSE,
           #                     maxHeight = 400,
           #                     maxWidth = 400,
