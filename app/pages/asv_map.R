@@ -605,70 +605,120 @@ asvmap_server <- function(id, login_import) {
       }
     })
     
+    sel_asv <- reactive({
+    asv_perc_min_ind <- tbl(
+      login_import$con,
+      Id(schema = "views",
+         table = "asv_perc_min_ind")
+    )
     
-    # species = "NULL"
-    asv_to_leaflet <- function() {
-      #con <- login_import$con()
+    sel_asv <- asv_perc_min_ind |>
+      filter(species_latin_gbif == !!selected_species(),
+             project_short_name == !!selected_project()) |>
+      collect() |>
+      mutate(seq_short = stringr::str_sub(sequence_id,
+                                                  start = 1,
+                                                  end = 8),
+             asv = as_factor(sequence_id),
+             perc_min_no_ind = round(perc_min_no_ind, 3)
+      ) |>
+      arrange(sequence_id)
+    
+    return(sel_asv)
+    })
+    
+    
+    asv_to_leaflet <- reactive({
 
-      # asv_perc_reads <- tbl(
-      #   login_import$con,
-      #   Id(
-      #     schema = "views",
-      #     table = "asv_perc_reads"
-      #   )
-      # )
-      
-      asv_perc_min_ind <- tbl(
-        login_import$con,
-        Id(schema = "views",
-           table = "asv_perc_min_ind")
-      )
-
-      sel_asv <- asv_perc_min_ind |>
-        filter(species_latin_gbif == !!selected_species(),
-               project_short_name == !!selected_project()) |>
-        collect() |>
-        mutate(
-          asv = as_factor(sequence_id)
-        ) |>
-        arrange(sequence_id)
-
-
-      to_plot <- sel_asv |>
+      to_plot <- sel_asv() |>
         select(
           locality,
           lat,
           lon,
-          sequence_id,
+          seq_short,
           min_no_ind,
           sum_min_no_ind,
-          perc_min_no_ind,
+          #perc_min_no_ind,
           max_possible_no_ind
         ) |>
         distinct() |> # This is a workaround for multiple records in genetics.asv_sequences for the same sequence_id. Should only be one species_latin_fixed per sequence_id!
         pivot_wider(
-          names_from = "sequence_id",
-          values_from = "perc_min_no_ind",
+          names_from = "seq_short",
+          values_from = "min_no_ind",
           names_prefix = "seq_",
           values_fill = 0
         )
 
       return(to_plot)
-    }
+    })
 
 
-    
-    ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("green"),  ninaColors("yellow")),
-                          bias = 5)   
-    
-    custom_colors <- sel_asv |> 
-      select(sequence_id,
-             color_val) |> 
-      distinct() |> 
-      mutate(custom_col = rgb(ramp_fun(color_val), maxColorValue = 255)) |> 
-      select(custom_col) |> 
-      pull()
+    asv_colors <- function(x){
+      ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("green"),  ninaColors("yellow")),
+                            bias = 5)   
       
+      rgb(ramp_fun(x), maxColorValue = 255)
+      
+    }
+    
+    custom_colors <- reactive({ 
+    
+    custom_colors <- sel_asv() |> 
+      mutate(seq_short = paste0("seq_", seq_short)) |> 
+       select(seq_short,
+              color_val) |> 
+      distinct() |> 
+      mutate(custom_col = asv_colors(color_val)) |> 
+      select(seq_short,
+             custom_col) 
+    
+    return(custom_colors)
+    })
+      
+    custom_popups <- reactive({
+      to_plot <-  asv_to_leaflet()
+      
+      res <- apply(to_plot, 1, function(row) {
+        max_val <- row["max_possible_no_ind"]
+        
+        seq_mask <- grepl("^seq_", names(row))
+        vals <- as.numeric(row[seq_mask])
+        names(vals) <- names(row)[seq_mask]
+        
+        non_zero_filt <- vals[!is.na(vals) & vals > 0]
+        non_zero_filt <- head(non_zero_filt[order(as.numeric(non_zero_filt), decreasing = TRUE)],
+             10)
+        
+        if (length(non_zero_filt) == 0) {
+          items <- "<i>No Data</i>"
+        } else {
+          # 1. Match names(non_zero_filt) to seq_colors$seq_short to get corresponding colors
+          
+          seq_colors <- custom_colors()
+          col_matches <- seq_colors$custom_col[match(names(non_zero_filt), seq_colors$seq_short)]
+          
+          # Optional fallback (e.g., "#000000" or "black") if a sequence isn't found in your color table
+          col_matches[is.na(col_matches)] <- "black"
+          
+          # 2. Wrap each sequence name in an HTML <span> with the matched inline color
+          items <- paste0(
+            "<span style='color: ", col_matches, "; font-weight: bold;'>", 
+            names(non_zero_filt), 
+            ":</span> ", 
+            non_zero_filt, 
+            collapse = "<br>"
+          )
+        }
+        
+        # 3. Assemble final popup
+        popup <- paste0(
+          "<b>Observed out of ", max_val, "<br> possible times:(top ten seq.)</b> ", "<br>",
+          "<hr style='margin: 4px 0;'>",
+          items
+        )
+      })
+    })
+    
     
     output$asv_map <- renderLeaflet({
       req(input$asv_species)
@@ -676,7 +726,9 @@ asvmap_server <- function(id, login_import) {
 
       to_plot <- asv_to_leaflet()
       if(nrow(to_plot) == 0) return(NULL)
-
+      
+      chart_data <- to_plot[, which(grepl("seq_", names(to_plot)))]
+      
       basemap |>
         leaflet::addProviderTiles(providers$Esri.WorldImagery,
           group = "Ortophoto"
@@ -692,16 +744,22 @@ asvmap_server <- function(id, login_import) {
         addMinicharts(to_plot$lon,
           to_plot$lat,
           type = "pie",
-          chartdata = to_plot[, which(grepl("seq_", names(to_plot)))],
+          chartdata = chart_data,
           width = log(to_plot$sum_min_no_ind) * 10,
           legend = FALSE,
-          popup = list(noPopup = TRUE),
-          colorPalette = custom_colors
-          # popupOptions = list(autoPan = FALSE,
-          #                     maxHeight = 400,
-          #                     maxWidth = 400,
-          #                     minWidth = 200
-          #                    )
+          #popup = list(noPopup = TRUE),
+          colorPalette = custom_colors()$custom_col,
+           popup = list(html = custom_popups(),
+                        showValues = FALSE, # Disables default JS table generator
+                        showTitle = FALSE   # Hides auto-generated layer ID title
+                        )
+          ) |> 
+        addLegend(
+          position = "bottomright",
+          colors = asv_colors(seq(from = 0, to = 1, by = 0.25)),
+          labels = round(seq(from = 0, to = 1, by = 0.25), 2),
+          title = "Genetic variants 0-1",
+          opacity = 1
         )
     })
 

@@ -23,7 +23,8 @@ conn_pool <- pool::dbPool(RPostgres::Postgres(),
                           dbname = Sys.getenv("DB_NAME"),
                           host =Sys.getenv("DB_HOST"),
                           user = Sys.getenv("DB_USER"),
-                          password = Sys.getenv("DB_PASSWORD"))
+                          password = Sys.getenv("DB_PASSWORD"),
+                          bigint = "integer")
 
 
 
