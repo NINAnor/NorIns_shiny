@@ -9,13 +9,15 @@ require(Norimon)
 require(shinyvalidate)
 require(shinyjs)
 
+
 asvmap_ui <- function(id) {
   ns <- NS(id)
-
-  useShinyjs()
-
+  
   tabPanel(
     title = "Innenartsvariasjon",
+    useShinyjs(),
+    
+
     column(
       6,
       shinydashboardPlus::box(
@@ -25,6 +27,19 @@ asvmap_ui <- function(id) {
         textOutput(ns("asvmap_text")),
         uiOutput(ns("choose_project")),
         height = "500px"
+      ),
+      shinydashboardPlus::box(
+        width = 12,
+        id = "map_choices_box",
+        title = "Kartinstillinger",
+        fluidRow(
+          column(6,
+                 uiOutput(ns("choose_color_mode"))
+          ),
+          column(6,
+                 uiOutput(ns("choose_pie_size"))
+          )
+        )
       ),
       shinydashboardPlus::box(
         width = 12,
@@ -40,17 +55,17 @@ asvmap_ui <- function(id) {
           column(
             6,
             uiOutput(ns("choose_spec")),
-             selectizeInput(
-               inputId = ns("species_filter"),
-               label = "Fritekst",
-               choices = NULL,
-               selected = NULL
-             ),
+            selectizeInput(
+              inputId = ns("species_filter"),
+              label = "Fritekst",
+              choices = NULL,
+              selected = NULL
+            ),
             actionButton(ns("filter_btn"),
-              label = "Fritekssøk"
+                         label = "Fritekssøk"
             ),
             actionButton(ns("filter_clear_btn"),
-              label = "Rens fritext"
+                         label = "Rens fritext"
             )
           )
         ),
@@ -66,8 +81,8 @@ asvmap_ui <- function(id) {
         shinycssloaders::withSpinner(
           {
             leaflet::leafletOutput(ns("asv_map"),
-              width = "95%",
-              height = 800
+                                   width = "95%",
+                                   height = 800
             )
           },
           type = 2,
@@ -79,6 +94,90 @@ asvmap_ui <- function(id) {
     )
   )
 }
+
+# asvmap_ui <- function(id) {
+#   ns <- NS(id)
+# 
+#   useShinyjs()
+#   
+#   tabPanel(
+#     title = "Innenartsvariasjon",
+#     column(
+#       6,
+#       shinydashboardPlus::box(
+#         id = "taxabox",
+#         width = 12,
+#         title = "Genetisk variasjon innen arter",
+#         textOutput(ns("asvmap_text")),
+#         uiOutput(ns("choose_project")),
+#         height = "500px"
+#       ),
+#       shinydashboardPlus::box(
+#         width = 12,
+#         id = "map_choices_box",
+#         title = "Kartinstillinger",
+#         fluidRow(
+#           column(6,
+#                  uiOutput(ns("choose_color_mode"))
+#                  ),
+#           column(6,
+#                  uiOutput(ns("choose_pie_size"))
+#                  )
+#         )
+#       ),
+#       shinydashboardPlus::box(
+#         width = 12,
+#         id = "speciesbox",
+#         title = "Artssøk",
+#         fluidRow(
+#           column(
+#             6,
+#             uiOutput(ns("choose_conf")),
+#             uiOutput(ns("choose_order")),
+#             uiOutput(ns("choose_fam"))
+#           ),
+#           column(
+#             6,
+#             uiOutput(ns("choose_spec")),
+#              selectizeInput(
+#                inputId = ns("species_filter"),
+#                label = "Fritekst",
+#                choices = NULL,
+#                selected = NULL
+#              ),
+#             actionButton(ns("filter_btn"),
+#               label = "Fritekssøk"
+#             ),
+#             actionButton(ns("filter_clear_btn"),
+#               label = "Rens fritext"
+#             )
+#           )
+#         ),
+#         height = "400px"
+#       )
+#     ),
+#     column(
+#       6,
+#       shinydashboardPlus::box(
+#         width = 12,
+#         id = "asv_leaflet_box",
+#         title = "Fordeling av genetiske varianter",
+#         shinycssloaders::withSpinner(
+#           {
+#             leaflet::leafletOutput(ns("asv_map"),
+#               width = "95%",
+#               height = 800
+#             )
+#           },
+#           type = 2,
+#           color = "#E57200",
+#           color.background = "#004F71"
+#         ),
+#         height = "800px"
+#       )
+#     )
+#   )
+# }
 
 
 
@@ -469,6 +568,13 @@ asvmap_server <- function(id, login_import) {
     })
 
 
+    output$choose_color_mode <- renderUI({
+      selectInput(ns("color_mode"),
+                  label = "Fargelegg basert på",
+                  choices = c("Genetisk avstand", 
+                              "Tilfeldige farger"),
+                  selected = "Genetisk avstand")
+    })
 
     basemap <- leaflet(
       width = "300px",
@@ -476,9 +582,15 @@ asvmap_server <- function(id, login_import) {
     ) |>
       addTiles(group = "OpenStreetMap")
 
-
-
-
+  output$choose_pie_size <- renderUI({
+    
+    sliderInput(ns("pie_size"),
+                label = "Kakestørrelse",
+                min = 10,
+                max = 80,
+                step = 10,
+                value = 30)
+  })
 
     # species_choices <- function() {
     #   loc_species_list <- tbl({}
@@ -578,7 +690,6 @@ asvmap_server <- function(id, login_import) {
     })
 
 
-    
     selected_project <- reactive({
       if (is.na(input$project)) {
         return(NULL)
@@ -637,6 +748,7 @@ asvmap_server <- function(id, login_import) {
           lon,
           seq_short,
           min_no_ind,
+          most_common_min_no_ind,
           sum_min_no_ind,
           #perc_min_no_ind,
           max_possible_no_ind
@@ -654,8 +766,10 @@ asvmap_server <- function(id, login_import) {
 
 
     asv_colors <- function(x){
-      ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("green"),  ninaColors("yellow")),
-                            bias = 5)   
+      # ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("green"),  ninaColors("purple")),
+      #                       bias = 5)
+      ramp_fun <- colorRamp(c(ninaColors("yellow"), ninaColors("blue"),  ninaColors("orange")),
+                            bias = 5) 
       
       rgb(ramp_fun(x), maxColorValue = 255)
       
@@ -680,6 +794,7 @@ asvmap_server <- function(id, login_import) {
       
       res <- apply(to_plot, 1, function(row) {
         max_val <- row["max_possible_no_ind"]
+        locality <- row["locality"]
         
         seq_mask <- grepl("^seq_", names(row))
         vals <- as.numeric(row[seq_mask])
@@ -712,23 +827,48 @@ asvmap_server <- function(id, login_import) {
         
         # 3. Assemble final popup
         popup <- paste0(
-          "<b>Observed out of ", max_val, "<br> possible times:(top ten seq.)</b> ", "<br>",
+          "<b>Observed out of ", max_val, "<br> possible times in ", locality , "<br> (showing top ten seq.)</b> ", "<br>",
           "<hr style='margin: 4px 0;'>",
           items
         )
       })
     })
     
-    
+
     output$asv_map <- renderLeaflet({
       req(input$asv_species)
       # req(input$species_filter)
 
       to_plot <- asv_to_leaflet()
       if(nrow(to_plot) == 0) return(NULL)
-      
+
       chart_data <- to_plot[, which(grepl("seq_", names(to_plot)))]
+
+      # if(input$color_mode == "Genetisk avstand"){
+      # chosen_colors <-  custom_colors()
+      # chosen_colors <- chosen_colors$custom_col[match(names(chart_data), chosen_colors$seq_short)]} else {
+      # chosen_colors <- d3.schemeCategory10
+      # }
       
+      # 1. Extract sequence data
+      chart_data <- to_plot[, grepl("^seq_", names(to_plot)), drop = FALSE]
+      
+      # 2. Build an explicit, static named color mapping
+      if (input$color_mode == "Genetisk avstand") {
+        col_ref <- custom_colors()
+        # Map colors directly to column names in chart_data order
+        chosen_colors <- col_ref$custom_col[match(names(chart_data), col_ref$seq_short)]
+      } else {
+        # Use a fixed categorical palette mapped to exact column names
+        chosen_colors <- d3.schemeCategory10
+      }
+      
+      # 3. Ensure chosen_colors is an unassigned character vector of pure hex codes
+      chosen_colors <- as.character(chosen_colors)
+
+      calc_widths <- (to_plot$most_common_min_no_ind / to_plot$max_possible_no_ind) * input$pie_size
+      safe_widths <- pmax(replace_na(calc_widths, 1), 1)
+
       basemap |>
         leaflet::addProviderTiles(providers$Esri.WorldImagery,
           group = "Ortophoto"
@@ -745,15 +885,19 @@ asvmap_server <- function(id, login_import) {
           to_plot$lat,
           type = "pie",
           chartdata = chart_data,
-          width = log(to_plot$sum_min_no_ind) * 10,
+          width = safe_widths,
+          #width = input$pie_size,
           legend = FALSE,
+          opacity = 1,
+          showLabels = FALSE,
+          #popup = NULL,
           #popup = list(noPopup = TRUE),
-          colorPalette = custom_colors()$custom_col,
-           popup = list(html = custom_popups(),
+          colorPalette = chosen_colors,
+          popup = list(html = custom_popups(),
                         showValues = FALSE, # Disables default JS table generator
                         showTitle = FALSE   # Hides auto-generated layer ID title
                         )
-          ) |> 
+          ) |>
         addLegend(
           position = "bottomright",
           colors = asv_colors(seq(from = 0, to = 1, by = 0.25)),
