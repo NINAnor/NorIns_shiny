@@ -1,5 +1,5 @@
 require(leaflet)
-require(leaflet.minicharts)
+#require(leaflet.minicharts)
 require(DBI)
 require(dbplyr)
 require(dplyr)
@@ -8,6 +8,10 @@ require(tidyr)
 require(Norimon)
 require(shinyvalidate)
 require(shinyjs)
+library(dplyr)
+library(sf)
+library(leafgl)
+
 
 
 asvmap_ui <- function(id) {
@@ -33,11 +37,25 @@ asvmap_ui <- function(id) {
         id = "map_choices_box",
         title = "Kartinstillinger",
         fluidRow(
-          column(6,
-                 uiOutput(ns("choose_color_mode"))
+          column(
+            6,
+            selectInput(
+              ns("color_mode"),
+              label = "Fargelegg basert på",
+              choices = c("Genetisk avstand", "Tilfeldige farger"),
+              selected = "Genetisk avstand"
+            )
           ),
-          column(6,
-                 uiOutput(ns("choose_pie_size"))
+          column(
+            6,
+            sliderInput(
+              ns("pie_size"),
+              label = "Kakestørrelse",
+              min = 0,
+              max = 200,
+              step = 25,
+              value = 100
+            )
           )
         )
       ),
@@ -568,13 +586,13 @@ asvmap_server <- function(id, login_import) {
     })
 
 
-    output$choose_color_mode <- renderUI({
-      selectInput(ns("color_mode"),
-                  label = "Fargelegg basert på",
-                  choices = c("Genetisk avstand", 
-                              "Tilfeldige farger"),
-                  selected = "Genetisk avstand")
-    })
+    # output$choose_color_mode <- renderUI({
+    #   selectInput(ns("color_mode"),
+    #               label = "Fargelegg basert på",
+    #               choices = c("Genetisk avstand", 
+    #                           "Tilfeldige farger"),
+    #               selected = "Genetisk avstand")
+    # })
 
     basemap <- leaflet(
       width = "300px",
@@ -582,15 +600,15 @@ asvmap_server <- function(id, login_import) {
     ) |>
       addTiles(group = "OpenStreetMap")
 
-  output$choose_pie_size <- renderUI({
-    
-    sliderInput(ns("pie_size"),
-                label = "Kakestørrelse",
-                min = 10,
-                max = 80,
-                step = 10,
-                value = 30)
-  })
+  # output$choose_pie_size <- renderUI({
+  #   
+  #   sliderInput(ns("pie_size"),
+  #               label = "Kakestørrelse",
+  #               min = 10,
+  #               max = 80,
+  #               step = 10,
+  #               value = 30)
+  # })
 
     # species_choices <- function() {
     #   loc_species_list <- tbl({}
@@ -768,8 +786,8 @@ asvmap_server <- function(id, login_import) {
     asv_colors <- function(x){
       # ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("green"),  ninaColors("purple")),
       #                       bias = 5)
-      ramp_fun <- colorRamp(c(ninaColors("yellow"), ninaColors("blue"),  ninaColors("orange")),
-                            bias = 5) 
+      ramp_fun <- colorRamp(c(ninaColors("yellow"), ninaColors("blue"),  ninaColors("purple")),
+                            bias = 1) 
       
       rgb(ramp_fun(x), maxColorValue = 255)
       
@@ -778,7 +796,7 @@ asvmap_server <- function(id, login_import) {
     custom_colors <- reactive({ 
     
     custom_colors <- sel_asv() |> 
-      mutate(seq_short = paste0("seq_", seq_short)) |> 
+     # mutate(seq_short = paste0("seq_", seq_short)) |> 
        select(seq_short,
               color_val) |> 
       distinct() |> 
@@ -835,69 +853,82 @@ asvmap_server <- function(id, login_import) {
     })
     
 
-    output$asv_map <- renderLeaflet({
-      req(input$asv_species)
-      # req(input$species_filter)
+    
 
-      to_plot <- asv_to_leaflet()
-      if(nrow(to_plot) == 0) return(NULL)
-
-      chart_data <- to_plot[, which(grepl("seq_", names(to_plot)))]
-
-      # if(input$color_mode == "Genetisk avstand"){
-      # chosen_colors <-  custom_colors()
-      # chosen_colors <- chosen_colors$custom_col[match(names(chart_data), chosen_colors$seq_short)]} else {
-      # chosen_colors <- d3.schemeCategory10
-      # }
+    prepare_spatial_pie_slices <- function(df, pie_scale_factor = 20, base_radius_m = 500) {
       
-      # 1. Extract sequence data
-      chart_data <- to_plot[, grepl("^seq_", names(to_plot)), drop = FALSE]
+      # 1. Ensure data is sorted to compute cumulative slice percentages cleanly
+      df_processed <- df %>%
+        filter(!is.na(lat), !is.na(lon), perc_min_no_ind > 0) %>%
+        group_by(locality_id, lat, lon) %>%
+        mutate(
+          # Calculate slice angles in radians based on perc_min_no_ind (0 to 1)
+          #shares = perc_min_no_ind / sum(perc_min_no_ind),
+          #end_angle = 2 * pi * cumsum(shares),
+          #start_angle = lag(end_angle, default = 0),
+          shares = perc_min_no_ind,
+          end_angle = 2 * pi * cumsum(perc_min_no_ind),
+          start_angle = lag(end_angle, default = 0),
+          # Determine geographic radius in meters based on sum_min_no_ind / max_possible
+          calc_ratio = most_common_min_no_ind / max_possible_no_ind,
+          radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m)
+        ) %>%
+        ungroup()
       
-      # 2. Build an explicit, static named color mapping
-      if (input$color_mode == "Genetisk avstand") {
-        col_ref <- custom_colors()
-        # Map colors directly to column names in chart_data order
-        chosen_colors <- col_ref$custom_col[match(names(chart_data), col_ref$seq_short)]
-      } else {
-        # Use a fixed categorical palette mapped to exact column names
-        chosen_colors <- d3.schemeCategory10
+      polys_list <- vector("list", nrow(df_processed))
+      
+      # 2. Construct trigonometric polygon coordinates for each slice
+      for (i in seq_len(nrow(df_processed))) {
+        row <- df_processed[i, ]
+        
+        # Radians to arc
+        theta <- seq(row$start_angle, row$end_angle, length.out = 20)
+        
+        # Approximate meters-to-degrees offsets at given latitude
+        lat_rad <- row$lat * pi / 180
+        meters_per_deg_lat <- 111139
+        meters_per_deg_lon <- 111139 * cos(lat_rad)
+        
+        dx <- row$radius_m * sin(theta) / meters_per_deg_lon
+        dy <- row$radius_m * cos(theta) / meters_per_deg_lat
+        
+        # Center -> Arc -> Center
+        coords <- rbind(
+          c(row$lon, row$lat),
+          cbind(row$lon + dx, row$lat + dy),
+          c(row$lon, row$lat)
+        )
+        
+        polys_list[[i]] <- st_polygon(list(coords))
       }
       
-      # 3. Ensure chosen_colors is an unassigned character vector of pure hex codes
-      chosen_colors <- as.character(chosen_colors)
-
-      calc_widths <- (to_plot$most_common_min_no_ind / to_plot$max_possible_no_ind) * input$pie_size
-      safe_widths <- pmax(replace_na(calc_widths, 1), 1)
-
-      basemap |>
-        leaflet::addProviderTiles(providers$Esri.WorldImagery,
-          group = "Ortophoto"
-        ) |>
-        leaflet::addProviderTiles(providers$OpenTopoMap,
-          group = "Topo"
-        ) |>
-        leaflet::addLayersControl(
+      # 3. Combine into a single sf spatial data frame
+      sf_slices <- st_sf(
+        df_processed %>% 
+          select(
+          locality_id, locality, species_latin_fixed, 
+          sequence_id, seq_short, perc_min_no_ind, 
+          sum_min_no_ind, color_val
+        ),
+        geometry = st_sfc(polys_list, crs = 4326)
+      )
+      
+      return(sf_slices)
+    }
+    
+    
+    output$asv_map <- renderLeaflet({
+      req(input$asv_species)
+      
+      leaflet() |>
+        addTiles(group = "OpenStreetMap") |>
+        addProviderTiles(providers$Esri.WorldImagery, group = "Ortophoto") |>
+        addProviderTiles(providers$OpenTopoMap, group = "Topo") |>
+        addLayersControl(
           overlayGroups = c("OpenStreetMap", "Topo", "Ortophoto"),
           options = layersControlOptions(collapsed = FALSE)
         ) |>
-        leaflet::hideGroup(c("Topo", "Ortophoto")) |>
-        addMinicharts(to_plot$lon,
-          to_plot$lat,
-          type = "pie",
-          chartdata = chart_data,
-          width = safe_widths,
-          #width = input$pie_size,
-          legend = FALSE,
-          opacity = 1,
-          showLabels = FALSE,
-          #popup = NULL,
-          #popup = list(noPopup = TRUE),
-          colorPalette = chosen_colors,
-          popup = list(html = custom_popups(),
-                        showValues = FALSE, # Disables default JS table generator
-                        showTitle = FALSE   # Hides auto-generated layer ID title
-                        )
-          ) |>
+        hideGroup(c("Topo", "Ortophoto")) |>
         addLegend(
           position = "bottomright",
           colors = asv_colors(seq(from = 0, to = 1, by = 0.25)),
@@ -906,6 +937,73 @@ asvmap_server <- function(id, login_import) {
           opacity = 1
         )
     })
+    
+    
+    # Track whether we've set the initial extent for the current dataset selection
+    map_initialized <- reactiveVal(FALSE)
+    
+    # Reset initialization flag whenever the target species/dataset changes
+    observeEvent(input$asv_species, {
+      map_initialized(FALSE)
+    })
+    
+    observeEvent(list(input$asv_species, input$pie_size, input$color_mode), {
+      req(input$asv_species)
+      req(input$pie_size)
+      req(input$color_mode)
+      
+      df_current <- sel_asv()
+      req(nrow(df_current) > 0)
+      
+      # 1. Prepare spatial polygon geometries
+      pie_sf <- prepare_spatial_pie_slices(
+        df = df_current,
+        pie_scale_factor = pmax(input$pie_size, 1),
+        base_radius_m = 250
+      )
+      
+      # 2. Map hex colors
+      if (input$color_mode == "Genetisk avstand") {
+        col_ref <- custom_colors()
+        color_map <- setNames(col_ref$custom_col, col_ref$seq_short)
+        pie_sf$hex_color <- color_map[pie_sf$seq_short]
+        pie_sf$hex_color[is.na(pie_sf$hex_color)] <- "#808080"
+      } else {
+        pal <- leaflet::colorFactor("Set1", domain = pie_sf$seq_short)
+        pie_sf$hex_color <- pal(pie_sf$seq_short)
+      }
+      
+      proxy <- leafletProxy("asv_map")
+      
+      # 3. Fit bounds ONLY on species selection switch
+      if (!map_initialized()) {
+        min_lon <- min(df_current$lon, na.rm = TRUE)
+        max_lon <- max(df_current$lon, na.rm = TRUE)
+        min_lat <- min(df_current$lat, na.rm = TRUE)
+        max_lat <- max(df_current$lat, na.rm = TRUE)
+        
+        proxy |> fitBounds(lng1 = min_lon, lat1 = min_lat, lng2 = max_lon, lat2 = max_lat)
+        map_initialized(TRUE)
+      }
+      
+      # 4. Redraw WebGL polygons while maintaining existing viewport/zoom
+      proxy |>
+        clearGlLayers() |>
+        addGlPolygons(
+          data = pie_sf,
+          fillColor = pie_sf$hex_color,
+          fillOpacity = 0.9,
+          color = "#ffffff",
+          weight = 0.5,
+          bounds = FALSE, # Preserves user pan & zoom
+          popup = paste0(
+            "<strong>Lokalitet: </strong>", pie_sf$locality, "<br>",
+            "<strong>ASV: </strong>", pie_sf$seq_short, "<br>",
+            "<strong>Andel: </strong>", round(pie_sf$perc_min_no_ind * 100, 1), "%"
+          ),
+          group = "pie_gl_layer"
+        )
+    }, ignoreInit = TRUE)
 
     output$asvmap_text <- renderText("Kartet til høyre viser funnstedet for enkelte arter og kakediagrammene representerer komposisjonen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant. Størrelsen på sirklene er skalert etter hvor mange DNA-sekvenser vi totalt har funnet av arten i en lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
 
