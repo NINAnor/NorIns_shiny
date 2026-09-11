@@ -1,3 +1,9 @@
+asv_perc_min_ind <- tbl(
+  login_import$con,
+  Id(schema = "views",
+     table = "asv_perc_min_ind")
+)
+
 sel_asv <- asv_perc_min_ind |>
       filter(species_latin_gbif == "Actia lamia",
              project_short_name == "NorIns") |>
@@ -40,7 +46,7 @@ to_plot |>
 custom_colors <- function(){ 
   
   custom_colors <- sel_asv |> 
-    mutate(seq_short = paste0("seq_", seq_short)) |> 
+    #mutate(seq_short = paste0("seq_", seq_short)) |> 
     select(seq_short,
            color_val) |> 
     distinct() |> 
@@ -59,7 +65,7 @@ c('seq_8ffdc1c6', 'seq_338532b8')
 
 '#903B81','#807F24','#7B9309','#903A82','#7B9309','#7B9309','#807F24','#7B9309','#7D8917','#807F24','#7B9309','#93328E','#7D8A15','#7B9408','#7B9309','#8C4D68','#8B5163','#7C900D'
 
-
+'#808080'
 
 # Inside your Shiny server observer / render function:
 

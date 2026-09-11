@@ -28,7 +28,7 @@ asvmap_ui <- function(id) {
         id = "taxabox",
         width = 12,
         title = "Genetisk variasjon innen arter",
-        textOutput(ns("asvmap_text")),
+        htmlOutput(ns("asvmap_text")),
         uiOutput(ns("choose_project")),
         height = "500px"
       ),
@@ -42,7 +42,7 @@ asvmap_ui <- function(id) {
             selectInput(
               ns("color_mode"),
               label = "Fargelegg basert på",
-              choices = c("Genetisk avstand", "Tilfeldige farger"),
+              choices = c("Genetisk avstand", "Tilfeldige farger", "Total diversitet per lok."),
               selected = "Genetisk avstand"
             )
           ),
@@ -793,127 +793,221 @@ asvmap_server <- function(id, login_import) {
       
     }
     
-    custom_colors <- reactive({ 
+    custom_colors <- function(df,
+                              type){ 
+      
+      type <- match.arg(type,
+                        choices = c("asv_color",
+                                    "loc_color"))
+      
+      scale_01 <- function(x) {
+        (x - min(x)) / (max(x) - min(x))
+      }
     
-    custom_colors <- sel_asv() |> 
+    if(type == "asv_color"){  
+    res <- df |> 
      # mutate(seq_short = paste0("seq_", seq_short)) |> 
        select(seq_short,
               color_val) |> 
       distinct() |> 
       mutate(custom_col = asv_colors(color_val)) |> 
       select(seq_short,
-             custom_col) 
+             custom_col) } else 
+    if(type == "loc_color"){
+        res <- df |> 
+          group_by(species_latin_fixed,
+                   locality) |> 
+          mutate(loc_color_val = sum(diff(color_val))) |>
+          group_by(species_latin_fixed) |> 
+          mutate(loc_color_val = scale_01(loc_color_val),
+                 .groups = "keep") |> 
+          ungroup() |> 
+          select(locality,
+                 loc_color_val) |> 
+          distinct() |> 
+          mutate(custom_col = asv_colors(loc_color_val)) |> 
+          select(locality,
+                 custom_col)
+      }
     
-    return(custom_colors)
-    })
+    return(res)
+    }
       
-    custom_popups <- reactive({
-      to_plot <-  asv_to_leaflet()
-      
-      res <- apply(to_plot, 1, function(row) {
-        max_val <- row["max_possible_no_ind"]
-        locality <- row["locality"]
-        
-        seq_mask <- grepl("^seq_", names(row))
-        vals <- as.numeric(row[seq_mask])
-        names(vals) <- names(row)[seq_mask]
-        
-        non_zero_filt <- vals[!is.na(vals) & vals > 0]
-        non_zero_filt <- head(non_zero_filt[order(as.numeric(non_zero_filt), decreasing = TRUE)],
-             10)
-        
-        if (length(non_zero_filt) == 0) {
-          items <- "<i>No Data</i>"
-        } else {
-          # 1. Match names(non_zero_filt) to seq_colors$seq_short to get corresponding colors
-          
-          seq_colors <- custom_colors()
-          col_matches <- seq_colors$custom_col[match(names(non_zero_filt), seq_colors$seq_short)]
-          
-          # Optional fallback (e.g., "#000000" or "black") if a sequence isn't found in your color table
-          col_matches[is.na(col_matches)] <- "black"
-          
-          # 2. Wrap each sequence name in an HTML <span> with the matched inline color
-          items <- paste0(
-            "<span style='color: ", col_matches, "; font-weight: bold;'>", 
-            names(non_zero_filt), 
-            ":</span> ", 
-            non_zero_filt, 
-            collapse = "<br>"
-          )
-        }
-        
-        # 3. Assemble final popup
-        popup <- paste0(
-          "<b>Observed out of ", max_val, "<br> possible times in ", locality , "<br> (showing top ten seq.)</b> ", "<br>",
-          "<hr style='margin: 4px 0;'>",
-          items
-        )
-      })
-    })
+    # custom_popups <- reactive({
+    #   to_plot <-  asv_to_leaflet()
+    #   
+    #   res <- apply(to_plot, 1, function(row) {
+    #     max_val <- row["max_possible_no_ind"]
+    #     locality <- row["locality"]
+    #     
+    #     seq_mask <- grepl("^seq_", names(row))
+    #     vals <- as.numeric(row[seq_mask])
+    #     names(vals) <- names(row)[seq_mask]
+    #     
+    #     non_zero_filt <- vals[!is.na(vals) & vals > 0]
+    #     non_zero_filt <- head(non_zero_filt[order(as.numeric(non_zero_filt), decreasing = TRUE)],
+    #          10)
+    #     
+    #     if (length(non_zero_filt) == 0) {
+    #       items <- "<i>No Data</i>"
+    #     } else {
+    #       # 1. Match names(non_zero_filt) to seq_colors$seq_short to get corresponding colors
+    #       
+    #       seq_colors <- custom_colors()
+    #       col_matches <- seq_colors$custom_col[match(names(non_zero_filt), seq_colors$seq_short)]
+    #       
+    #       # Optional fallback (e.g., "#000000" or "black") if a sequence isn't found in your color table
+    #       col_matches[is.na(col_matches)] <- "black"
+    #       
+    #       # 2. Wrap each sequence name in an HTML <span> with the matched inline color
+    #       items <- paste0(
+    #         "<span style='color: ", col_matches, "; font-weight: bold;'>", 
+    #         names(non_zero_filt), 
+    #         ":</span> ", 
+    #         non_zero_filt, 
+    #         collapse = "<br>"
+    #       )
+    #     }
+    #     
+    #     # 3. Assemble final popup
+    #     popup <- paste0(
+    #       "<b>Observed out of ", max_val, "<br> possible times in ", locality , "<br> (showing top ten seq.)</b> ", "<br>",
+    #       "<hr style='margin: 4px 0;'>",
+    #       items
+    #     )
+    #   })
+    # })
     
 
     
 
-    prepare_spatial_pie_slices <- function(df, pie_scale_factor = 20, base_radius_m = 500) {
+    prepare_spatial_pie_slices <- function(df, 
+                                           pie_scale_factor = 20, 
+                                           base_radius_m = 500,
+                                           aggregation_level = c("slices", "pie")) {
       
-      # 1. Ensure data is sorted to compute cumulative slice percentages cleanly
-      df_processed <- df %>%
-        filter(!is.na(lat), !is.na(lon), perc_min_no_ind > 0) %>%
-        group_by(locality_id, lat, lon) %>%
-        mutate(
-          # Calculate slice angles in radians based on perc_min_no_ind (0 to 1)
-          #shares = perc_min_no_ind / sum(perc_min_no_ind),
-          #end_angle = 2 * pi * cumsum(shares),
-          #start_angle = lag(end_angle, default = 0),
-          shares = perc_min_no_ind,
-          end_angle = 2 * pi * cumsum(perc_min_no_ind),
-          start_angle = lag(end_angle, default = 0),
-          # Determine geographic radius in meters based on sum_min_no_ind / max_possible
-          calc_ratio = most_common_min_no_ind / max_possible_no_ind,
-          radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m)
-        ) %>%
-        ungroup()
+      aggregation_level <- match.arg(aggregation_level)
       
-      polys_list <- vector("list", nrow(df_processed))
+      # 1. Ensure data is filtered and grouped
+      df_filtered <- df %>%
+        filter(!is.na(lat), !is.na(lon), perc_min_no_ind > 0)
       
-      # 2. Construct trigonometric polygon coordinates for each slice
-      for (i in seq_len(nrow(df_processed))) {
-        row <- df_processed[i, ]
-        
-        # Radians to arc
-        theta <- seq(row$start_angle, row$end_angle, length.out = 20)
-        
-        # Approximate meters-to-degrees offsets at given latitude
-        lat_rad <- row$lat * pi / 180
-        meters_per_deg_lat <- 111139
-        meters_per_deg_lon <- 111139 * cos(lat_rad)
-        
-        dx <- row$radius_m * sin(theta) / meters_per_deg_lon
-        dy <- row$radius_m * cos(theta) / meters_per_deg_lat
-        
-        # Center -> Arc -> Center
-        coords <- rbind(
-          c(row$lon, row$lat),
-          cbind(row$lon + dx, row$lat + dy),
-          c(row$lon, row$lat)
-        )
-        
-        polys_list[[i]] <- st_polygon(list(coords))
+      # Return empty sf if no data matches criteria
+      if (nrow(df_filtered) == 0) {
+        return(st_sf(geometry = st_sfc(crs = 4326)))
       }
       
-      # 3. Combine into a single sf spatial data frame
-      sf_slices <- st_sf(
-        df_processed %>% 
-          select(
-          locality_id, locality, species_latin_fixed, 
-          sequence_id, seq_short, perc_min_no_ind, 
-          sum_min_no_ind, color_val
-        ),
-        geometry = st_sfc(polys_list, crs = 4326)
-      )
+      if (aggregation_level == "pie") {
+        # ----------------------------------------------------
+        # AGGREGATION LEVEL: PIE (Single circular polygon per locality)
+        # ----------------------------------------------------
+        df_processed <- df_filtered %>%
+          group_by(locality_id, locality, species_latin_fixed, lat, lon) %>%
+          summarise(
+            sum_min_no_ind = max(sum_min_no_ind, na.rm = TRUE),
+            max_possible_no_ind = max(max_possible_no_ind, na.rm = TRUE),
+            calc_ratio = max(most_common_min_no_ind / max_possible_no_ind, na.rm = TRUE),
+            .groups = "drop"
+          ) %>%
+          mutate(
+            radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m)
+          )
+        
+        polys_list <- vector("list", nrow(df_processed))
+        
+        for (i in seq_len(nrow(df_processed))) {
+          row <- df_processed[i, ]
+          
+          # Full circle from 0 to 2*pi
+          theta <- seq(0, 2 * pi, length.out = 60)
+          
+          lat_rad <- row$lat * pi / 180
+          meters_per_deg_lat <- 111139
+          meters_per_deg_lon <- 111139 * cos(lat_rad)
+          
+          dx <- row$radius_m * sin(theta) / meters_per_deg_lon
+          dy <- row$radius_m * cos(theta) / meters_per_deg_lat
+          
+          # Circle boundary closed back to origin point
+          coords <- cbind(row$lon + dx, row$lat + dy)
+          coords <- rbind(coords, coords[1, ])
+          
+          polys_list[[i]] <- st_polygon(list(coords))
+        }
+        
+        sf_out <- st_sf(
+          df_processed %>% 
+            mutate(seq_short = "alle",
+                   perc_min_no_ind = 1) |> 
+            select(locality_id, 
+                   locality, 
+                   species_latin_fixed, 
+                   seq_short,
+                   min_no_ind = sum_min_no_ind,
+                   perc_min_no_ind, 
+                   max_possible_no_ind,
+                   radius_m),
+          geometry = st_sfc(polys_list, crs = 4326)
+        )
+        
+      } else {
+        # ----------------------------------------------------
+        # AGGREGATION LEVEL: SLICES (Individual pie slice polygons)
+        # ----------------------------------------------------
+        df_processed <- df_filtered %>%
+          group_by(locality_id, lat, lon) %>%
+          mutate(
+            shares = perc_min_no_ind,
+            end_angle = 2 * pi * cumsum(perc_min_no_ind),
+            start_angle = lag(end_angle, default = 0),
+            calc_ratio = most_common_min_no_ind / max_possible_no_ind,
+            radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m)
+          ) %>%
+          ungroup()
+        
+        polys_list <- vector("list", nrow(df_processed))
+        
+        for (i in seq_len(nrow(df_processed))) {
+          row <- df_processed[i, ]
+          
+          theta <- seq(row$start_angle, row$end_angle, length.out = 20)
+          
+          lat_rad <- row$lat * pi / 180
+          meters_per_deg_lat <- 111139
+          meters_per_deg_lon <- 111139 * cos(lat_rad)
+          
+          dx <- row$radius_m * sin(theta) / meters_per_deg_lon
+          dy <- row$radius_m * cos(theta) / meters_per_deg_lat
+          
+          coords <- rbind(
+            c(row$lon, row$lat),
+            cbind(row$lon + dx, row$lat + dy),
+            c(row$lon, row$lat)
+          )
+          
+          polys_list[[i]] <- st_polygon(list(coords))
+        }
+        
+        sf_out <- st_sf(
+          df_processed %>% 
+            select(
+              locality_id, 
+              locality, 
+              species_latin_fixed, 
+              sequence_id, 
+              seq_short, 
+              perc_min_no_ind,
+              min_no_ind,
+              sum_min_no_ind, 
+              max_possible_no_ind,
+              color_val, 
+              radius_m
+            ),
+          geometry = st_sfc(polys_list, crs = 4326)
+        )
+      }
       
-      return(sf_slices)
+      return(sf_out)
     }
     
     
@@ -933,7 +1027,7 @@ asvmap_server <- function(id, login_import) {
           position = "bottomright",
           colors = asv_colors(seq(from = 0, to = 1, by = 0.25)),
           labels = round(seq(from = 0, to = 1, by = 0.25), 2),
-          title = "Genetic variants 0-1",
+          title = "Color scale 0-1",
           opacity = 1
         )
     })
@@ -956,21 +1050,36 @@ asvmap_server <- function(id, login_import) {
       req(nrow(df_current) > 0)
       
       # 1. Prepare spatial polygon geometries
+      if(input$color_mode != "Total diversitet per lok."){
       pie_sf <- prepare_spatial_pie_slices(
         df = df_current,
         pie_scale_factor = pmax(input$pie_size, 1),
-        base_radius_m = 250
-      )
+        base_radius_m = 250,
+        aggregation_level = "slices"
+      )} else{
+        pie_sf <- prepare_spatial_pie_slices(
+          df = df_current,
+          pie_scale_factor = pmax(input$pie_size, 1),
+          base_radius_m = 250,
+          aggregation_level = "pie")
+      }
       
       # 2. Map hex colors
       if (input$color_mode == "Genetisk avstand") {
-        col_ref <- custom_colors()
+        col_ref <- custom_colors(df = df_current, 
+                                 type = "asv_color")
         color_map <- setNames(col_ref$custom_col, col_ref$seq_short)
         pie_sf$hex_color <- color_map[pie_sf$seq_short]
         pie_sf$hex_color[is.na(pie_sf$hex_color)] <- "#808080"
-      } else {
+      } else if(input$color_mode == "Tilfeldige farger") { 
         pal <- leaflet::colorFactor("Set1", domain = pie_sf$seq_short)
         pie_sf$hex_color <- pal(pie_sf$seq_short)
+      } else if(input$color_mode == "Total diversitet per lok."){
+        col_ref <- custom_colors(df_current,
+                                 type = "loc_color")
+        color_map <- setNames(col_ref$custom_col, col_ref$locality)
+        pie_sf$hex_color <- color_map[pie_sf$locality]
+        pie_sf$hex_color[is.na(pie_sf$hex_color)] <- "#808080"
       }
       
       proxy <- leafletProxy("asv_map")
@@ -986,28 +1095,38 @@ asvmap_server <- function(id, login_import) {
         map_initialized(TRUE)
       }
       
+      pie_sf_sorted <- pie_sf %>%
+        arrange(desc(radius_m), locality_id)
+      
       # 4. Redraw WebGL polygons while maintaining existing viewport/zoom
       proxy |>
         clearGlLayers() |>
         addGlPolygons(
-          data = pie_sf,
-          fillColor = pie_sf$hex_color,
-          fillOpacity = 0.9,
-          color = "#ffffff",
-          weight = 0.5,
+          data = pie_sf_sorted,
+          fillColor = pie_sf_sorted$hex_color,
+          fillOpacity = 1,
+          color = NULL,
+          weight = 0,
           bounds = FALSE, # Preserves user pan & zoom
           popup = paste0(
-            "<strong>Lokalitet: </strong>", pie_sf$locality, "<br>",
-            "<strong>ASV: </strong>", pie_sf$seq_short, "<br>",
-            "<strong>Andel: </strong>", round(pie_sf$perc_min_no_ind * 100, 1), "%"
+            "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
+            "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
+            "<strong>ASV: </strong>", pie_sf_sorted$seq_short, "<br>",
+            "<strong>Antall individer >=: </strong>", pie_sf_sorted$min_no_ind
           ),
           group = "pie_gl_layer"
         )
     }, ignoreInit = TRUE)
 
-    output$asvmap_text <- renderText("Kartet til høyre viser funnstedet for enkelte arter og kakediagrammene representerer komposisjonen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant. Størrelsen på sirklene er skalert etter hvor mange DNA-sekvenser vi totalt har funnet av arten i en lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
-
-Nedenfor kan man søke på enkeltarter.
-Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelse angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt og det kan være feil i artsnavn selv om vi angir sikkerheten som høy.")
+    output$asvmap_text <- renderUI({
+      HTML(paste0(
+    "<p>Kartet til høyre viser funnstedet for enkelte arter og kakediagrammene representerer komposisjonen av genetiske varianter innen hver art der hver farge representerer en spesifikk genetisk variant. Hvert enkelt funn av en genetisk variant representerer minst et individ. Størrelsen på sirklene gjenspeiler hvor ofte av alle mulige tilfeller den vanligste genetiske varianten ble funnet. Størrelsen på kakebitene viser hvor relativt vanlig de enkelte variantene var på hver plass.</p>",
+"<p>Dataen kan vises på flere måte, enten som tilfeldige farger for hver unik genetisk variant, eller langs en fargeskale som prøver å representere den genetiske avstanden mellom ulike varianter langs en skala fra 0 og 1, eller der fargene representerer den totale genetiske variasjonen på tvers av alle varianter innen en lokalitet, standardisert mellom 0 og 1.</p>",
+"<p>Nedenfor kan man søke på enkeltarter.
+Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelse angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt og det kan være feil i artsnavn selv om vi angir sikkerheten som høy.</p>"
+))
+    })
+    
+    
   })
 }
