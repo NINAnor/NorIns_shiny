@@ -1,3 +1,7 @@
+#To do. Scale pie widths to total minimum amount of individuals, but find some  way to scale the pies to a common enough size
+# Sort the pies along PcOA axis scores so similar colors are close together.
+
+
 asv_perc_min_ind <- tbl(
   login_import$con,
   Id(schema = "views",

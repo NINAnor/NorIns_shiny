@@ -1000,6 +1000,7 @@ asvmap_server <- function(id, login_import) {
               min_no_ind,
               sum_min_no_ind, 
               max_possible_no_ind,
+              pcoa_axis1,
               color_val, 
               radius_m
             ),
@@ -1047,18 +1048,21 @@ asvmap_server <- function(id, login_import) {
       req(input$color_mode)
       
       df_current <- sel_asv()
+      
+      df_sorted <- df_current %>%
+        arrange(across(any_of(c("locality_id", "pcoa_axis1")))) 
       req(nrow(df_current) > 0)
       
       # 1. Prepare spatial polygon geometries
       if(input$color_mode != "Total diversitet per lok."){
       pie_sf <- prepare_spatial_pie_slices(
-        df = df_current,
+        df = df_sorted,
         pie_scale_factor = pmax(input$pie_size, 1),
         base_radius_m = 250,
         aggregation_level = "slices"
       )} else{
         pie_sf <- prepare_spatial_pie_slices(
-          df = df_current,
+          df = df_sorted,
           pie_scale_factor = pmax(input$pie_size, 1),
           base_radius_m = 250,
           aggregation_level = "pie")
@@ -1066,15 +1070,19 @@ asvmap_server <- function(id, login_import) {
       
       # 2. Map hex colors
       if (input$color_mode == "Genetisk avstand") {
-        col_ref <- custom_colors(df = df_current, 
+        
+        col_ref <- custom_colors(df = df_sorted, 
                                  type = "asv_color")
         color_map <- setNames(col_ref$custom_col, col_ref$seq_short)
         pie_sf$hex_color <- color_map[pie_sf$seq_short]
         pie_sf$hex_color[is.na(pie_sf$hex_color)] <- "#808080"
+        
       } else if(input$color_mode == "Tilfeldige farger") { 
+        
         pal <- leaflet::colorFactor("Set1", domain = pie_sf$seq_short)
         pie_sf$hex_color <- pal(pie_sf$seq_short)
-      } else if(input$color_mode == "Total diversitet per lok."){
+      
+        } else if(input$color_mode == "Total diversitet per lok."){
         col_ref <- custom_colors(df_current,
                                  type = "loc_color")
         color_map <- setNames(col_ref$custom_col, col_ref$locality)
@@ -1096,7 +1104,7 @@ asvmap_server <- function(id, login_import) {
       }
       
       pie_sf_sorted <- pie_sf %>%
-        arrange(desc(radius_m), locality_id)
+        arrange(desc(radius_m), locality)
       
       # 4. Redraw WebGL polygons while maintaining existing viewport/zoom
       proxy |>
