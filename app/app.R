@@ -18,19 +18,38 @@ source("./pages/landowners.R", local = TRUE)
 addResourcePath(prefix = "figures", directoryPath = "./figures")
 
 
+conn_pool <- NULL
+db_error_msg <- NULL
 
-conn_pool <- pool::dbPool(RPostgres::Postgres(),
-                          dbname = Sys.getenv("DB_NAME"),
-                          host =Sys.getenv("DB_HOST"),
-                          user = Sys.getenv("DB_USER"),
-                          password = Sys.getenv("DB_PASSWORD"))
-
-
-
-#Close the connection on app stop
-onStop(function() {
-  pool::poolClose(conn_pool)
-  #del_qr_img()
+tryCatch({
+  # 1. Create the pool with a short connection timeout
+  conn_pool <- pool::dbPool(
+    RPostgres::Postgres(),
+    dbname   = Sys.getenv("DB_NAME"),
+    host     = Sys.getenv("DB_HOST"),
+    user     = Sys.getenv("DB_USER"),
+    password = Sys.getenv("DB_PASSWORD"),
+    bigint   = "integer",
+    connect_timeout = 5 # Timeout in seconds to prevent Docker freezes
+  )
+  
+  # 2. Force an IMMEDIATE connection check (Checkout & Return)
+  conn <- pool::poolCheckout(conn_pool)
+  pool::poolReturn(conn)
+  
+  # Lock the reference directly into the onStop environment
+  local({
+    p <- conn_pool
+    onStop(function() {
+      if (!is.null(p) && pool::dbIsValid(p)) {
+        pool::poolClose(p)
+      }
+    })
+  })
+  
+}, error = function(e) {
+  db_error_msg <<- e$message
+  message("Database connection error: ", e$message)
 })
 
 login_export <- list(
@@ -38,7 +57,27 @@ login_export <- list(
 )
 
 # Set up master ui function, fetching module ui-functions and defining ids
-ui <- navbarPage(
+ui <- function(request){
+  # If DB failed, replace navbar with a full-screen block error page
+  if (!is.null(db_error_msg)) {
+    return(
+      fluidPage(
+        style = "margin-top: 50px;",
+        div(
+          class = "alert alert-danger",
+          role = "alert",
+          h4(icon("exclamation-triangle"), " Severe Application Error: Database Unavailable"),
+          p("The application failed to connect to the backend database on startup."),
+          hr(),
+          p(tags$strong("Details: "), tags$code(db_error_msg)),
+          p(style = "margin-top: 15px; font-size: 0.9em;", 
+            "If this container was just deployed, check Docker environment variables, network bridges, or firewall settings.")
+        )
+      )
+    )
+  }
+  
+  navbarPage(
   title = "Norsk insektovervåking - et innblikk",
   footer = NULL,
   header = NULL,
@@ -53,12 +92,36 @@ ui <- navbarPage(
   div_map_ui(id = "id_5"),
   tidstrend_ui(id = "id_7"),
   asvmap_ui(id = "id_6"),
-  landowners_ui(id = "id_9")
+  landowners_ui(id = "id_9"),
+  uiOutput("db_status_ui")
 )
-
+}
 
 # Set up master server function, fetching module server-functions and defining ids. Database connection is made once, and shared though modules
 server <- function(input, output, session) {
+  
+  output$db_status_ui <- renderUI({
+    if (!is.null(db_error_msg)) {
+      div(class = "db-err-banner",
+          icon("exclamation-triangle"),
+          " CRITICAL DATABASE ERROR: ",
+          br(), br(),
+          db_error_msg
+      )
+    }
+  })
+  
+  # Also trigger a persistent toast notification on startup
+  observe({
+    if (!is.null(db_error_msg)) {
+      showNotification(
+        db_error_msg, 
+        type = "error", 
+        duration = NULL # Keep visible until dismissed
+      )
+    }
+  })
+  
   felt_server(id = "id_1")
 
   labarbeid_server(id = "id_2")

@@ -18,6 +18,17 @@
 
 }
 
+/* Force pie chart SVG slices to stay 100% solid without opacity or filter drops */
+.leaflet-marker-pane svg path,
+.minichart-container path,
+.minichart-container svg path {
+  fill-opacity: 1 !important;
+  opacity: 1 !important;
+  filter: none !important;
+  stroke: #ffffff !important;
+  stroke-width: 1px !important;
+  mix-blend-mode: normal !important;
+}
 
 .small-box.bg-yellow {
   background-color: #FFB25B;
@@ -72,6 +83,10 @@
   padding-bottom: 0px; 
 }
 
+#map_choices_box > .box-body {
+white-space: nowrap;
+margin-top: 0px;
+}
 
 #speciesbox > .box-body {
 white-space: nowrap;

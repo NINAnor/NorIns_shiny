@@ -1,5 +1,5 @@
 require(leaflet)
-require(leaflet.minicharts)
+#require(leaflet.minicharts)
 require(DBI)
 require(dbplyr)
 require(dplyr)
@@ -8,23 +8,56 @@ require(tidyr)
 require(Norimon)
 require(shinyvalidate)
 require(shinyjs)
+library(dplyr)
+library(sf)
+library(leafgl)
+
+
 
 asvmap_ui <- function(id) {
   ns <- NS(id)
-
-  useShinyjs()
-
+  
   tabPanel(
     title = "Innenartsvariasjon",
+    useShinyjs(),
+    
+
     column(
       6,
       shinydashboardPlus::box(
         id = "taxabox",
         width = 12,
         title = "Genetisk variasjon innen arter",
-        textOutput(ns("asvmap_text")),
+        htmlOutput(ns("asvmap_text")),
         uiOutput(ns("choose_project")),
         height = "500px"
+      ),
+      shinydashboardPlus::box(
+        width = 12,
+        id = "map_choices_box",
+        title = "Kartinstillinger",
+        fluidRow(
+          column(
+            6,
+            selectInput(
+              ns("color_mode"),
+              label = "Fargelegg basert på",
+              choices = c("Genetisk avstand", "Tilfeldige farger", "Total diversitet per lok."),
+              selected = "Genetisk avstand"
+            )
+          ),
+          column(
+            6,
+            sliderInput(
+              ns("pie_size"),
+              label = "Kakestørrelse (0 = 500m)",
+              min = 0,
+              max = 50,
+              #step = 5,
+              value = 10
+            )
+          )
+        )
       ),
       shinydashboardPlus::box(
         width = 12,
@@ -40,17 +73,17 @@ asvmap_ui <- function(id) {
           column(
             6,
             uiOutput(ns("choose_spec")),
-             selectizeInput(
-               inputId = ns("species_filter"),
-               label = "Fritekst",
-               choices = NULL,
-               selected = NULL
-             ),
+            selectizeInput(
+              inputId = ns("species_filter"),
+              label = "Fritekst",
+              choices = NULL,
+              selected = NULL
+            ),
             actionButton(ns("filter_btn"),
-              label = "Fritekssøk"
+                         label = "Fritekssøk"
             ),
             actionButton(ns("filter_clear_btn"),
-              label = "Rens fritext"
+                         label = "Rens fritext"
             )
           )
         ),
@@ -66,8 +99,8 @@ asvmap_ui <- function(id) {
         shinycssloaders::withSpinner(
           {
             leaflet::leafletOutput(ns("asv_map"),
-              width = "95%",
-              height = 800
+                                   width = "95%",
+                                   height = 800
             )
           },
           type = 2,
@@ -79,6 +112,90 @@ asvmap_ui <- function(id) {
     )
   )
 }
+
+# asvmap_ui <- function(id) {
+#   ns <- NS(id)
+# 
+#   useShinyjs()
+#   
+#   tabPanel(
+#     title = "Innenartsvariasjon",
+#     column(
+#       6,
+#       shinydashboardPlus::box(
+#         id = "taxabox",
+#         width = 12,
+#         title = "Genetisk variasjon innen arter",
+#         textOutput(ns("asvmap_text")),
+#         uiOutput(ns("choose_project")),
+#         height = "500px"
+#       ),
+#       shinydashboardPlus::box(
+#         width = 12,
+#         id = "map_choices_box",
+#         title = "Kartinstillinger",
+#         fluidRow(
+#           column(6,
+#                  uiOutput(ns("choose_color_mode"))
+#                  ),
+#           column(6,
+#                  uiOutput(ns("choose_pie_size"))
+#                  )
+#         )
+#       ),
+#       shinydashboardPlus::box(
+#         width = 12,
+#         id = "speciesbox",
+#         title = "Artssøk",
+#         fluidRow(
+#           column(
+#             6,
+#             uiOutput(ns("choose_conf")),
+#             uiOutput(ns("choose_order")),
+#             uiOutput(ns("choose_fam"))
+#           ),
+#           column(
+#             6,
+#             uiOutput(ns("choose_spec")),
+#              selectizeInput(
+#                inputId = ns("species_filter"),
+#                label = "Fritekst",
+#                choices = NULL,
+#                selected = NULL
+#              ),
+#             actionButton(ns("filter_btn"),
+#               label = "Fritekssøk"
+#             ),
+#             actionButton(ns("filter_clear_btn"),
+#               label = "Rens fritext"
+#             )
+#           )
+#         ),
+#         height = "400px"
+#       )
+#     ),
+#     column(
+#       6,
+#       shinydashboardPlus::box(
+#         width = 12,
+#         id = "asv_leaflet_box",
+#         title = "Fordeling av genetiske varianter",
+#         shinycssloaders::withSpinner(
+#           {
+#             leaflet::leafletOutput(ns("asv_map"),
+#               width = "95%",
+#               height = 800
+#             )
+#           },
+#           type = 2,
+#           color = "#E57200",
+#           color.background = "#004F71"
+#         ),
+#         height = "800px"
+#       )
+#     )
+#   )
+# }
 
 
 
@@ -469,6 +586,13 @@ asvmap_server <- function(id, login_import) {
     })
 
 
+    # output$choose_color_mode <- renderUI({
+    #   selectInput(ns("color_mode"),
+    #               label = "Fargelegg basert på",
+    #               choices = c("Genetisk avstand", 
+    #                           "Tilfeldige farger"),
+    #               selected = "Genetisk avstand")
+    # })
 
     basemap <- leaflet(
       width = "300px",
@@ -476,9 +600,15 @@ asvmap_server <- function(id, login_import) {
     ) |>
       addTiles(group = "OpenStreetMap")
 
-
-
-
+  # output$choose_pie_size <- renderUI({
+  #   
+  #   sliderInput(ns("pie_size"),
+  #               label = "Kakestørrelse",
+  #               min = 10,
+  #               max = 80,
+  #               step = 10,
+  #               value = 30)
+  # })
 
     # species_choices <- function() {
     #   loc_species_list <- tbl({}
@@ -578,7 +708,6 @@ asvmap_server <- function(id, login_import) {
     })
 
 
-    
     selected_project <- reactive({
       if (is.na(input$project)) {
         return(NULL)
@@ -605,97 +734,441 @@ asvmap_server <- function(id, login_import) {
       }
     })
     
+    sel_asv <- reactive({
+    asv_perc_min_ind <- tbl(
+      login_import$con,
+      Id(schema = "views",
+         table = "asv_perc_min_ind")
+    )
     
-    # species = "NULL"
-    asv_to_leaflet <- function() {
-      #con <- login_import$con()
+    sel_asv <- asv_perc_min_ind |>
+      filter(species_latin_gbif == !!selected_species(),
+             project_short_name == !!selected_project()) |>
+      collect() |>
+      mutate(seq_short = stringr::str_sub(sequence_id,
+                                                  start = 1,
+                                                  end = 8),
+             asv = as_factor(sequence_id),
+             perc_min_no_ind = round(perc_min_no_ind, 3)
+      ) |>
+      arrange(sequence_id)
+    
+    return(sel_asv)
+    })
+    
+    
+    asv_to_leaflet <- reactive({
 
-      asv_perc_reads <- tbl(
-        login_import$con,
-        Id(
-          schema = "views",
-          table = "asv_perc_reads"
-        )
-      )
-
-      sel_asv <- asv_perc_reads |>
-        filter(species_latin_gbif == !!selected_species(),
-               project_short_name == !!selected_project()) |>
-        group_by(locality,
-                 lat, 
-                 lon,
-                 sequence_id) |> 
-        summarize(perc_reads = mean(perc_reads, na.rm = TRUE),
-                  sum_reads = sum(sum_reads, na.rm = TRUE),
-                  .groups = "drop") |> 
-        collect() |>
-        mutate(
-          asv = as_factor(sequence_id),
-          perc_reads = round(perc_reads * 100, 2)
-        ) |>
-        arrange(sequence_id)
-
-
-      to_plot <- sel_asv |>
+      to_plot <- sel_asv() |>
         select(
           locality,
           lat,
           lon,
-          sequence_id,
-          perc_reads,
-          sum_reads
+          seq_short,
+          min_no_ind,
+          most_common_min_no_ind,
+          sum_min_no_ind,
+          #perc_min_no_ind,
+          max_possible_no_ind
         ) |>
+        distinct() |> # This is a workaround for multiple records in genetics.asv_sequences for the same sequence_id. Should only be one species_latin_fixed per sequence_id!
         pivot_wider(
-          names_from = "sequence_id",
-          values_from = "perc_reads",
+          names_from = "seq_short",
+          values_from = "min_no_ind",
           names_prefix = "seq_",
           values_fill = 0
         )
 
       return(to_plot)
+    })
+
+
+    asv_colors <- function(x){
+      # ramp_fun <- colorRamp(c(ninaColors("dark blue"), ninaColors("green"),  ninaColors("purple")),
+      #                       bias = 5)
+      ramp_fun <- colorRamp(c(ninaColors("yellow"), ninaColors("blue"),  ninaColors("purple")),
+                            bias = 1) 
+      
+      rgb(ramp_fun(x), maxColorValue = 255)
+      
     }
+    
+    custom_colors <- function(df,
+                              type){ 
+      
+      type <- match.arg(type,
+                        choices = c("asv_color",
+                                    "loc_color"))
+      
+      scale_01 <- function(x) {
+        (x - min(x)) / (max(x) - min(x))
+      }
+    
+    if(type == "asv_color"){  
+    res <- df |> 
+     # mutate(seq_short = paste0("seq_", seq_short)) |> 
+       select(seq_short,
+              color_val) |> 
+      distinct() |> 
+      mutate(custom_col = asv_colors(color_val)) |> 
+      select(seq_short,
+             custom_col) } else 
+    if(type == "loc_color"){
+        res <- df |> 
+          group_by(species_latin_fixed,
+                   locality) |> 
+          mutate(loc_color_val = n_distinct(sequence_id)) |>
+          group_by(species_latin_fixed) |> 
+          mutate(loc_color_val = scale_01(loc_color_val),
+                 .groups = "keep") |> 
+          ungroup() |> 
+          select(locality,
+                 loc_color_val) |> 
+          distinct() |> 
+          mutate(custom_col = asv_colors(loc_color_val)) |> 
+          select(locality,
+                 custom_col)
+      }
+    
+    return(res)
+    }
+      
+    # custom_popups <- reactive({
+    #   to_plot <-  asv_to_leaflet()
+    #   
+    #   res <- apply(to_plot, 1, function(row) {
+    #     max_val <- row["max_possible_no_ind"]
+    #     locality <- row["locality"]
+    #     
+    #     seq_mask <- grepl("^seq_", names(row))
+    #     vals <- as.numeric(row[seq_mask])
+    #     names(vals) <- names(row)[seq_mask]
+    #     
+    #     non_zero_filt <- vals[!is.na(vals) & vals > 0]
+    #     non_zero_filt <- head(non_zero_filt[order(as.numeric(non_zero_filt), decreasing = TRUE)],
+    #          10)
+    #     
+    #     if (length(non_zero_filt) == 0) {
+    #       items <- "<i>No Data</i>"
+    #     } else {
+    #       # 1. Match names(non_zero_filt) to seq_colors$seq_short to get corresponding colors
+    #       
+    #       seq_colors <- custom_colors()
+    #       col_matches <- seq_colors$custom_col[match(names(non_zero_filt), seq_colors$seq_short)]
+    #       
+    #       # Optional fallback (e.g., "#000000" or "black") if a sequence isn't found in your color table
+    #       col_matches[is.na(col_matches)] <- "black"
+    #       
+    #       # 2. Wrap each sequence name in an HTML <span> with the matched inline color
+    #       items <- paste0(
+    #         "<span style='color: ", col_matches, "; font-weight: bold;'>", 
+    #         names(non_zero_filt), 
+    #         ":</span> ", 
+    #         non_zero_filt, 
+    #         collapse = "<br>"
+    #       )
+    #     }
+    #     
+    #     # 3. Assemble final popup
+    #     popup <- paste0(
+    #       "<b>Observed out of ", max_val, "<br> possible times in ", locality , "<br> (showing top ten seq.)</b> ", "<br>",
+    #       "<hr style='margin: 4px 0;'>",
+    #       items
+    #     )
+    #   })
+    # })
+    
 
+    
 
-
-
-
+    prepare_spatial_pie_slices <- function(df, 
+                                           pie_scale_factor = 5, 
+                                           base_radius_m = 250,
+                                           aggregation_level = c("slices", "pie")) {
+      
+      aggregation_level <- match.arg(aggregation_level)
+      
+      # 1. Ensure data is filtered and grouped
+      df_filtered <- df %>%
+        filter(!is.na(lat), !is.na(lon), perc_min_no_ind > 0)
+      
+      # Return empty sf if no data matches criteria
+      if (nrow(df_filtered) == 0) {
+        return(st_sf(geometry = st_sfc(crs = 4326)))
+      }
+      
+      if (aggregation_level == "pie") {
+        # ----------------------------------------------------
+        # AGGREGATION LEVEL: PIE (Single circular polygon per locality)
+        # ----------------------------------------------------
+        df_processed <- df_filtered %>%
+          group_by(locality_id, locality, species_latin_fixed, lat, lon) %>%
+          summarise(
+            sum_min_no_ind = max(sum_min_no_ind, na.rm = TRUE),
+            max_possible_no_ind = max(max_possible_no_ind, na.rm = TRUE),
+            calc_ratio = max(sum_min_no_ind / max_possible_no_ind, na.rm = TRUE),
+            .groups = "drop"
+          ) %>%
+          mutate(
+            radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m)
+          )
+        
+        polys_list <- vector("list", nrow(df_processed))
+        
+        for (i in seq_len(nrow(df_processed))) {
+          row <- df_processed[i, ]
+          
+          # Full circle from 0 to 2*pi
+          theta <- seq(0, 2 * pi, length.out = 60)
+          
+          lat_rad <- row$lat * pi / 180
+          meters_per_deg_lat <- 111139
+          meters_per_deg_lon <- 111139 * cos(lat_rad)
+          
+          dx <- row$radius_m * sin(theta) / meters_per_deg_lon
+          dy <- row$radius_m * cos(theta) / meters_per_deg_lat
+          
+          # Circle boundary closed back to origin point
+          coords <- cbind(row$lon + dx, row$lat + dy)
+          coords <- rbind(coords, coords[1, ])
+          
+          polys_list[[i]] <- st_polygon(list(coords))
+        }
+        
+        sf_out <- st_sf(
+          df_processed %>% 
+            mutate(seq_short = "alle",
+                   perc_min_no_ind = 1,
+                   min_no_ind = sum_min_no_ind) |> 
+            select(locality_id, 
+                   locality, 
+                   species_latin_fixed, 
+                   seq_short,
+                   min_no_ind,
+                   sum_min_no_ind,
+                   perc_min_no_ind, 
+                   max_possible_no_ind,
+                   radius_m),
+          geometry = st_sfc(polys_list, crs = 4326)
+        )
+        
+      } else {
+        # ----------------------------------------------------
+        # AGGREGATION LEVEL: SLICES (Individual pie slice polygons)
+        # ----------------------------------------------------
+        df_processed <- df_filtered %>%
+          group_by(locality_id, lat, lon) %>%
+          mutate(
+            # shares = perc_min_no_ind,
+            # end_angle = 2 * pi * cumsum(perc_min_no_ind),
+            # start_angle = lag(end_angle, default = 0),
+            # calc_ratio = sum_min_no_ind / max_possible_no_ind,
+            # radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m
+            shares = min_no_ind / sum(min_no_ind),
+            end_angle = 2 * pi * cumsum(shares),
+            start_angle = lag(end_angle, default = 0),
+            calc_ratio = sum_min_no_ind / max_possible_no_ind,
+            radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m
+            )
+          ) %>%
+          ungroup()
+        
+        polys_list <- vector("list", nrow(df_processed))
+        
+        for (i in seq_len(nrow(df_processed))) {
+          row <- df_processed[i, ]
+          
+          theta <- seq(row$start_angle, row$end_angle, length.out = 20)
+          
+          lat_rad <- row$lat * pi / 180
+          meters_per_deg_lat <- 111139
+          meters_per_deg_lon <- 111139 * cos(lat_rad)
+          
+          dx <- row$radius_m * sin(theta) / meters_per_deg_lon
+          dy <- row$radius_m * cos(theta) / meters_per_deg_lat
+          
+          coords <- rbind(
+            c(row$lon, row$lat),
+            cbind(row$lon + dx, row$lat + dy),
+            c(row$lon, row$lat)
+          )
+          
+          polys_list[[i]] <- st_polygon(list(coords))
+        }
+        
+        sf_out <- st_sf(
+          df_processed %>% 
+            select(
+              locality_id, 
+              locality, 
+              species_latin_fixed, 
+              sequence_id, 
+              seq_short, 
+              perc_min_no_ind,
+              min_no_ind,
+              sum_min_no_ind, 
+              max_possible_no_ind,
+              pcoa_axis1,
+              color_val, 
+              radius_m
+            ),
+          geometry = st_sfc(polys_list, crs = 4326)
+        )
+      }
+      
+      return(sf_out)
+    }
+    
+    
     output$asv_map <- renderLeaflet({
       req(input$asv_species)
-      # req(input$species_filter)
-
-      to_plot <- asv_to_leaflet()
-      if(nrow(to_plot) == 0) return(NULL)
-
-      basemap |>
-        leaflet::addProviderTiles(providers$Esri.WorldImagery,
-          group = "Ortophoto"
-        ) |>
-        leaflet::addProviderTiles(providers$OpenTopoMap,
-          group = "Topo"
-        ) |>
-        leaflet::addLayersControl(
+      
+      leaflet() |>
+        addTiles(group = "OpenStreetMap") |>
+        addProviderTiles(providers$Esri.WorldImagery, group = "Ortophoto") |>
+        addProviderTiles(providers$OpenTopoMap, group = "Topo") |>
+        addLayersControl(
           overlayGroups = c("OpenStreetMap", "Topo", "Ortophoto"),
           options = layersControlOptions(collapsed = FALSE)
         ) |>
-        leaflet::hideGroup(c("Topo", "Ortophoto")) |>
-        addMinicharts(to_plot$lon,
-          to_plot$lat,
-          type = "pie",
-          chartdata = to_plot[, which(grepl("seq_", names(to_plot)))],
-          width = log(to_plot$sum_reads) * 3,
-          legend = FALSE,
-          popup = list(noPopup = TRUE)
-          # popupOptions = list(autoPan = FALSE,
-          #                     maxHeight = 400,
-          #                     maxWidth = 400,
-          #                     minWidth = 200
-          #                    )
+        hideGroup(c("Topo", "Ortophoto")) |>
+        addLegend(
+          position = "bottomright",
+          colors = asv_colors(seq(from = 0, to = 1, by = 0.25)),
+          labels = round(seq(from = 0, to = 1, by = 0.25), 2),
+          title = "Color scale 0-1",
+          opacity = 1
         )
     })
+    
+    
+    # Track whether we've set the initial extent for the current dataset selection
+    map_initialized <- reactiveVal(FALSE)
+    
+    # Reset initialization flag whenever the target species/dataset changes
+    observeEvent(list(input$project, input$asv_species), {
+      map_initialized(FALSE)
+    })
+    
+    observeEvent(list(input$project, input$asv_species, input$pie_size, input$color_mode), {
+      req(input$asv_species)
+      req(input$pie_size)
+      req(input$color_mode)
+      
+      df_current <- sel_asv()
+      
+      df_sorted <- df_current %>%
+        arrange(across(any_of(c("locality_id", "pcoa_axis1")))) 
+      req(nrow(df_current) > 0)
+      
+      # 1. Prepare spatial polygon geometries
+      if(input$color_mode != "Total diversitet per lok."){
+      pie_sf <- prepare_spatial_pie_slices(
+        df = df_sorted,
+        pie_scale_factor = input$pie_size,
+        base_radius_m = 250,
+        aggregation_level = "slices"
+      )} else{
+        pie_sf <- prepare_spatial_pie_slices(
+          df = df_sorted,
+          pie_scale_factor = input$pie_size,
+          base_radius_m = 250,
+          aggregation_level = "pie")
+      }
+      
+      # 2. Map hex colors
+      if (input$color_mode == "Genetisk avstand") {
+        
+        col_ref <- custom_colors(df = df_sorted, 
+                                 type = "asv_color")
+        color_map <- setNames(col_ref$custom_col, col_ref$seq_short)
+        pie_sf$hex_color <- color_map[pie_sf$seq_short]
+        pie_sf$hex_color[is.na(pie_sf$hex_color)] <- "#808080"
+        
+      } else if (input$color_mode == "Tilfeldige farger") { 
+        
+        # Get unique sequences
+        unique_seqs <- unique(pie_sf$seq_short)
+        n_seqs <- length(unique_seqs)
+        
+        # Generate N distinct hex colors evenly spaced around the HSV color wheel
+        # (Golden ratio hue stepping creates visually distinct adjacent colors)
+        distinct_colors <- hsv(
+          h = (seq(0, n_seqs - 1) * 0.618033988749895) %% 1,
+          s = 0.8,
+          v = 0.95
+        )
+        
+        # Map colors to unique sequence IDs
+        color_map <- setNames(distinct_colors, unique_seqs)
+        pie_sf$hex_color <- color_map[pie_sf$seq_short]
+        
+      } else if(input$color_mode == "Total diversitet per lok."){
+        col_ref <- custom_colors(df_current,
+                                 type = "loc_color")
+        color_map <- setNames(col_ref$custom_col, col_ref$locality)
+        pie_sf$hex_color <- color_map[pie_sf$locality]
+        pie_sf$hex_color[is.na(pie_sf$hex_color)] <- "#808080"
+      }
+      
+      proxy <- leafletProxy("asv_map")
+      
+      # 3. Fit bounds ONLY on species selection switch
+      if (!map_initialized()) {
+        min_lon <- min(df_current$lon, na.rm = TRUE)
+        max_lon <- max(df_current$lon, na.rm = TRUE)
+        min_lat <- min(df_current$lat, na.rm = TRUE)
+        max_lat <- max(df_current$lat, na.rm = TRUE)
+        
+        proxy |> fitBounds(lng1 = min_lon, lat1 = min_lat, lng2 = max_lon, lat2 = max_lat)
+        map_initialized(TRUE)
+      }
+      
+      pie_sf_sorted <- pie_sf %>%
+        arrange(desc(radius_m), locality)
+      
+      popup_text <- if (input$color_mode == "Total diversitet per lok.") {
+        # Full pie aggregation level (no specific ASV context)
+        paste0(
+          "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
+          "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
+          "<strong>Antall individer alle ASV >=: </strong>", pie_sf_sorted$sum_min_no_ind
+        )
+      } else {
+        # Slice level (includes specific ASV info)
+        paste0(
+          "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
+          "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
+          "<strong>Antall individer alle ASV >=: </strong>", pie_sf_sorted$sum_min_no_ind, "<br>",
+          "<strong>ASV: </strong>", pie_sf_sorted$seq_short, "<br>",
+          "<strong>Antall individer denne ASV >=: </strong>", pie_sf_sorted$min_no_ind
+        )
+      }
+      
+      
+      # 4. Redraw WebGL polygons while maintaining existing viewport/zoom
+      proxy |>
+        clearGlLayers() |>
+        addGlPolygons(
+          data = pie_sf_sorted,
+          fillColor = pie_sf_sorted$hex_color,
+          fillOpacity = 1,
+          color = NULL,
+          weight = 0,
+          bounds = FALSE, # Preserves user pan & zoom
+          popup = popup_text,
+          group = "pie_gl_layer"
+        )
+    }, ignoreInit = TRUE)
 
-    output$asvmap_text <- renderText("Kartet til høyre viser funnstedet for enkelte arter og kakediagrammene representerer komposisjonen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant. Størrelsen på sirklene er skalert etter hvor mange DNA-sekvenser vi totalt har funnet av arten i en lokalitet, og størrelsen på kakebitene viser hvor stor del av disse en gitt genetisk variant står for.
-
-Nedenfor kan man søke på enkeltarter.
-Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelse angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt og det kan være feil i artsnavn selv om vi angir sikkerheten som høy.")
+    output$asvmap_text <- renderUI({
+      HTML(paste0(
+    "<p>Kartet til høyre viser funnstedet for enkelte arter, og kakediagrammene representerer sammensetningen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant, og størrelsen på kakebitene viser hvor relativt vanlig de genetiske variantene var på hvert sted. Hvert enkelt funn av en genetisk variant representerer minst ét individ. Finner man en genetisk variant tre ganger, eller tre genetiske varianter én gang hver, har man derfor samlet inn i hvert fall tre individer. Størrelsen på sirklene gjenspeiler minimum totalt antall individer av arten i proporsjon til antall prøvetilfeller. Kakene, som kan skaleres etter ønske, er derfor større jo flere genetiske varianter som er funnet på et sted, og jo flere ganger de er funnet.</p>
+Dataene kan vises på flere måter, enten som tilfeldige farger for hver unike genetiske variant, eller der fargene (så langt det er mulig) representerer den genetiske avstanden mellom ulike varianter langs en lineær skala fra 0 til 1. Kakene kan også fargelegges etter den totale genetiske variasjonen på tvers av alle varianter innen en lokalitet, standardisert mellom 0 og 1 (viser foreløpig antall unike sekvenser).</p>
+<p>Nedenfor kan man søke på enkeltarter. Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn for arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelsen angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt, og det kan være feil i artsnavn selv om vi angir sikkerheten som høy.</p>"
+))
+    })
+    
+    
   })
 }
