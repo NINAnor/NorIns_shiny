@@ -50,11 +50,11 @@ asvmap_ui <- function(id) {
             6,
             sliderInput(
               ns("pie_size"),
-              label = "Kakestørrelse",
+              label = "Kakestørrelse (0 = 500m)",
               min = 0,
-              max = 200,
-              step = 25,
-              value = 100
+              max = 50,
+              #step = 5,
+              value = 10
             )
           )
         )
@@ -817,7 +817,7 @@ asvmap_server <- function(id, login_import) {
         res <- df |> 
           group_by(species_latin_fixed,
                    locality) |> 
-          mutate(loc_color_val = sum(diff(color_val))) |>
+          mutate(loc_color_val = n_distinct(sequence_id)) |>
           group_by(species_latin_fixed) |> 
           mutate(loc_color_val = scale_01(loc_color_val),
                  .groups = "keep") |> 
@@ -882,8 +882,8 @@ asvmap_server <- function(id, login_import) {
     
 
     prepare_spatial_pie_slices <- function(df, 
-                                           pie_scale_factor = 20, 
-                                           base_radius_m = 500,
+                                           pie_scale_factor = 5, 
+                                           base_radius_m = 250,
                                            aggregation_level = c("slices", "pie")) {
       
       aggregation_level <- match.arg(aggregation_level)
@@ -906,7 +906,7 @@ asvmap_server <- function(id, login_import) {
           summarise(
             sum_min_no_ind = max(sum_min_no_ind, na.rm = TRUE),
             max_possible_no_ind = max(max_possible_no_ind, na.rm = TRUE),
-            calc_ratio = max(most_common_min_no_ind / max_possible_no_ind, na.rm = TRUE),
+            calc_ratio = max(sum_min_no_ind / max_possible_no_ind, na.rm = TRUE),
             .groups = "drop"
           ) %>%
           mutate(
@@ -938,12 +938,14 @@ asvmap_server <- function(id, login_import) {
         sf_out <- st_sf(
           df_processed %>% 
             mutate(seq_short = "alle",
-                   perc_min_no_ind = 1) |> 
+                   perc_min_no_ind = 1,
+                   min_no_ind = sum_min_no_ind) |> 
             select(locality_id, 
                    locality, 
                    species_latin_fixed, 
                    seq_short,
-                   min_no_ind = sum_min_no_ind,
+                   min_no_ind,
+                   sum_min_no_ind,
                    perc_min_no_ind, 
                    max_possible_no_ind,
                    radius_m),
@@ -957,11 +959,17 @@ asvmap_server <- function(id, login_import) {
         df_processed <- df_filtered %>%
           group_by(locality_id, lat, lon) %>%
           mutate(
-            shares = perc_min_no_ind,
-            end_angle = 2 * pi * cumsum(perc_min_no_ind),
+            # shares = perc_min_no_ind,
+            # end_angle = 2 * pi * cumsum(perc_min_no_ind),
+            # start_angle = lag(end_angle, default = 0),
+            # calc_ratio = sum_min_no_ind / max_possible_no_ind,
+            # radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m
+            shares = min_no_ind / sum(min_no_ind),
+            end_angle = 2 * pi * cumsum(shares),
             start_angle = lag(end_angle, default = 0),
-            calc_ratio = most_common_min_no_ind / max_possible_no_ind,
-            radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m)
+            calc_ratio = sum_min_no_ind / max_possible_no_ind,
+            radius_m = pmax(calc_ratio * pie_scale_factor * 250, base_radius_m
+            )
           ) %>%
           ungroup()
         
@@ -1038,11 +1046,11 @@ asvmap_server <- function(id, login_import) {
     map_initialized <- reactiveVal(FALSE)
     
     # Reset initialization flag whenever the target species/dataset changes
-    observeEvent(input$asv_species, {
+    observeEvent(list(input$project, input$asv_species), {
       map_initialized(FALSE)
     })
     
-    observeEvent(list(input$asv_species, input$pie_size, input$color_mode), {
+    observeEvent(list(input$project, input$asv_species, input$pie_size, input$color_mode), {
       req(input$asv_species)
       req(input$pie_size)
       req(input$color_mode)
@@ -1057,13 +1065,13 @@ asvmap_server <- function(id, login_import) {
       if(input$color_mode != "Total diversitet per lok."){
       pie_sf <- prepare_spatial_pie_slices(
         df = df_sorted,
-        pie_scale_factor = pmax(input$pie_size, 1),
+        pie_scale_factor = input$pie_size,
         base_radius_m = 250,
         aggregation_level = "slices"
       )} else{
         pie_sf <- prepare_spatial_pie_slices(
           df = df_sorted,
-          pie_scale_factor = pmax(input$pie_size, 1),
+          pie_scale_factor = input$pie_size,
           base_radius_m = 250,
           aggregation_level = "pie")
       }
@@ -1077,12 +1085,25 @@ asvmap_server <- function(id, login_import) {
         pie_sf$hex_color <- color_map[pie_sf$seq_short]
         pie_sf$hex_color[is.na(pie_sf$hex_color)] <- "#808080"
         
-      } else if(input$color_mode == "Tilfeldige farger") { 
+      } else if (input$color_mode == "Tilfeldige farger") { 
         
-        pal <- leaflet::colorFactor("Set1", domain = pie_sf$seq_short)
-        pie_sf$hex_color <- pal(pie_sf$seq_short)
-      
-        } else if(input$color_mode == "Total diversitet per lok."){
+        # Get unique sequences
+        unique_seqs <- unique(pie_sf$seq_short)
+        n_seqs <- length(unique_seqs)
+        
+        # Generate N distinct hex colors evenly spaced around the HSV color wheel
+        # (Golden ratio hue stepping creates visually distinct adjacent colors)
+        distinct_colors <- hsv(
+          h = (seq(0, n_seqs - 1) * 0.618033988749895) %% 1,
+          s = 0.8,
+          v = 0.95
+        )
+        
+        # Map colors to unique sequence IDs
+        color_map <- setNames(distinct_colors, unique_seqs)
+        pie_sf$hex_color <- color_map[pie_sf$seq_short]
+        
+      } else if(input$color_mode == "Total diversitet per lok."){
         col_ref <- custom_colors(df_current,
                                  type = "loc_color")
         color_map <- setNames(col_ref$custom_col, col_ref$locality)
@@ -1106,6 +1127,25 @@ asvmap_server <- function(id, login_import) {
       pie_sf_sorted <- pie_sf %>%
         arrange(desc(radius_m), locality)
       
+      popup_text <- if (input$color_mode == "Total diversitet per lok.") {
+        # Full pie aggregation level (no specific ASV context)
+        paste0(
+          "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
+          "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
+          "<strong>Antall individer alle ASV >=: </strong>", pie_sf_sorted$sum_min_no_ind
+        )
+      } else {
+        # Slice level (includes specific ASV info)
+        paste0(
+          "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
+          "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
+          "<strong>Antall individer alle ASV >=: </strong>", pie_sf_sorted$sum_min_no_ind, "<br>",
+          "<strong>ASV: </strong>", pie_sf_sorted$seq_short, "<br>",
+          "<strong>Antall individer denne ASV >=: </strong>", pie_sf_sorted$min_no_ind
+        )
+      }
+      
+      
       # 4. Redraw WebGL polygons while maintaining existing viewport/zoom
       proxy |>
         clearGlLayers() |>
@@ -1116,22 +1156,16 @@ asvmap_server <- function(id, login_import) {
           color = NULL,
           weight = 0,
           bounds = FALSE, # Preserves user pan & zoom
-          popup = paste0(
-            "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
-            "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
-            "<strong>ASV: </strong>", pie_sf_sorted$seq_short, "<br>",
-            "<strong>Antall individer >=: </strong>", pie_sf_sorted$min_no_ind
-          ),
+          popup = popup_text,
           group = "pie_gl_layer"
         )
     }, ignoreInit = TRUE)
 
     output$asvmap_text <- renderUI({
       HTML(paste0(
-    "<p>Kartet til høyre viser funnstedet for enkelte arter og kakediagrammene representerer komposisjonen av genetiske varianter innen hver art der hver farge representerer en spesifikk genetisk variant. Hvert enkelt funn av en genetisk variant representerer minst et individ. Størrelsen på sirklene gjenspeiler hvor ofte av alle mulige tilfeller den vanligste genetiske varianten ble funnet. Størrelsen på kakebitene viser hvor relativt vanlig de enkelte variantene var på hver plass.</p>",
-"<p>Dataen kan vises på flere måte, enten som tilfeldige farger for hver unik genetisk variant, eller langs en fargeskale som prøver å representere den genetiske avstanden mellom ulike varianter langs en skala fra 0 og 1, eller der fargene representerer den totale genetiske variasjonen på tvers av alle varianter innen en lokalitet, standardisert mellom 0 og 1.</p>",
-"<p>Nedenfor kan man søke på enkeltarter.
-Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelse angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt og det kan være feil i artsnavn selv om vi angir sikkerheten som høy.</p>"
+    "<p>Kartet til høyre viser funnstedet for enkelte arter, og kakediagrammene representerer sammensetningen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant, og størrelsen på kakebitene viser hvor relativt vanlig de genetiske variantene var på hvert sted. Hvert enkelt funn av en genetisk variant representerer minst ét individ. Finner man en genetisk variant tre ganger, eller tre genetiske varianter én gang hver, har man derfor samlet inn i hvert fall tre individer. Størrelsen på sirklene gjenspeiler minimum totalt antall individer av arten i proporsjon til antall prøvetilfeller. Kakene, som kan skaleres etter ønske, er derfor større jo flere genetiske varianter som er funnet på et sted, og jo flere ganger de er funnet.</p>
+Dataene kan vises på flere måter, enten som tilfeldige farger for hver unike genetiske variant, eller der fargene (så langt det er mulig) representerer den genetiske avstanden mellom ulike varianter langs en lineær skala fra 0 til 1. Kakene kan også fargelegges etter den totale genetiske variasjonen på tvers av alle varianter innen en lokalitet, standardisert mellom 0 og 1 (viser foreløpig antall unike sekvenser).</p>
+<p>Nedenfor kan man søke på enkeltarter. Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn for arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelsen angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt, og det kan være feil i artsnavn selv om vi angir sikkerheten som høy.</p>"
 ))
     })
     
