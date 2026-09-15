@@ -16,6 +16,20 @@ require(leafgl)
 asvmap_ui <- function(id) {
   ns <- NS(id)
   
+  tags$head(
+    tags$script(HTML("
+    $(document).on('shiny:sessioninitialized', function() {
+      var canvas = document.createElement('canvas');
+      var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) {
+        Shiny.setInputValue('webgl_supported', false);
+      } else {
+        Shiny.setInputValue('webgl_supported', true);
+      }
+    });
+  "))
+  )
+  
   tabPanel(
     title = "Innenartsvariasjon",
     useShinyjs(),
@@ -203,6 +217,16 @@ asvmap_server <- function(id, login_import) {
   moduleServer(id, function(input, output, session) {
     values <- reactiveValues(a = 1)
 
+    observeEvent(input$webgl_supported, {
+      if (isFALSE(input$webgl_supported)) {
+        showNotification(
+          "WebGL hardware acceleration is disabled in your browser. Map layers may not render correctly.",
+          type = "warning",
+          duration = NULL
+        )
+      }
+    })
+    
     
     output$choose_project <- renderUI({
       #con <- login_import$con()
