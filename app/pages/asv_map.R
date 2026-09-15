@@ -47,13 +47,12 @@ asvmap_ui <- function(id) {
           ),
           column(
             6,
-            sliderInput(
+            sliderTextInput(
               ns("pie_size"),
               label = "Kakestørrelse (0 = 500m)",
-              min = 0,
-              max = 50,
+              choices = c(0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 150, 200),
               #step = 5,
-              value = 10
+              selected = 10
             )
           )
         )
