@@ -13,6 +13,10 @@ RUN apt-get update && apt-get install -y \
     libgeos-dev \
     libproj-dev \
     libpq-dev \
+    libssl-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libxml2-dev \
     # Clean up apt caches to keep the image small
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
