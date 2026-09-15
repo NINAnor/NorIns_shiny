@@ -8,9 +8,8 @@ require(tidyr)
 require(Norimon)
 require(shinyvalidate)
 require(shinyjs)
-library(dplyr)
-library(sf)
-library(leafgl)
+require(sf)
+require(leafgl)
 
 
 
