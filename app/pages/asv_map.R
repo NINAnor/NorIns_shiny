@@ -18,6 +18,26 @@ asvmap_ui <- function(id) {
   
   tags$head(
     tags$script(HTML("
+    Shiny.addCustomMessageHandler('selectize-focus-select', function(message) {
+      var inputId = message.inputId;
+      var $el = $('#' + inputId);
+      
+      // Wait until selectize is initialized
+      if ($el[0] && $el[0].selectize) {
+        var selectize = $el[0].selectize;
+        
+        // Add a handler for when the control gets focus
+        selectize.on('focus', function() {
+          var control = selectize.$control_input[0];
+          if (control) {
+            control.focus();
+            control.select();  // highlight current text so typing replaces it
+          }
+        });
+      }
+    });
+  ")),
+    tags$script(HTML("
     $(document).on('shiny:sessioninitialized', function() {
       var canvas = document.createElement('canvas');
       var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -665,8 +685,8 @@ asvmap_server <- function(id, login_import) {
                  
                  updateSelectizeInput(
                    inputId = "species_filter",
-                   choices = c("Ingen", species_choices),
-                   selected = "Ingen",
+                   choices = c("", species_choices),
+                   selected = "",
                    server = TRUE,
                    options = list(maxOptions = 10)
                  )
@@ -676,7 +696,10 @@ asvmap_server <- function(id, login_import) {
     
   )
 
-
+  session$sendCustomMessage(
+    type = "selectize-focus-select",
+    message = list(inputId = "species_filter")
+  )
 
     observeEvent(input$filter_clear_btn,
       {
@@ -690,8 +713,8 @@ asvmap_server <- function(id, login_import) {
         
         updateSelectizeInput(
           inputId = "species_filter",
-          choices = c("Ingen", species_choices),
-          selected = "Ingen",
+          choices = c("", species_choices),
+          selected = "",
           server = TRUE,
           options = list(maxOptions = 10)
         )
@@ -702,7 +725,7 @@ asvmap_server <- function(id, login_import) {
 
     species_filter_out <- reactive({
       req(input$project)
-      if (input$species_filter != "Ingen") {
+      if (input$species_filter != "") {
         #con <- login_import$con()
 
         taxa_reverse_q <- "
@@ -723,7 +746,7 @@ asvmap_server <- function(id, login_import) {
           taxa_reverse_sql
         )
       } else {
-        taxa_reverse_res <- tibble("species_latin_gbif" = "Ingen")
+        taxa_reverse_res <- tibble("species_latin_gbif" = "")
       }
 
       return(taxa_reverse_res)
@@ -1142,7 +1165,12 @@ asvmap_server <- function(id, login_import) {
         min_lat <- min(df_current$lat, na.rm = TRUE)
         max_lat <- max(df_current$lat, na.rm = TRUE)
         
-        proxy |> fitBounds(lng1 = min_lon, lat1 = min_lat, lng2 = max_lon, lat2 = max_lat)
+        buff <- 0.05
+        
+        proxy |> fitBounds(lng1 = min_lon - buff, 
+                           lat1 = min_lat - buff, 
+                           lng2 = max_lon + buff, 
+                           lat2 = max_lat + buff)
         map_initialized(TRUE)
       }
       
@@ -1154,7 +1182,9 @@ asvmap_server <- function(id, login_import) {
         paste0(
           "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
           "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
-          "<strong>Antall individer alle ASV >=: </strong>", pie_sf_sorted$sum_min_no_ind
+          "<span style='color:", pie_sf_sorted$hex_color, ";'>",
+          "<strong>Antall individer alle ASV >=: </strong>", pie_sf_sorted$sum_min_no_ind, "<br>",
+          "</span>"
         )
       } else {
         # Slice level (includes specific ASV info)
@@ -1162,8 +1192,11 @@ asvmap_server <- function(id, login_import) {
           "<strong>Lokalitet: </strong>", pie_sf_sorted$locality, "<br>",
           "<strong>Samplet antall ganger: </strong>", pie_sf_sorted$max_possible_no_ind, "<br>",
           "<strong>Antall individer alle ASV >=: </strong>", pie_sf_sorted$sum_min_no_ind, "<br>",
+          "<span style='color:", pie_sf_sorted$hex_color, ";'>",
           "<strong>ASV: </strong>", pie_sf_sorted$seq_short, "<br>",
-          "<strong>Antall individer denne ASV >=: </strong>", pie_sf_sorted$min_no_ind
+          "<strong> Genotyp 0 til 1: </strong>" , round(pie_sf_sorted$color_val, 2), "<br>",
+          "<strong>Antall individer denne ASV >=: </strong>", pie_sf_sorted$min_no_ind, 
+          "</span>"
         )
       }
       
@@ -1176,7 +1209,7 @@ asvmap_server <- function(id, login_import) {
           fillColor = pie_sf_sorted$hex_color,
           fillOpacity = 1,
           color = NULL,
-          weight = 0,
+          weight = 1,
           bounds = FALSE, # Preserves user pan & zoom
           popup = popup_text,
           group = "pie_gl_layer"
@@ -1185,8 +1218,10 @@ asvmap_server <- function(id, login_import) {
 
     output$asvmap_text <- renderUI({
       HTML(paste0(
-    "<p>Kartet til høyre viser funnstedet for enkelte arter, og kakediagrammene representerer sammensetningen av genetiske varianter innen hver art. Hver farge representerer en spesifikk genetisk variant, og størrelsen på kakebitene viser hvor relativt vanlig de genetiske variantene var på hvert sted. Hvert enkelt funn av en genetisk variant representerer minst ét individ. Finner man en genetisk variant tre ganger, eller tre genetiske varianter én gang hver, har man derfor samlet inn i hvert fall tre individer. Størrelsen på sirklene gjenspeiler minimum totalt antall individer av arten i proporsjon til antall prøvetilfeller. Kakene, som kan skaleres etter ønske, er derfor større jo flere genetiske varianter som er funnet på et sted, og jo flere ganger de er funnet.</p>
-Dataene kan vises på flere måter, enten som tilfeldige farger for hver unike genetiske variant, eller der fargene (så langt det er mulig) representerer den genetiske avstanden mellom ulike varianter langs en lineær skala fra 0 til 1. Kakene kan også fargelegges etter den totale genetiske variasjonen på tvers av alle varianter innen en lokalitet, standardisert mellom 0 og 1 (viser foreløpig antall unike sekvenser).</p>
+    "<p>Kartet til høyre viser funnstedet for enkelte arter, og kakediagrammene representerer sammensetningen av genetiske varianter (genotyper) innen hver art. Dataene kan vises på flere måter, enten der hver unike genotypene får en tilfeldig farge, eller der fargeskalaen representerer den genetiske avstanden mellom genotypene (standardisert for hver art mellom 0 og 1). Kakene kan også fargelegges etter den totale genetiske variasjonen på tvers av alle varianter innen en lokalitet (viser foreløpig antall unike genotyper, standardiser på samme måte). </p>
+    
+<p>Vi har ikke kapasitet å telle antallet individer i flaskene, men hvert enkelt funn av én genetisk variant representerer minst ét individ. Finner man en genetisk variant tre ganger, eller tre genetiske varianter én gang hver, har man derfor samlet inn i hvert fall tre individer. Størrelsen på kakebitene representerer på denne måte hvor vanlig de genetiske variantene var på hvert sted. Størrelsen på sirklene gjenspeiler det minste mulige totale antallet individer på stedet i proporsjon til antall prøvetilfeller. Kakene, som kan skaleres etter ønske, er derfor større jo flere genetiske varianter som er funnet på et sted, og jo flere ganger de er funnet.</p>
+
 <p>Nedenfor kan man søke på enkeltarter. Per i dag har overvåkingsprogrammet et begrenset geografisk og tidsmessig omfang. Dataene for arter som er observert med få individer på få steder vil være mer tilfeldige enn for arter med mange individer fanget på mange steder. Sikkerhet på artsbestemmelsen angir usikkerheten knyttet til den automatiske artsidentifiseringen med DNA. De fleste funn er ikke gjennomgått manuelt, og det kan være feil i artsnavn selv om vi angir sikkerheten som høy.</p>"
 ))
     })

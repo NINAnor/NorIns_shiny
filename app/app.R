@@ -13,6 +13,8 @@ source("./pages/tidstrender.R", local = TRUE)
 source("./pages/dashboard.R", local = TRUE)
 source("./pages/landowners.R", local = TRUE)
 
+# Enable error messages in browser
+options(shiny.sanitize.errors = FALSE)
 
 # To make the app find the figures folder (and expose it to the web)
 addResourcePath(prefix = "figures", directoryPath = "./figures")
