@@ -187,7 +187,7 @@ tidstrend_server <- function(id, login_import) {
     pal_hab <- reactive({
       req(ruter())
       leaflet::colorFactor(
-        palette = NinaR::ninaPalette(),
+        palette = NinaR::ninaPalette("darkblue-orange"),
         domain = ruter()$habitat_type
       )
     })
@@ -218,13 +218,15 @@ tidstrend_server <- function(id, login_import) {
         leaflet::hideGroup(c("Topo", "Ortophoto")) %>%
         leaflet::addPolygons(
           data = map_ruter,
-          color = ~ color_provider(habitat_type)
+          color = ~ color_provider(habitat_type),
+          opacity = 1
         ) %>%
         leaflet::addCircles(
           data = map_traps,
           popup = htmltools::htmlEscape(map_traps$trap_name),
           radius = ~ coordinate_precision_m,
-          color = ~ color_provider(habitat_type)
+          color = ~ color_provider(habitat_type),
+          opacity = 1
         ) %>%
         leaflet::addLegend(
           pal = color_provider,
