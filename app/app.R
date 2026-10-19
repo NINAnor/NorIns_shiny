@@ -1,3 +1,5 @@
+app_version <- "v1.1.0"
+
 require(shiny)
 require(shinydashboard)
 
@@ -95,7 +97,14 @@ ui <- function(request){
   tidstrend_ui(id = "id_7"),
   asvmap_ui(id = "id_6"),
   landowners_ui(id = "id_9"),
-  uiOutput("db_status_ui")
+  uiOutput("db_status_ui"),
+  tags$script(HTML(sprintf("
+  $(function() {
+    $('.navbar > .container-fluid').append(
+      '<div class=\"app-version\">%s</div>'
+    );
+  });
+", app_version)))
 )
 }
 
