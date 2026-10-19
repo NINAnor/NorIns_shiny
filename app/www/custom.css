@@ -308,4 +308,20 @@ background-image: none !important;
 }
 
 
+/* Make the navbar container the positioning reference */
+.navbar > .container-fluid {
+  position: relative;
+}
 
+/* Version in the bottom-right of the navbar */
+.app-version {
+  position: absolute;
+  right: 15px;
+  bottom: 2px;
+
+  color: #ffffff;       /* Change if your navbar has a light background */
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}

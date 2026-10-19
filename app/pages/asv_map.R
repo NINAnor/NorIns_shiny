@@ -60,7 +60,7 @@ asvmap_ui <- function(id) {
       shinydashboardPlus::box(
         id = "taxabox",
         width = 12,
-        title = "Genetisk variasjon innen arter",
+        title = "Genetisk variasjon innen arter - under utvikling",
         htmlOutput(ns("asvmap_text")),
         uiOutput(ns("choose_project")),
         height = "500px"
